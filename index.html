@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMF · CMMS — Acceso</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg0:#080a0d; --bg1:#0f1218; --bg2:#161b24; --bg3:#1d2330;
+  --border:rgba(255,255,255,0.07); --border2:rgba(0,212,255,0.25);
+  --cyan:#00d4ff; --green:#00e676; --amber:#ffb300; --red:#ff4444;
+  --txt0:#f0f2f5; --txt1:#9ba3b2; --txt2:#4a5568;
+  --font-d:'Syne',sans-serif; --font-b:'Geist',sans-serif; --font-m:'DM Mono',monospace;
+}
+body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+
+/* Fondo animado */
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.bg-glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(ellipse,rgba(0,212,255,0.06) 0%,transparent 70%);pointer-events:none;}
+.bg-glow2{position:fixed;bottom:-20%;right:-10%;width:400px;height:400px;background:radial-gradient(ellipse,rgba(0,230,118,0.04) 0%,transparent 70%);pointer-events:none;}
+
+/* Card login */
+.login-wrap{position:relative;z-index:10;width:100%;max-width:420px;padding:20px;}
+.login-brand{text-align:center;margin-bottom:32px;}
+.login-brand .plant{font-family:var(--font-m);font-size:11px;color:var(--txt2);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+.login-brand .logo{font-family:var(--font-d);font-size:32px;font-weight:800;color:var(--cyan);letter-spacing:-1px;line-height:1;}
+.login-brand .sub{font-size:12px;color:var(--txt2);margin-top:6px;font-family:var(--font-m);}
+
+.login-card{background:var(--bg1);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,0.5);}
+.login-title{font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:6px;}
+.login-desc{font-size:12px;color:var(--txt2);font-family:var(--font-m);margin-bottom:24px;}
+
+.form-group{margin-bottom:16px;}
+.form-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;}
+.form-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--txt0);font-family:var(--font-b);font-size:14px;padding:12px 14px;transition:border-color .2s,box-shadow .2s;}
+.form-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.08);}
+.form-input::placeholder{color:var(--txt2);}
+
+.btn-login{width:100%;background:var(--cyan);color:#050810;font-family:var(--font-d);font-size:15px;font-weight:700;border:none;border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-top:8px;}
+.btn-login:hover{background:#00e5ff;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,212,255,0.25);}
+.btn-login:active{transform:none;}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.error-msg{background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);font-family:var(--font-m);margin-top:12px;display:none;}
+.error-msg.show{display:block;}
+
+.loading-spinner{display:none;text-align:center;margin-top:12px;}
+.loading-spinner.show{display:block;}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.login-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--txt2);font-family:var(--font-m);}
+.login-footer strong{color:var(--cyan);}
+
+/* Roles pills */
+.roles-preview{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+.role-pill{font-size:9px;font-family:var(--font-m);padding:3px 8px;border-radius:20px;border:1px solid;}
+.role-pill.admin{background:rgba(255,68,68,0.1);color:var(--red);border-color:rgba(255,68,68,0.2);}
+.role-pill.jefe{background:rgba(0,212,255,0.1);color:var(--cyan);border-color:rgba(0,212,255,0.2);}
+.role-pill.supervisor{background:rgba(255,179,0,0.1);color:var(--amber);border-color:rgba(255,179,0,0.2);}
+.role-pill.tecnico{background:rgba(0,230,118,0.1);color:var(--green);border-color:rgba(0,230,118,0.2);}
+.role-pill.solicitante{background:rgba(187,134,252,0.1);color:#bb86fc;border-color:rgba(187,134,252,0.2);}
+
+@media(max-width:480px){.login-wrap{padding:16px;}.login-card{padding:24px;}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow2"></div>
+
+<div class="login-wrap">
+  <div class="login-brand">
+    <div class="plant">Industrial Pesquera</div>
+    <div class="logo">SMF · CMMS</div>
+    <div class="sub">Santa Mónica Fishing · Planta Paita</div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-title">Acceso al sistema</div>
+    <div class="login-desc">Ingresa tus credenciales asignadas por el administrador</div>
+
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-input" type="email" id="email" placeholder="usuario@santamonicafishing.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar al sistema</button>
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="loading-spinner" id="spinner"><div class="spinner"></div></div>
+  </div>
+
+  <div class="login-footer">
+    Sistema de gestión de mantenimiento · <strong>v2.0</strong><br>
+    ¿Problemas de acceso? Contacta a <strong>emiranda@santamonicafishing.com</strong>
+    <div class="roles-preview">
+      <span class="role-pill admin">Administrador</span>
+      <span class="role-pill jefe">Jefe Mant.</span>
+      <span class="role-pill supervisor">Supervisor</span>
+      <span class="role-pill tecnico">Técnico</span>
+      <span class="role-pill solicitante">Solicitante</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FIREBASE ══ -->
+<script type="module">
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  REEMPLAZA ESTE BLOQUE CON TU firebaseConfig REAL
+// ─────────────────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyA6WmObur3fs93MiR7Muo-TMcHqLANaRQI",
+  authDomain:        "smf-cmms-paita.firebaseapp.com",
+  projectId:         "smf-cmms-paita",
+  storageBucket:     "smf-cmms-paita.firebasestorage.app",
+  messagingSenderId: "858930569794",
+  appId:             "1:858930569794:web:979ced8498c3d7e53ec3db"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { initializeApp }        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged }
+                                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc }
+                                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// Si ya hay sesión activa, redirigir directamente
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const rol = await getUserRol(user.uid);
+    redirectByRol(rol);
+  }
+});
+
+// ─── Login ────────────────────────────────────────────────────────────────────
+window.doLogin = async function() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('btn-login');
+  const errEl    = document.getElementById('error-msg');
+  const spinner  = document.getElementById('spinner');
+
+  if (!email || !password) {
+    showError('Ingresa tu correo y contraseña.');
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.classList.add('show');
+  errEl.classList.remove('show');
+
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const rol  = await getUserRol(cred.user.uid);
+
+    // Guardar sesión en sessionStorage para que app.html la lea
+    sessionStorage.setItem('smf_uid',   cred.user.uid);
+    sessionStorage.setItem('smf_email', cred.user.email);
+    sessionStorage.setItem('smf_rol',   rol);
+
+    redirectByRol(rol);
+
+  } catch (err) {
+    const msgs = {
+      'auth/invalid-credential':    'Correo o contraseña incorrectos.',
+      'auth/user-not-found':        'Usuario no encontrado.',
+      'auth/wrong-password':        'Contraseña incorrecta.',
+      'auth/too-many-requests':     'Demasiados intentos. Espera unos minutos.',
+      'auth/user-disabled':         'Cuenta desactivada. Contacta al administrador.',
+      'auth/network-request-failed':'Sin conexión a internet.',
+    };
+    showError(msgs[err.code] || 'Error al iniciar sesión: ' + err.message);
+    btn.disabled = false;
+    spinner.classList.remove('show');
+  }
+};
+
+async function getUserRol(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', uid));
+    return snap.exists() ? (snap.data().rol || 'tecnico') : 'tecnico';
+  } catch { return 'tecnico'; }
+}
+
+function redirectByRol(rol) {
+  // El administrador puede ir al panel de usuarios
+  // Todos los demás van al sistema principal
+  window.location.href = 'app.html';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// Enter para login
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.doLogin();
+});
+document.getElementById('email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('password').focus();
+});
+</script>
+</body>
+</html>

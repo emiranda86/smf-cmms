@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMF · CMMS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg0:#080a0d;--bg1:#0f1218;--bg2:#161b24;--bg3:#1d2330;--bg4:#232a38;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --cyan:#00d4ff;--green:#00e676;--amber:#ffb300;--red:#ff4444;--purple:#bb86fc;--orange:#ff9800;
+  --txt0:#f0f2f5;--txt1:#9ba3b2;--txt2:#4a5568;
+  --font-d:'Syne',sans-serif;--font-b:'Geist',sans-serif;--font-m:'DM Mono',monospace;
+  --r:8px;--r2:12px;--sidebar:240px;
+}
+body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{height:52px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.topbar-brand{font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--cyan);}
+.topbar-sep{color:var(--txt2);}
+.topbar-title{font-size:13px;font-weight:500;color:var(--txt1);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:11px;font-weight:700;}
+.user-name{font-size:12px;color:var(--txt1);}
+.user-rol{font-size:10px;font-family:var(--font-m);padding:2px 6px;border-radius:10px;}
+.btn{border:none;border-radius:var(--r);padding:7px 14px;font-family:var(--font-b);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+.btn-primary{background:var(--cyan);color:#050810;font-weight:600;}.btn-primary:hover{background:#00e5ff;}
+.btn-secondary{background:var(--bg3);color:var(--txt0);border:1px solid var(--border);}.btn-secondary:hover{background:var(--bg4);}
+.btn-ghost{background:transparent;color:var(--txt1);border:1px solid var(--border);}.btn-ghost:hover{background:var(--bg3);color:var(--txt0);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-danger{background:rgba(255,68,68,0.12);color:var(--red);border:1px solid rgba(255,68,68,0.2);}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;min-height:0;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;height:calc(100vh - 52px);position:sticky;top:52px;overflow-y:auto;flex-shrink:0;}
+.nav-section{padding:16px 10px 6px;font-size:9px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:1.5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-radius:var(--r);margin:1px 6px;transition:all .15s;border:1px solid transparent;}
+.nav-item:hover{background:var(--bg2);}
+.nav-item.active{background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.15);color:var(--cyan);}
+.nav-item.active .nav-label{color:var(--cyan);}
+.nav-icon{font-size:15px;flex-shrink:0;width:20px;text-align:center;}
+.nav-label{font-size:12.5px;color:var(--txt1);}
+.nav-badge{margin-left:auto;font-size:9px;font-family:var(--font-m);background:rgba(255,68,68,0.15);color:var(--red);padding:2px 6px;border-radius:10px;}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;height:calc(100vh - 52px);}
+.page{display:none;padding:20px;animation:fadeIn .2s ease;}
+.page.active{display:block;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.page-h1{font-family:var(--font-d);font-size:20px;font-weight:800;}
+.page-sub{font-size:11px;color:var(--txt2);font-family:var(--font-m);margin-top:2px;}
+
+/* ── CARDS & GRIDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.cyan::before{background:var(--cyan);}
+.kpi-card.green::before{background:var(--green);}
+.kpi-card.amber::before{background:var(--amber);}
+.kpi-card.red::before{background:var(--red);}
+.kpi-icon{font-size:22px;margin-bottom:8px;display:block;}
+.kpi-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}
+.kpi-value{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;}
+.kpi-value.cyan{color:var(--cyan);}
+.kpi-value.green{color:var(--green);}
+.kpi-value.amber{color:var(--amber);}
+.kpi-value.red{color:var(--red);}
+.kpi-sub{font-size:11px;color:var(--txt2);margin-top:4px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title{font-family:var(--font-d);font-size:13px;font-weight:700;}
+
+/* ── TABLA ── */
+.tbl-wrap{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;font-weight:400;}
+.tbl td{padding:10px 12px;font-size:12.5px;border-bottom:1px solid var(--border);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,0.02);}
+.mono{font-family:var(--font-m);font-size:11px;color:var(--txt2);}
+.hl{font-family:var(--font-m);font-size:11px;color:var(--cyan);}
+.action-btns{display:flex;gap:5px;}
+.action-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--txt1);cursor:pointer;padding:4px 8px;font-size:12px;transition:all .15s;}
+.action-btn:hover{background:var(--bg4);color:var(--txt0);}
+
+/* ── STATUS BADGES ── */
+.status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-m);padding:3px 8px;border-radius:20px;}
+.status::before{content:'';width:5px;height:5px;border-radius:50%;}
+.status.abierta{background:rgba(0,212,255,0.12);color:var(--cyan);}.status.abierta::before{background:var(--cyan);}
+.status.prog{background:rgba(255,179,0,0.12);color:var(--amber);}.status.prog::before{background:var(--amber);}
+.status.ejecucion{background:rgba(0,230,118,0.12);color:var(--green);}.status.ejecucion::before{background:var(--green);}
+.status.cerrada{background:rgba(90,98,114,0.15);color:var(--txt2);}.status.cerrada::before{background:var(--txt2);}
+.status.vencida{background:rgba(255,68,68,0.12);color:var(--red);}.status.vencida::before{background:var(--red);}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-family:var(--font-m);padding:3px 8px;border-radius:20px;}
+.badge.cyan{background:rgba(0,212,255,0.12);color:var(--cyan);}
+.badge.amber{background:rgba(255,179,0,0.12);color:var(--amber);}
+.badge.green{background:rgba(0,230,118,0.12);color:var(--green);}
+.badge.red{background:rgba(255,68,68,0.12);color:var(--red);}
+.badge.gray{background:rgba(90,98,114,0.15);color:var(--txt2);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);width:100%;max-width:580px;max-height:92vh;overflow-y:auto;}
+.modal-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--font-d);font-size:16px;font-weight:700;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.modal-close{width:28px;height:28px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);color:var(--txt1);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.modal-close:hover{background:rgba(255,68,68,0.15);color:var(--red);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:13px;padding:10px 12px;width:100%;transition:border-color .15s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--cyan);}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--txt2);}
+.form-select{appearance:none;cursor:pointer;}
+.form-textarea{resize:vertical;min-height:72px;}
+.form-section{grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding-bottom:5px;border-bottom:1px solid rgba(0,212,255,0.15);}
+
+/* ── EMPTY STATE ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:10px;}
+.empty-icon{font-size:40px;opacity:.3;}
+.empty-title{font-family:var(--font-d);font-size:16px;color:var(--txt1);}
+.empty-sub{font-size:12px;color:var(--txt2);max-width:320px;line-height:1.6;}
+
+/* ── LOADING ── */
+.loading-row{text-align:center;padding:40px;color:var(--txt2);font-family:var(--font-m);font-size:12px;}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid rgba(0,230,118,.3);border-radius:var(--r2);padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;z-index:500;transform:translateY(100px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:18px;}
+.toast-sub{font-size:10px;color:var(--txt2);font-family:var(--font-m);}
+
+/* ── SEARCH ── */
+.search-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:12px;padding:7px 12px;}
+.search-box:focus{outline:none;border-color:var(--cyan);}
+.search-box::placeholder{color:var(--txt2);}
+.filter-sel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:12px;padding:7px 10px;appearance:none;cursor:pointer;}
+
+/* ── PRIO ── */
+.prio-alta{color:var(--red);}
+.prio-media{color:var(--amber);}
+.prio-baja{color:var(--green);}
+
+/* ── KANBAN ── */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.kanban-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.kanban-lbl{font-size:12px;font-weight:600;}
+.kanban-cnt{font-size:10px;font-family:var(--font-m);background:var(--bg3);padding:2px 7px;border-radius:10px;}
+.kanban-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;}
+.sol-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:all .15s;}
+.sol-card:hover{border-color:var(--border2);}
+.sol-card-cod{font-family:var(--font-m);font-size:10px;color:var(--cyan);}
+.sol-card-desc{font-size:12px;margin:4px 0;line-height:1.4;}
+.sol-card-meta{font-size:10px;color:var(--txt2);font-family:var(--font-m);}
+
+/* ── ÁRBOL ACTIVOS INLINE ── */
+.tree-row{display:flex;align-items:center;height:28px;cursor:pointer;border-left:2px solid transparent;transition:all .1s;border-radius:0 4px 4px 0;}
+.tree-row:hover{background:var(--bg3);}
+.tree-row.selected{background:rgba(0,212,255,0.08);border-left-color:var(--cyan);}
+.tree-toggle{width:14px;font-size:9px;color:var(--txt2);flex-shrink:0;transition:transform .15s;cursor:pointer;}
+.tree-toggle.open{transform:rotate(90deg);}
+.tree-toggle.leaf{opacity:0;pointer-events:none;}
+
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .kanban{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="topbar-brand">SMF</span>
+  <span class="topbar-sep">›</span>
+  <span class="topbar-title" id="topbar-title">CMMS · Planta Paita</span>
+  <div class="topbar-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar" style="background:rgba(0,212,255,0.15);color:var(--cyan)">—</div>
+      <span class="user-name" id="user-name">—</span>
+      <span class="user-rol badge cyan" id="user-rol-badge">—</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btn-admin" style="display:none" onclick="window.location.href='admin-usuarios.html'">👥 Usuarios</button>
+    <button class="btn btn-danger btn-sm" onclick="doLogout()">Salir</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+    </div>
+
+    <div class="nav-section">Mantenimiento</div>
+    <div class="nav-item" onclick="showPage('ot',this)">
+      <span class="nav-icon">🔧</span><span class="nav-label">Órdenes de Trabajo</span>
+      <span class="nav-badge" id="badge-ot">—</span>
+    </div>
+    <div class="nav-item" id="nav-sol" onclick="showPage('solicitudes',this)">
+      <span class="nav-icon">📋</span><span class="nav-label">Solicitudes</span>
+      <span class="nav-badge" id="badge-sol">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('activos',this)">
+      <span class="nav-icon">🏭</span><span class="nav-label">Activos</span>
+    </div>
+    <div class="nav-item" onclick="showPage('almacen',this)">
+      <span class="nav-icon">📦</span><span class="nav-label">Almacén</span>
+    </div>
+
+    <div class="nav-section" id="nav-section-ops">Operaciones</div>
+    <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
+      <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);text-align:center">
+        SMF · CMMS v2.0<br>smf-cmms-paita
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><div class="page-h1">Dashboard</div><div class="page-sub" id="dash-fecha">—</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">↻ Actualizar</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card cyan"><span class="kpi-icon">🔧</span><div class="kpi-label">OT abiertas</div><div class="kpi-value cyan" id="d-ot-abiertas">—</div><div class="kpi-sub">activas en el sistema</div></div>
+        <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">OT vencidas</div><div class="kpi-value amber" id="d-ot-vencidas">—</div><div class="kpi-sub">requieren atención</div></div>
+        <div class="kpi-card green"><span class="kpi-icon">📋</span><div class="kpi-label">Solicitudes pendientes</div><div class="kpi-value green" id="d-sol-pend">—</div><div class="kpi-sub">sin OT asignada</div></div>
+        <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Repuestos stock bajo</div><div class="kpi-value red" id="d-rep-bajo">—</div><div class="kpi-sub">agotados o bajo mínimo</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Últimas OT creadas</div></div>
+          <div id="dash-ot-list"><div class="loading-row"><span class="spinner"></span>Cargando…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Solicitudes recientes</div></div>
+          <div id="dash-sol-list"><div class="loading-row"><span class="spinner"></span>Cargando…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ÓRDENES DE TRABAJO ══ -->
+    <div class="page" id="page-ot">
+      <div class="page-header">
+        <div><div class="page-h1">Órdenes de Trabajo</div><div class="page-sub">Registro y seguimiento de todas las OT</div></div>
+        <button class="btn btn-primary" id="btn-nueva-ot" onclick="abrirModalOT()">+ Nueva OT</button>
+      </div>
+      <!-- Filtros -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <input class="search-box" type="text" id="ot-search" placeholder="Buscar OT, activo, técnico…" oninput="filtrarOT()" style="flex:1;min-width:200px">
+        <select class="filter-sel" id="ot-f-estado" onchange="filtrarOT()">
+          <option value="">Todos los estados</option>
+          <option value="abierta">Abierta</option>
+          <option value="programada">Programada</option>
+          <option value="ejecucion">En ejecución</option>
+          <option value="cerrada">Cerrada</option>
+          <option value="vencida">Vencida</option>
+        </select>
+        <select class="filter-sel" id="ot-f-tipo" onchange="filtrarOT()">
+          <option value="">Todos los tipos</option>
+          <option>Preventivo</option><option>Correctivo</option>
+          <option>Predictivo</option><option>Emergencia</option><option>Inspección</option>
+        </select>
+        <span id="ot-count" style="font-size:11px;color:var(--txt2);font-family:var(--font-m)"></span>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Código</th><th>Tipo</th><th>Activo / Componente</th><th>Área</th>
+              <th>Técnico</th><th>F. Creación</th><th>F. Programada</th>
+              <th>Prioridad</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="ot-tbody"><tr><td colspan="10" class="loading-row"><span class="spinner"></span>Cargando OT…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SOLICITUDES ══ -->
+    <div class="page" id="page-solicitudes">
+      <div class="page-header">
+        <div><div class="page-h1">Solicitudes de Trabajo</div><div class="page-sub">Kanban — flujo de aprobación</div></div>
+        <button class="btn btn-primary" onclick="abrirModalSol()">+ Nueva solicitud</button>
+      </div>
+      <div class="kanban" id="kanban-board">
+        <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando solicitudes…</div>
+      </div>
+    </div>
+
+    <!-- ══ ACTIVOS ══ -->
+    <div class="page" id="page-activos">
+      <div class="page-header">
+        <div><div class="page-h1">Gestión de Activos</div><div class="page-sub">Jerarquía multinivel — Planta Paita</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="window.open('smf-activos.html','_blank')">🌳 Árbol completo</button>
+          <button class="btn btn-primary btn-sm" id="btn-nuevo-activo" onclick="abrirModalActivo()">+ Nuevo activo</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:14px">
+        <!-- Mini árbol -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:10px 12px;border-bottom:1px solid var(--border)">
+            <input class="search-box" type="text" id="activo-search" placeholder="Buscar activo…" oninput="filtrarActivos(this.value)" style="width:100%">
+          </div>
+          <div id="activos-tree" style="overflow-y:auto;max-height:520px;padding:6px 0">
+            <div class="loading-row"><span class="spinner"></span>Cargando…</div>
+          </div>
+        </div>
+        <!-- Ficha activo -->
+        <div id="activo-ficha">
+          <div class="empty">
+            <div class="empty-icon">🏭</div>
+            <div class="empty-title">Selecciona un activo</div>
+            <div class="empty-sub">Haz clic en cualquier nodo del árbol para ver su ficha, historial de OT y repuestos compatibles.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ALMACÉN ══ -->
+    <div class="page" id="page-almacen">
+      <div class="page-header">
+        <div><div class="page-h1">Almacén y Repuestos</div><div class="page-sub">Control de stock en tiempo real</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalMovimiento('entrada')">↓ Entrada</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalMovimiento('salida')">↑ Salida</button>
+          <button class="btn btn-primary btn-sm" id="btn-nuevo-rep" onclick="abrirModalRepuesto()">+ Nuevo repuesto</button>
+        </div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card cyan"><span class="kpi-icon">📦</span><div class="kpi-label">Total SKUs</div><div class="kpi-value cyan" id="alm-total">—</div></div>
+        <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Agotados</div><div class="kpi-value red" id="alm-agotados">—</div></div>
+        <div class="kpi-card amber"><span class="kpi-icon">📉</span><div class="kpi-label">Stock bajo</div><div class="kpi-value amber" id="alm-bajo">—</div></div>
+        <div class="kpi-card green"><span class="kpi-icon">💰</span><div class="kpi-label">Valor inventario</div><div class="kpi-value green" id="alm-valor" style="font-size:20px">—</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <input class="search-box" type="text" id="alm-search" placeholder="Buscar repuesto, código…" oninput="filtrarRepuestos()" style="flex:1;min-width:200px">
+        <select class="filter-sel" id="alm-f-estado" onchange="filtrarRepuestos()">
+          <option value="">Todos</option><option value="ok">OK</option>
+          <option value="bajo">Stock bajo</option><option value="agotado">Agotado</option>
+        </select>
+        <select class="filter-sel" id="alm-f-cat" onchange="filtrarRepuestos()">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Marca</th>
+              <th>Ubicación</th><th>Stock</th><th>Mín/Máx</th><th>Costo unit.</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="alm-tbody"><tr><td colspan="10" class="loading-row"><span class="spinner"></span>Cargando inventario…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LECTURAS ══ -->
+    <div class="page" id="page-lecturas">
+      <div class="page-header">
+        <div><div class="page-h1">Registro de Lecturas</div><div class="page-sub">Parámetros operativos — turno actual</div></div>
+        <button class="btn btn-primary" onclick="abrirModalLectura()">+ Registrar lectura</button>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Lecturas recientes</div>
+          <select class="filter-sel" id="lec-f-tipo" onchange="cargarLecturas()">
+            <option value="">Todas</option>
+            <option value="refrigeracion">Refrigeración</option>
+            <option value="osmosis">Ósmosis</option>
+            <option value="energia">Energía</option>
+            <option value="agua">Agua</option>
+            <option value="caldero">Caldero</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Fecha / Hora</th><th>Tipo</th><th>Activo / Equipo</th><th>Parámetro</th>
+              <th>Valor</th><th>Unidad</th><th>Observación</th><th>Técnico</th>
+            </tr></thead>
+            <tbody id="lec-tbody"><tr><td colspan="8" class="loading-row"><span class="spinner"></span>Cargando lecturas…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ MODAL: NUEVA OT ══ -->
+<div class="modal-overlay" id="modal-ot">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-ot-titulo">Nueva Orden de Trabajo</div>
+      <button class="modal-close" onclick="cerrarModal('modal-ot')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Tipo de OT</label>
+          <select class="form-select" id="ot-tipo">
+            <option>Correctivo</option><option>Preventivo</option>
+            <option>Predictivo</option><option>Emergencia</option><option>Inspección</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Prioridad</label>
+          <select class="form-select" id="ot-prioridad">
+            <option value="Alta">Alta</option><option value="Media" selected>Media</option><option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Activo / Componente afectado</label>
+          <div style="position:relative">
+            <input class="form-input" type="text" id="ot-activo-search" placeholder="Buscar equipo, componente… (ej: filtro aceite, pistón)" oninput="buscarActivoModal(this.value,'ot-activo-results','ot-activo-id')" autocomplete="off">
+            <div id="ot-activo-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);z-index:50;max-height:200px;overflow-y:auto;margin-top:3px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+          </div>
+          <input type="hidden" id="ot-activo-id">
+          <div id="ot-activo-sel" style="display:none;margin-top:6px;background:var(--bg3);border:1px solid rgba(0,212,255,0.2);border-radius:var(--r);padding:8px 12px">
+            <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2)" id="ot-activo-bc"></div>
+            <div style="font-size:13px;font-weight:500;margin-top:2px" id="ot-activo-nm"></div>
+          </div>
+        </div>
+        <div class="form-group full"><label class="form-label">Descripción del trabajo</label>
+          <textarea class="form-textarea" id="ot-desc" placeholder="Describe el trabajo a realizar con detalle…"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Técnico asignado</label>
+          <select class="form-select" id="ot-tecnico" style="font-family:var(--font-m);font-size:12px">
+            <option value="">— Sin asignar —</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Especialidad requerida</label>
+          <select class="form-select" id="ot-especialidad">
+            <option>Frigorista</option><option>Electricista</option>
+            <option>Mecánico de mantenimiento</option><option>Mecánico soldador</option>
+            <option>Calderista</option><option>Operador de ósmosis</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Fecha programada</label>
+          <input class="form-input" type="date" id="ot-fecha"></div>
+        <div class="form-group"><label class="form-label">Horas estimadas</label>
+          <input class="form-input" type="number" id="ot-horas" placeholder="Ej: 4" min="0.5" step="0.5"></div>
+        <div class="form-group full"><label class="form-label">Causa raíz (si aplica)</label>
+          <input class="form-input" type="text" id="ot-causa" placeholder="Desgaste, corrosión, falla eléctrica…"></div>
+        <div class="form-group full"><label class="form-label">Observaciones / EPP requerido</label>
+          <textarea class="form-textarea" id="ot-obs" placeholder="Permisos de trabajo, EPP, bloqueo LOTO…" style="min-height:56px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-ot')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarOT()">Crear OT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NUEVA SOLICITUD ══ -->
+<div class="modal-overlay" id="modal-sol">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva Solicitud de Trabajo</div>
+      <button class="modal-close" onclick="cerrarModal('modal-sol')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Activo / Área afectada</label>
+          <div style="position:relative">
+            <input class="form-input" type="text" id="sol-activo-search" placeholder="Buscar equipo o área…" oninput="buscarActivoModal(this.value,'sol-activo-results','sol-activo-id')" autocomplete="off">
+            <div id="sol-activo-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);z-index:50;max-height:180px;overflow-y:auto;margin-top:3px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+          </div>
+          <input type="hidden" id="sol-activo-id">
+        </div>
+        <div class="form-group"><label class="form-label">Tipo de trabajo</label>
+          <select class="form-select" id="sol-tipo">
+            <option>Correctivo</option><option>Preventivo</option><option>Mejora</option><option>Emergencia</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Prioridad</label>
+          <select class="form-select" id="sol-prioridad">
+            <option value="Alta">Alta</option><option value="Media" selected>Media</option><option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Descripción del problema</label>
+          <textarea class="form-textarea" id="sol-desc" placeholder="Describe el problema observado con el mayor detalle posible…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-sol')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarSolicitud()">Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NUEVO REPUESTO ══ -->
+<div class="modal-overlay" id="modal-rep">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-rep-titulo">Nuevo repuesto</div>
+      <button class="modal-close" onclick="cerrarModal('modal-rep')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Código</label>
+          <input class="form-input" type="text" id="rep-cod" placeholder="REP-XXX" style="font-family:var(--font-m)"></div>
+        <div class="form-group"><label class="form-label">Categoría</label>
+          <select class="form-select" id="rep-cat">
+            <option>Lubricantes y aceites</option><option>Filtros</option><option>Rodamientos y sellos</option>
+            <option>Eléctrico / Electrónico</option><option>Refrigeración / Válvulas</option>
+            <option>Ósmosis</option><option>Vapor y calderos</option><option>Tuberías y mangueras</option>
+            <option>Correas y fajas</option><option>Instrumentación</option><option>Ferretería</option><option>Otros</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Descripción</label>
+          <input class="form-input" type="text" id="rep-desc" placeholder="Descripción completa del repuesto"></div>
+        <div class="form-group"><label class="form-label">Marca</label>
+          <input class="form-input" type="text" id="rep-marca" placeholder="Ej: SKF, Parker"></div>
+        <div class="form-group"><label class="form-label">Modelo / Referencia</label>
+          <input class="form-input" type="text" id="rep-modelo" placeholder="Ej: 6205-2RS"></div>
+        <div class="form-group"><label class="form-label">Ubicación en almacén</label>
+          <input class="form-input" type="text" id="rep-ubic" placeholder="Ej: Est. B-1"></div>
+        <div class="form-group"><label class="form-label">Unidad de medida</label>
+          <select class="form-select" id="rep-uni">
+            <option>unid.</option><option>litros</option><option>kg</option>
+            <option>metros</option><option>kit</option><option>rollo</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Stock inicial</label>
+          <input class="form-input" type="number" id="rep-stock" placeholder="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Stock mínimo</label>
+          <input class="form-input" type="number" id="rep-min" placeholder="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Stock máximo</label>
+          <input class="form-input" type="number" id="rep-max" placeholder="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Costo unitario (S/)</label>
+          <input class="form-input" type="number" id="rep-cunit" placeholder="0.00" step="0.01" min="0"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-rep')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarRepuesto()">Guardar repuesto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: MOVIMIENTO ALMACÉN ══ -->
+<div class="modal-overlay" id="modal-mov">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-mov-titulo">Entrada de material</div>
+      <button class="modal-close" onclick="cerrarModal('modal-mov')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Repuesto</label>
+          <select class="form-select" id="mov-rep"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Cantidad</label>
+          <input class="form-input" type="number" id="mov-qty" placeholder="0" min="1"></div>
+        <div class="form-group"><label class="form-label">Costo unitario (S/)</label>
+          <input class="form-input" type="number" id="mov-cunit" placeholder="0.00" step="0.01"></div>
+        <div class="form-group full" id="mov-ot-group"><label class="form-label">OT asociada (salida)</label>
+          <select class="form-select" id="mov-ot"></select>
+        </div>
+        <div class="form-group full"><label class="form-label">Referencia / Observación</label>
+          <input class="form-input" type="text" id="mov-ref" placeholder="N° factura, guía, nota…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-mov')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarMovimiento()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: LECTURA ══ -->
+<div class="modal-overlay" id="modal-lectura">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Registrar lectura operativa</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="lec-tipo">
+            <option value="refrigeracion">Refrigeración</option>
+            <option value="osmosis">Ósmosis</option>
+            <option value="energia">Energía</option>
+            <option value="agua">Agua</option>
+            <option value="caldero">Caldero</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Equipo / Activo</label>
+          <input class="form-input" type="text" id="lec-equipo" placeholder="Ej: GRAM-01, Módulo OI-1"></div>
+        <div class="form-group"><label class="form-label">Parámetro</label>
+          <input class="form-input" type="text" id="lec-parametro" placeholder="Ej: Presión succión, Temperatura"></div>
+        <div class="form-group"><label class="form-label">Valor</label>
+          <input class="form-input" type="number" id="lec-valor" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Unidad</label>
+          <input class="form-input" type="text" id="lec-unidad" placeholder="bar, °C, A, kWh, m³"></div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="lec-obs" placeholder="Notas, alarmas, condiciones especiales…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLectura()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <div><div id="toast-msg"></div><div class="toast-sub" id="toast-sub"></div></div>
+</div>
+
+<!-- ══════════════════ FIREBASE + APP LOGIC ══════════════════ -->
+<script type="module">
+const firebaseConfig = {
+  apiKey:            "AIzaSyA6WmObur3fs93MiR7Muo-TMcHqLANaRQI",
+  authDomain:        "smf-cmms-paita.firebaseapp.com",
+  projectId:         "smf-cmms-paita",
+  storageBucket:     "smf-cmms-paita.firebasestorage.app",
+  messagingSenderId: "858930569794",
+  appId:             "1:858930569794:web:979ced8498c3d7e53ec3db"
+};
+
+import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut }
+                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc,
+         query, where, orderBy, limit, serverTimestamp, increment }
+                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ─── Estado global ────────────────────────────────────────────────────────────
+let currentUser  = null;
+let currentPerfil= null;
+let allOT        = [];
+let allSol       = [];
+let allRepuestos = [];
+let allActivos   = [];
+let allTecnicos  = [];
+
+const ROL_COLOR = {admin:'var(--red)',jefe:'var(--cyan)',supervisor:'var(--amber)',tecnico:'var(--green)',solicitante:'var(--purple)'};
+const ROL_LABEL = {admin:'Administrador',jefe:'Jefe Mant.',supervisor:'Supervisor',tecnico:'Técnico',solicitante:'Solicitante'};
+const TIPO_ICONS= {PLANTA:'🏭',AREA:'🏗️',SUBAREA:'📍',SISTEMA:'⚙️',EQUIPO:'🔩',COMPONENTE:'🔧',SUBCOMPONENTE:'🔬'};
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'index.html'; return; }
+  currentUser = user;
+  const snap = await getDoc(doc(db, 'usuarios', user.uid));
+  if (!snap.exists()) { window.location.href = 'index.html'; return; }
+  currentPerfil = snap.data();
+  if (currentPerfil.estado === 'inactivo') {
+    await signOut(auth);
+    window.location.href = 'index.html?msg=inactivo';
+    return;
+  }
+  setupUI();
+  await Promise.all([cargarActivos(), cargarTecnicos()]);
+  loadDashboard();
+  cargarOT();
+  cargarSolicitudes();
+  cargarRepuestos();
+  cargarLecturas();
+});
+
+function setupUI() {
+  const p = currentPerfil;
+  const ini = ((p.nombres||'U')[0]+(p.apellidos||'S')[0]).toUpperCase();
+  const col = ROL_COLOR[p.rol]||'var(--cyan)';
+  document.getElementById('user-avatar').textContent = ini;
+  document.getElementById('user-avatar').style.background = col+'22';
+  document.getElementById('user-avatar').style.color = col;
+  document.getElementById('user-name').textContent   = `${p.nombres} ${p.apellidos}`;
+  const rolBadge = document.getElementById('user-rol-badge');
+  rolBadge.textContent  = ROL_LABEL[p.rol]||p.rol;
+  rolBadge.style.background = col+'22';
+  rolBadge.style.color  = col;
+  if (p.rol === 'admin') document.getElementById('btn-admin').style.display='flex';
+  // Ocultar botones según rol
+  if (p.rol === 'solicitante') {
+    document.getElementById('btn-nueva-ot')?.remove();
+    document.getElementById('btn-nuevo-activo')?.remove();
+    document.getElementById('btn-nuevo-rep')?.remove();
+  }
+  // Fecha dashboard
+  document.getElementById('dash-fecha').textContent =
+    new Date().toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
+window.showPage = function(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = {
+    dashboard:'Dashboard · Planta Paita', ot:'Órdenes de Trabajo',
+    solicitudes:'Solicitudes de Trabajo', activos:'Gestión de Activos',
+    almacen:'Almacén y Repuestos', lecturas:'Registro de Lecturas'
+  }[name] || name;
+};
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+window.loadDashboard = async function() {
+  try {
+    const [otSnap, solSnap, repSnap] = await Promise.all([
+      getDocs(query(collection(db,'ordenes_trabajo'), orderBy('creadoEn','desc'), limit(50))),
+      getDocs(query(collection(db,'solicitudes'),     orderBy('creadoEn','desc'), limit(5))),
+      getDocs(collection(db,'repuestos')),
+    ]);
+    const ots = otSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const sols= solSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const reps= repSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const abiertas = ots.filter(o=>['abierta','programada','ejecucion'].includes(o.estado)).length;
+    const vencidas = ots.filter(o=>o.estado==='vencida').length;
+    const solPend  = sols.filter(s=>s.estado==='pendiente').length;
+    const repBajo  = reps.filter(r=>r.estado==='agotado'||r.estado==='bajo').length;
+
+    document.getElementById('d-ot-abiertas').textContent = abiertas;
+    document.getElementById('d-ot-vencidas').textContent = vencidas;
+    document.getElementById('d-sol-pend').textContent    = solPend;
+    document.getElementById('d-rep-bajo').textContent    = repBajo;
+    document.getElementById('badge-ot').textContent      = abiertas || '—';
+    document.getElementById('badge-sol').textContent     = solPend  || '—';
+
+    // Lista últimas OT
+    const otList = document.getElementById('dash-ot-list');
+    if (!ots.length) { otList.innerHTML = '<div class="empty" style="height:120px"><div class="empty-icon">🔧</div><div class="empty-sub">No hay OT registradas aún</div></div>'; }
+    else {
+      otList.innerHTML = ots.slice(0,6).map(o=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+          <span class="hl">${o.codigo||'—'}</span>
+          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descripcion||'—'}</span>
+          <span class="status ${o.estado||'abierta'}" style="font-size:10px;flex-shrink:0">${o.estado||'abierta'}</span>
+        </div>`).join('');
+    }
+
+    // Lista solicitudes
+    const solList = document.getElementById('dash-sol-list');
+    if (!sols.length) { solList.innerHTML = '<div class="empty" style="height:120px"><div class="empty-icon">📋</div><div class="empty-sub">No hay solicitudes aún</div></div>'; }
+    else {
+      solList.innerHTML = sols.slice(0,6).map(s=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+          <span class="hl">${s.codigo||'—'}</span>
+          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.descripcion||'—'}</span>
+          <span class="badge ${s.prioridad==='Alta'?'red':s.prioridad==='Media'?'amber':'green'}" style="flex-shrink:0">${s.prioridad||'—'}</span>
+        </div>`).join('');
+    }
+  } catch(e) { console.error('Dashboard error:',e); }
+};
+
+// ─── ÓRDENES DE TRABAJO ───────────────────────────────────────────────────────
+async function cargarOT() {
+  try {
+    const snap = await getDocs(query(collection(db,'ordenes_trabajo'), orderBy('creadoEn','desc'), limit(100)));
+    allOT = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderOT(allOT);
+    document.getElementById('badge-ot').textContent = allOT.filter(o=>['abierta','ejecucion','programada'].includes(o.estado)).length || '—';
+  } catch(e) { console.error(e); }
+}
+
+function renderOT(lista) {
+  const tbody = document.getElementById('ot-tbody');
+  document.getElementById('ot-count').textContent = lista.length+' registros';
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-title">Sin órdenes de trabajo</div><div class="empty-sub">Crea la primera OT con el botón "Nueva OT"</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(o => {
+    const pCol = o.prioridad==='Alta'?'red':o.prioridad==='Media'?'amber':'green';
+    const fecha = o.creadoEn?.toDate ? o.creadoEn.toDate().toLocaleDateString('es-PE') : '—';
+    const fProg = o.fechaProgramada||'—';
+    return `<tr>
+      <td class="hl">${o.codigo||'—'}</td>
+      <td style="font-size:12px">${o.tipo||'—'}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.activoNombre||''}">${o.activoNombre||'—'}</td>
+      <td style="font-size:11px;color:var(--txt2)">${o.area||'—'}</td>
+      <td style="font-size:12px">${o.tecnicoNombre||'Sin asignar'}</td>
+      <td class="mono">${fecha}</td>
+      <td class="mono">${fProg}</td>
+      <td><span class="prio-${(o.prioridad||'').toLowerCase()}" style="font-family:var(--font-m);font-size:11px">${o.prioridad||'—'}</span></td>
+      <td><span class="status ${o.estado||'abierta'}">${o.estado||'abierta'}</span></td>
+      <td><div class="action-btns">
+        <button class="action-btn" onclick="verOT('${o.id}')" title="Ver detalle">👁</button>
+        ${['admin','jefe','supervisor'].includes(currentPerfil?.rol)?`<button class="action-btn" onclick="cambiarEstadoOT('${o.id}','${o.estado}')" title="Cambiar estado">↔</button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+window.filtrarOT = function() {
+  const q   = document.getElementById('ot-search').value.toLowerCase();
+  const est = document.getElementById('ot-f-estado').value;
+  const tip = document.getElementById('ot-f-tipo').value;
+  renderOT(allOT.filter(o=>
+    (!q   || (o.codigo||'').toLowerCase().includes(q)||(o.activoNombre||'').toLowerCase().includes(q)||(o.tecnicoNombre||'').toLowerCase().includes(q)||(o.descripcion||'').toLowerCase().includes(q)) &&
+    (!est || o.estado===est) &&
+    (!tip || o.tipo===tip)
+  ));
+};
+
+window.abrirModalOT = function() {
+  document.getElementById('ot-activo-search').value = '';
+  document.getElementById('ot-activo-id').value     = '';
+  document.getElementById('ot-activo-sel').style.display = 'none';
+  document.getElementById('ot-desc').value  = '';
+  document.getElementById('ot-causa').value = '';
+  document.getElementById('ot-obs').value   = '';
+  document.getElementById('modal-ot').classList.add('open');
+  // Poblar técnicos
+  const sel = document.getElementById('ot-tecnico');
+  sel.innerHTML = '<option value="">— Sin asignar —</option>' +
+    allTecnicos.map(t=>`<option value="${t.uid}">${t.nombres} ${t.apellidos} · ${t.especialidad||''}</option>`).join('');
+};
+
+window.guardarOT = async function() {
+  const desc = document.getElementById('ot-desc').value.trim();
+  if (!desc) { showToast('⚠️','Completa la descripción del trabajo',''); return; }
+  try {
+    const activoId  = document.getElementById('ot-activo-id').value;
+    const activoObj = allActivos.find(a=>a.id===activoId);
+    const tecUid    = document.getElementById('ot-tecnico').value;
+    const tecObj    = allTecnicos.find(t=>t.uid===tecUid);
+    const codigo    = 'OT-'+Date.now().toString().slice(-6);
+    await addDoc(collection(db,'ordenes_trabajo'),{
+      codigo, tipo: document.getElementById('ot-tipo').value,
+      prioridad: document.getElementById('ot-prioridad').value,
+      activoId: activoId||null,
+      activoNombre: activoObj?.nombre||document.getElementById('ot-activo-search').value||'—',
+      activoCod:    activoObj?.cod||'—',
+      area:         activoObj?.area||'—',
+      descripcion:  desc,
+      tecnicoUid:   tecUid||null,
+      tecnicoNombre:tecObj?`${tecObj.nombres} ${tecObj.apellidos}`:'Sin asignar',
+      especialidad: document.getElementById('ot-especialidad').value,
+      fechaProgramada: document.getElementById('ot-fecha').value||null,
+      horasEstimadas:  parseFloat(document.getElementById('ot-horas').value)||null,
+      causaRaiz:       document.getElementById('ot-causa').value.trim()||null,
+      observaciones:   document.getElementById('ot-obs').value.trim()||null,
+      estado:          'abierta',
+      creadoPor:  currentUser.uid,
+      creadoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:   serverTimestamp(),
+    });
+    cerrarModal('modal-ot');
+    showToast('✅',`OT ${codigo} creada`,activoObj?.nombre||'');
+    await cargarOT();
+    loadDashboard();
+  } catch(e){ showToast('❌','Error al crear OT',e.message); }
+};
+
+window.cambiarEstadoOT = async function(id, estadoActual) {
+  const estados = ['abierta','programada','ejecucion','cerrada'];
+  const idx     = estados.indexOf(estadoActual);
+  const nuevo   = estados[(idx+1)%estados.length];
+  await updateDoc(doc(db,'ordenes_trabajo',id),{estado:nuevo,actualizadoEn:serverTimestamp()});
+  showToast('↔','Estado actualizado',nuevo);
+  await cargarOT();
+  loadDashboard();
+};
+
+window.verOT = function(id) {
+  const o = allOT.find(x=>x.id===id); if(!o) return;
+  showToast('📋',o.codigo,`${o.activoNombre} · ${o.estado}`);
+};
+
+// ─── SOLICITUDES ─────────────────────────────────────────────────────────────
+async function cargarSolicitudes() {
+  try {
+    const snap = await getDocs(query(collection(db,'solicitudes'), orderBy('creadoEn','desc'), limit(80)));
+    allSol = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderKanban(allSol);
+    document.getElementById('badge-sol').textContent = allSol.filter(s=>s.estado==='pendiente').length || '—';
+  } catch(e){ console.error(e); }
+}
+
+function renderKanban(lista) {
+  const cols = [
+    {key:'pendiente', label:'Pendiente',     color:'var(--amber)'},
+    {key:'aprobada',  label:'Aprobada',      color:'var(--cyan)'},
+    {key:'en_ot',     label:'Con OT',        color:'var(--green)'},
+    {key:'cerrada',   label:'Cerrada',       color:'var(--txt2)'},
+  ];
+  document.getElementById('kanban-board').innerHTML = cols.map(col=>{
+    const items = lista.filter(s=>s.estado===col.key);
+    return `<div class="kanban-col">
+      <div class="kanban-hdr">
+        <span class="kanban-lbl" style="color:${col.color}">${col.label}</span>
+        <span class="kanban-cnt">${items.length}</span>
+      </div>
+      <div class="kanban-body">
+        ${items.length?items.map(s=>`
+          <div class="sol-card" onclick="accionSolicitud('${s.id}','${s.estado}')">
+            <div class="sol-card-cod">${s.codigo||'—'}</div>
+            <div class="sol-card-desc">${(s.descripcion||'').slice(0,80)}${(s.descripcion||'').length>80?'…':''}</div>
+            <div class="sol-card-meta">📍 ${s.activoNombre||'—'} · <span style="color:${s.prioridad==='Alta'?'var(--red)':s.prioridad==='Media'?'var(--amber)':'var(--green)'}">${s.prioridad||'—'}</span></div>
+            <div class="sol-card-meta" style="margin-top:3px">👤 ${s.creadoNombre||'—'}</div>
+          </div>`).join('')
+        :'<div style="text-align:center;padding:20px;font-size:11px;color:var(--txt2)">Sin solicitudes</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.abrirModalSol = function() {
+  document.getElementById('sol-activo-search').value='';
+  document.getElementById('sol-activo-id').value='';
+  document.getElementById('sol-desc').value='';
+  document.getElementById('modal-sol').classList.add('open');
+};
+
+window.guardarSolicitud = async function() {
+  const desc = document.getElementById('sol-desc').value.trim();
+  if (!desc) { showToast('⚠️','Describe el problema',''); return; }
+  try {
+    const activoId  = document.getElementById('sol-activo-id').value;
+    const activoObj = allActivos.find(a=>a.id===activoId);
+    const codigo    = 'SOL-'+Date.now().toString().slice(-6);
+    await addDoc(collection(db,'solicitudes'),{
+      codigo, descripcion: desc,
+      tipo:       document.getElementById('sol-tipo').value,
+      prioridad:  document.getElementById('sol-prioridad').value,
+      activoId:   activoId||null,
+      activoNombre: activoObj?.nombre||document.getElementById('sol-activo-search').value||'—',
+      estado:     'pendiente',
+      creadoPor:  currentUser.uid,
+      creadoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:   serverTimestamp(),
+    });
+    cerrarModal('modal-sol');
+    showToast('✅',`Solicitud ${codigo} enviada`,'Pendiente de aprobación');
+    await cargarSolicitudes();
+    loadDashboard();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+window.accionSolicitud = async function(id, estadoActual) {
+  if (!['admin','jefe','supervisor'].includes(currentPerfil?.rol)) return;
+  const estados = ['pendiente','aprobada','en_ot','cerrada'];
+  const nuevo   = estados[(estados.indexOf(estadoActual)+1)%estados.length];
+  await updateDoc(doc(db,'solicitudes',id),{estado:nuevo,actualizadoEn:serverTimestamp()});
+  showToast('↔','Solicitud actualizada',nuevo);
+  await cargarSolicitudes();
+};
+
+// ─── ACTIVOS ──────────────────────────────────────────────────────────────────
+async function cargarActivos() {
+  try {
+    const snap = await getDocs(collection(db,'activos'));
+    allActivos = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderArbolActivos(allActivos);
+  } catch(e){ console.error(e); }
+}
+
+function renderArbolActivos(lista) {
+  const tree = document.getElementById('activos-tree');
+  if (!lista.length) {
+    tree.innerHTML = '<div class="empty" style="height:200px"><div class="empty-icon">🏭</div><div class="empty-sub">Sin activos registrados</div></div>';
+    return;
+  }
+  const byPadre = {};
+  lista.forEach(a=>{ (byPadre[a.padreId||'ROOT']=byPadre[a.padreId||'ROOT']||[]).push(a); });
+  function renderNodo(a, depth) {
+    const hijos = byPadre[a.id]||[];
+    const icon  = TIPO_ICONS[a.tipo]||'🔩';
+    const dotC  = a.estado==='operativo'?'var(--green)':a.estado==='detenido'?'var(--red)':'var(--amber)';
+    return `<div>
+      <div class="tree-row" onclick="seleccionarActivo('${a.id}')" style="padding-left:${8+depth*14}px">
+        <span class="tree-toggle${!hijos.length?' leaf':''}" style="margin-right:4px">▶</span>
+        <span style="font-size:12px;margin-right:5px">${icon}</span>
+        <span style="font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt1)">${a.nombre}</span>
+        <span style="width:6px;height:6px;border-radius:50%;background:${dotC};flex-shrink:0;margin-left:4px"></span>
+      </div>
+      ${hijos.map(h=>renderNodo(h,depth+1)).join('')}
+    </div>`;
+  }
+  const raices = byPadre['ROOT']||[];
+  tree.innerHTML = raices.map(r=>renderNodo(r,0)).join('');
+}
+
+window.filtrarActivos = function(q) {
+  const filtrados = q ? allActivos.filter(a=>a.nombre.toLowerCase().includes(q.toLowerCase())||a.cod?.toLowerCase().includes(q.toLowerCase())) : allActivos;
+  renderArbolActivos(filtrados);
+};
+
+window.seleccionarActivo = function(id) {
+  const a = allActivos.find(x=>x.id===id); if(!a) return;
+  const col = ROL_COLOR.jefe;
+  document.getElementById('activo-ficha').innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--txt2);margin-bottom:4px">${a.cod||a.id}</div>
+          <div style="font-family:var(--font-d);font-size:18px;font-weight:700">${TIPO_ICONS[a.tipo]||'🔩'} ${a.nombre}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <span class="badge gray">${a.tipo||'EQUIPO'}</span>
+            <span class="status ${a.estado||'operativo'}">${a.estado||'operativo'}</span>
+            <span class="badge ${a.crit==='A'?'red':a.crit==='B'?'amber':'green'}">Criticidad ${a.crit||'B'}</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalOTDesdeActivo('${a.id}')">+ Nueva OT</button>
+      </div>
+      <p style="font-size:12px;color:var(--txt1);line-height:1.6;margin-bottom:14px">${a.desc||'Sin descripción.'}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px">
+          <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-bottom:3px">MARCA / MODELO</div>
+          <div style="font-size:12px">${a.marca||'—'} ${a.modelo||''}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px">
+          <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-bottom:3px">UBICACIÓN</div>
+          <div style="font-size:12px">${a.ubicacion||'—'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px">
+          <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-bottom:3px">N° SERIE</div>
+          <div style="font-size:12px;font-family:var(--font-m)">${a.serie||'—'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px">
+          <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-bottom:3px">RESPONSABLE</div>
+          <div style="font-size:12px">${a.resp||'—'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">OT recientes de este activo</div>
+      <div id="ot-activo-hist">
+        ${allOT.filter(o=>o.activoId===id).slice(0,5).map(o=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span class="hl">${o.codigo}</span>
+            <span style="flex:1;font-size:12px">${o.descripcion?.slice(0,60)||'—'}</span>
+            <span class="status ${o.estado}">${o.estado}</span>
+          </div>`).join('') || '<div style="color:var(--txt2);font-size:12px;padding:8px 0">Sin OT registradas para este activo</div>'}
+      </div>
+    </div>`;
+};
+
+window.abrirModalActivo = function() { document.getElementById('modal-ot').classList.add('open'); };
+
+window.abrirModalOTDesdeActivo = function(activoId) {
+  const a = allActivos.find(x=>x.id===activoId);
+  if (a) {
+    document.getElementById('ot-activo-id').value = activoId;
+    document.getElementById('ot-activo-nm').textContent = `${TIPO_ICONS[a.tipo]||'🔩'} ${a.nombre}  ·  ${a.cod||activoId}`;
+    document.getElementById('ot-activo-bc').textContent = a.ubicacion||'';
+    document.getElementById('ot-activo-sel').style.display='block';
+    document.getElementById('ot-activo-search').value='';
+  }
+  const sel = document.getElementById('ot-tecnico');
+  sel.innerHTML = '<option value="">— Sin asignar —</option>' +
+    allTecnicos.map(t=>`<option value="${t.uid}">${t.nombres} ${t.apellidos} · ${t.especialidad||''}</option>`).join('');
+  document.getElementById('modal-ot').classList.add('open');
+};
+
+// ─── BUSCADOR ACTIVOS EN MODAL ────────────────────────────────────────────────
+window.buscarActivoModal = function(q, resultsId, hiddenId) {
+  const el = document.getElementById(resultsId);
+  const matches = q.length<1
+    ? allActivos.filter(a=>['EQUIPO','COMPONENTE','SUBCOMPONENTE','SISTEMA'].includes(a.tipo)).slice(0,10)
+    : allActivos.filter(a=>(a.nombre||'').toLowerCase().includes(q.toLowerCase())||(a.cod||'').toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if (!matches.length){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = matches.map(a=>`
+    <div onclick="selActivoModal('${a.id}','${resultsId}','${hiddenId}')"
+      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span>${TIPO_ICONS[a.tipo]||'🔩'}</span>
+        <span style="font-weight:500">${a.nombre}</span>
+        <span style="font-family:var(--font-m);font-size:9px;color:var(--txt2);margin-left:auto">${a.cod||a.id}</span>
+      </div>
+      ${a.ubicacion?`<div style="font-size:10px;color:var(--txt2);margin-top:2px;padding-left:20px">${a.ubicacion}</div>`:''}
+    </div>`).join('');
+  setTimeout(()=>{ const close=(e)=>{ if(!el.contains(e.target)){el.style.display='none';document.removeEventListener('click',close);} }; document.addEventListener('click',close); },10);
+};
+
+window.selActivoModal = function(id, resultsId, hiddenId) {
+  const a = allActivos.find(x=>x.id===id); if(!a) return;
+  document.getElementById(resultsId).style.display='none';
+  document.getElementById(hiddenId).value = id;
+  const prefix = hiddenId.replace('-id','');
+  const srch = document.getElementById(prefix+'-search');
+  if(srch) srch.value='';
+  const sel = document.getElementById(prefix+'-sel');
+  if(sel){
+    sel.style.display='block';
+    const bc = document.getElementById(prefix+'-bc');
+    const nm = document.getElementById(prefix+'-nm');
+    if(bc) bc.textContent = a.ubicacion||'';
+    if(nm) nm.textContent = `${TIPO_ICONS[a.tipo]||'🔩'} ${a.nombre}  ·  ${a.cod||id}`;
+  }
+};
+
+// ─── REPUESTOS / ALMACÉN ─────────────────────────────────────────────────────
+async function cargarRepuestos() {
+  try {
+    const snap = await getDocs(collection(db,'repuestos'));
+    allRepuestos = snap.docs.map(d=>({id:d.id,...d.data()}));
+    actualizarKPIsAlmacen();
+    renderRepuestos(allRepuestos);
+    popularFiltrosAlmacen();
+    popularSelMovimiento();
+  } catch(e){ console.error(e); }
+}
+
+function actualizarKPIsAlmacen() {
+  const total    = allRepuestos.length;
+  const agotados = allRepuestos.filter(r=>r.estado==='agotado').length;
+  const bajos    = allRepuestos.filter(r=>r.estado==='bajo').length;
+  const valor    = allRepuestos.reduce((s,r)=>(s+(r.stock||0)*(r.cunit||0)),0);
+  document.getElementById('alm-total').textContent    = total;
+  document.getElementById('alm-agotados').textContent = agotados;
+  document.getElementById('alm-bajo').textContent     = bajos;
+  document.getElementById('alm-valor').textContent    = 'S/ '+valor.toLocaleString('es-PE',{minimumFractionDigits:0});
+  document.getElementById('d-rep-bajo').textContent   = agotados+bajos;
+}
+
+function renderRepuestos(lista) {
+  const tbody = document.getElementById('alm-tbody');
+  if (!lista.length) {
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Sin repuestos</div><div class="empty-sub">Registra el primer repuesto del almacén</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(r=>{
+    const pct   = Math.min(Math.round(((r.stock||0)/(r.max||1))*100),100);
+    const stCls = r.estado==='agotado'?'red':r.estado==='bajo'?'amber':'green';
+    const stLbl = r.estado==='agotado'?'Agotado':r.estado==='bajo'?'Stock bajo':'OK';
+    const barC  = r.estado==='agotado'?'var(--red)':r.estado==='bajo'?'var(--amber)':'var(--green)';
+    return `<tr>
+      <td class="hl">${r.cod||r.id}</td>
+      <td style="font-size:12px;min-width:160px">${r.desc||'—'}</td>
+      <td style="font-size:11px;color:var(--txt2)">${r.cat||'—'}</td>
+      <td style="font-size:12px">${r.marca||'—'}</td>
+      <td class="mono">${r.ubic||'—'}</td>
+      <td style="min-width:110px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--font-m);font-size:13px;color:${barC};min-width:28px">${r.stock||0}</span>
+          <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barC};border-radius:2px"></div>
+          </div>
+          <span style="font-size:10px;color:var(--txt2);font-family:var(--font-m)">${r.uni||''}</span>
+        </div>
+      </td>
+      <td class="mono">${r.min||0} / ${r.max||0}</td>
+      <td class="mono">S/ ${(r.cunit||0).toFixed(2)}</td>
+      <td><span class="badge ${stCls}">${stLbl}</span></td>
+      <td><div class="action-btns">
+        <button class="action-btn" onclick="abrirModalMovimiento('entrada','${r.id}')" title="Entrada">↓</button>
+        <button class="action-btn" onclick="abrirModalMovimiento('salida','${r.id}')"  title="Salida">↑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+window.filtrarRepuestos = function() {
+  const q   = (document.getElementById('alm-search')?.value||'').toLowerCase();
+  const est = document.getElementById('alm-f-estado')?.value||'';
+  const cat = document.getElementById('alm-f-cat')?.value||'';
+  renderRepuestos(allRepuestos.filter(r=>
+    (!q  || (r.cod||'').toLowerCase().includes(q)||(r.desc||'').toLowerCase().includes(q)||(r.marca||'').toLowerCase().includes(q))&&
+    (!est|| r.estado===est)&&(!cat||r.cat===cat)
+  ));
+};
+
+function popularFiltrosAlmacen() {
+  const cats = [...new Set(allRepuestos.map(r=>r.cat).filter(Boolean))].sort();
+  const sel  = document.getElementById('alm-f-cat');
+  sel.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function popularSelMovimiento() {
+  const sel = document.getElementById('mov-rep');
+  sel.innerHTML = allRepuestos.map(r=>`<option value="${r.id}">${r.cod||r.id} · ${r.desc}</option>`).join('');
+  const selOT = document.getElementById('mov-ot');
+  selOT.innerHTML = '<option value="">— Sin OT asociada —</option>' +
+    allOT.filter(o=>o.estado!=='cerrada').map(o=>`<option value="${o.id}">${o.codigo} · ${o.descripcion?.slice(0,40)||''}</option>`).join('');
+}
+
+window.abrirModalRepuesto = function() { document.getElementById('modal-rep').classList.add('open'); };
+
+window.guardarRepuesto = async function() {
+  const cod  = document.getElementById('rep-cod').value.trim();
+  const desc = document.getElementById('rep-desc').value.trim();
+  if (!cod||!desc){ showToast('⚠️','Código y descripción son obligatorios',''); return; }
+  try {
+    const stock = parseInt(document.getElementById('rep-stock').value)||0;
+    const min   = parseInt(document.getElementById('rep-min').value)||0;
+    const max   = parseInt(document.getElementById('rep-max').value)||0;
+    const cunit = parseFloat(document.getElementById('rep-cunit').value)||0;
+    const estado= stock===0?'agotado':stock<=min?'bajo':'ok';
+    await addDoc(collection(db,'repuestos'),{
+      cod, desc, estado,
+      cat:   document.getElementById('rep-cat').value,
+      marca: document.getElementById('rep-marca').value.trim(),
+      modelo:document.getElementById('rep-modelo').value.trim(),
+      ubic:  document.getElementById('rep-ubic').value.trim(),
+      uni:   document.getElementById('rep-uni').value,
+      stock, min, max, cunit,
+      creadoPor: currentUser.uid,
+      creadoEn:  serverTimestamp(),
+    });
+    cerrarModal('modal-rep');
+    showToast('✅',`${cod} registrado en almacén`,desc);
+    await cargarRepuestos();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+window.abrirModalMovimiento = function(tipo, repId) {
+  document.getElementById('modal-mov-titulo').textContent = tipo==='entrada'?'Entrada de material':'Salida de material';
+  document.getElementById('mov-ot-group').style.display   = tipo==='salida'?'block':'none';
+  if (repId) document.getElementById('mov-rep').value = repId;
+  document.getElementById('modal-mov').classList.add('open');
+};
+
+window.guardarMovimiento = async function() {
+  const repId = document.getElementById('mov-rep').value;
+  const qty   = parseInt(document.getElementById('mov-qty').value)||0;
+  if (!repId||qty<=0){ showToast('⚠️','Selecciona el repuesto y la cantidad',''); return; }
+  const tipo  = document.getElementById('modal-mov-titulo').textContent.includes('Entrada')?'entrada':'salida';
+  const rep   = allRepuestos.find(r=>r.id===repId);
+  if (!rep){ showToast('❌','Repuesto no encontrado',''); return; }
+  try {
+    const nuevoStock = (rep.stock||0) + (tipo==='entrada'?qty:-qty);
+    if (nuevoStock < 0){ showToast('⚠️','Stock insuficiente',`Disponible: ${rep.stock}`); return; }
+    const nuevoEstado = nuevoStock===0?'agotado':nuevoStock<=(rep.min||0)?'bajo':'ok';
+    await addDoc(collection(db,'movimientos_almacen'),{
+      tipo, repId, repCod:rep.cod||repId, repDesc:rep.desc||'—',
+      qty, cunit:parseFloat(document.getElementById('mov-cunit').value)||rep.cunit||0,
+      ctotal: qty*(parseFloat(document.getElementById('mov-cunit').value)||rep.cunit||0),
+      stockAntes:rep.stock||0, stockDespues:nuevoStock,
+      otId:  document.getElementById('mov-ot')?.value||null,
+      ref:   document.getElementById('mov-ref').value.trim()||null,
+      resp:  `${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoPor: currentUser.uid,
+      creadoEn:  serverTimestamp(),
+    });
+    await updateDoc(doc(db,'repuestos',repId),{stock:nuevoStock,estado:nuevoEstado,actualizadoEn:serverTimestamp()});
+    cerrarModal('modal-mov');
+    showToast('✅',tipo==='entrada'?'Entrada registrada':'Salida registrada',`${rep.desc} · Nuevo stock: ${nuevoStock}`);
+    await cargarRepuestos();
+    loadDashboard();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// ─── LECTURAS ─────────────────────────────────────────────────────────────────
+window.cargarLecturas = async function() {
+  try {
+    const tipo = document.getElementById('lec-f-tipo').value;
+    let q = query(collection(db,'lecturas'), orderBy('creadoEn','desc'), limit(60));
+    if (tipo) q = query(collection(db,'lecturas'), where('tipo','==',tipo), orderBy('creadoEn','desc'), limit(60));
+    const snap = await getDocs(q);
+    const lista = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const tbody = document.getElementById('lec-tbody');
+    if (!lista.length) {
+      tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🌡️</div><div class="empty-title">Sin lecturas</div><div class="empty-sub">Registra la primera lectura del turno</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(l=>{
+      const fecha = l.creadoEn?.toDate?l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      return `<tr>
+        <td class="mono">${fecha}</td>
+        <td><span class="badge cyan" style="font-size:10px">${l.tipo||'—'}</span></td>
+        <td style="font-size:12px">${l.equipo||'—'}</td>
+        <td style="font-size:12px">${l.parametro||'—'}</td>
+        <td style="font-family:var(--font-m);font-size:14px;font-weight:600;color:var(--amber)">${l.valor||'—'}</td>
+        <td class="mono">${l.unidad||'—'}</td>
+        <td style="font-size:12px;color:var(--txt1)">${l.obs||'—'}</td>
+        <td style="font-size:12px">${l.tecnicoNombre||'—'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e){ console.error(e); }
+};
+
+window.abrirModalLectura = function() { document.getElementById('modal-lectura').classList.add('open'); };
+
+window.guardarLectura = async function() {
+  const val = document.getElementById('lec-valor').value;
+  const equ = document.getElementById('lec-equipo').value.trim();
+  if (!val||!equ){ showToast('⚠️','Completa equipo y valor',''); return; }
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:       document.getElementById('lec-tipo').value,
+      equipo:     equ,
+      parametro:  document.getElementById('lec-parametro').value.trim(),
+      valor:      parseFloat(val),
+      unidad:     document.getElementById('lec-unidad').value.trim(),
+      obs:        document.getElementById('lec-obs').value.trim()||null,
+      tecnicoUid: currentUser.uid,
+      tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:   serverTimestamp(),
+    });
+    cerrarModal('modal-lectura');
+    showToast('✅','Lectura registrada',`${equ} · ${val} ${document.getElementById('lec-unidad').value}`);
+    cargarLecturas();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// ─── TÉCNICOS ─────────────────────────────────────────────────────────────────
+async function cargarTecnicos() {
+  try {
+    const snap = await getDocs(query(collection(db,'usuarios'), where('estado','==','activo')));
+    allTecnicos = snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>['tecnico','supervisor','jefe','admin'].includes(u.rol));
+  } catch(e){ console.error(e); }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+window.cerrarModal = function(id){ document.getElementById(id).classList.remove('open'); };
+window.doLogout = async function(){ await signOut(auth); window.location.href='index.html'; };
+
+document.querySelectorAll('.modal-overlay').forEach(m=>
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); })
+);
+
+function showToast(icon, msg, sub) {
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  document.getElementById('toast-sub').textContent  = sub||'';
+  const t = document.getElementById('toast');
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+window.showToast = showToast;
+</script>
+</body>
+</html>

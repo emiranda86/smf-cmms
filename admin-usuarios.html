@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMF · Panel de Usuarios</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg0:#080a0d;--bg1:#0f1218;--bg2:#161b24;--bg3:#1d2330;--bg4:#232a38;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --cyan:#00d4ff;--green:#00e676;--amber:#ffb300;--red:#ff4444;--purple:#bb86fc;--orange:#ff9800;
+  --txt0:#f0f2f5;--txt1:#9ba3b2;--txt2:#4a5568;
+  --font-d:'Syne',sans-serif;--font-b:'Geist',sans-serif;--font-m:'DM Mono',monospace;
+  --r:8px;--r2:12px;
+}
+body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-height:100vh;}
+.topbar{height:52px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:100;}
+.topbar-brand{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--cyan);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.btn{border:none;border-radius:var(--r);padding:8px 16px;font-family:var(--font-b);font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--cyan);color:#050810;font-weight:600;}.btn-primary:hover{background:#00e5ff;}
+.btn-secondary{background:var(--bg3);color:var(--txt0);border:1px solid var(--border);}.btn-secondary:hover{background:var(--bg4);}
+.btn-danger{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.2);}.btn-danger:hover{background:rgba(255,68,68,0.25);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.content{max-width:1100px;margin:0 auto;padding:24px 20px;}
+.page-title{font-family:var(--font-d);font-size:22px;font-weight:800;margin-bottom:4px;}
+.page-sub{font-size:12px;color:var(--txt2);font-family:var(--font-m);margin-bottom:24px;}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
+.stat-num{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;}
+.stat-lbl{font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-top:4px;text-transform:uppercase;letter-spacing:.7px;}
+
+/* Tabla */
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:700;}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.search-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:12px;padding:7px 12px;width:220px;}
+.search-box:focus{outline:none;border-color:var(--cyan);}
+.search-box::placeholder{color:var(--txt2);}
+.filter-sel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:12px;padding:7px 10px;appearance:none;cursor:pointer;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;padding:10px 16px;border-bottom:1px solid var(--border);text-align:left;font-weight:400;background:var(--bg2);}
+.tbl td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,0.02);}
+.tbl .mono{font-family:var(--font-m);font-size:11px;color:var(--txt2);}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:13px;font-weight:700;flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-family:var(--font-m);padding:3px 8px;border-radius:20px;}
+.action-btns{display:flex;gap:6px;}
+.action-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--txt1);cursor:pointer;padding:5px 8px;font-size:12px;transition:all .15s;}
+.action-btn:hover{background:var(--bg4);color:var(--txt0);}
+.action-btn.danger:hover{background:rgba(255,68,68,0.15);color:var(--red);border-color:rgba(255,68,68,0.2);}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--font-d);font-size:16px;font-weight:700;}
+.modal-body{padding:22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.modal-close{width:28px;height:28px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);color:var(--txt1);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.modal-close:hover{background:rgba(255,68,68,0.15);color:var(--red);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;}
+.form-input,.form-select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--txt0);font-family:var(--font-b);font-size:13px;padding:10px 12px;width:100%;transition:border-color .15s;}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--cyan);}
+.form-input::placeholder{color:var(--txt2);}
+.form-select{appearance:none;cursor:pointer;}
+.form-hint{font-size:11px;color:var(--txt2);font-family:var(--font-m);margin-top:2px;}
+.form-section{grid-column:1/-1;font-size:11px;font-family:var(--font-m);color:var(--cyan);text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;border-bottom:1px solid rgba(0,212,255,0.15);margin-bottom:2px;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid rgba(0,230,118,.3);border-radius:var(--r2);padding:14px 18px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--txt0);z-index:400;transform:translateY(100px);opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);max-width:360px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:20px;}
+
+/* Roles */
+.rol-admin{background:rgba(255,68,68,0.12);color:var(--red);border:1px solid rgba(255,68,68,0.2);}
+.rol-jefe{background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.rol-supervisor{background:rgba(255,179,0,0.12);color:var(--amber);border:1px solid rgba(255,179,0,0.2);}
+.rol-tecnico{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
+.rol-solicitante{background:rgba(187,134,252,0.12);color:var(--purple);border:1px solid rgba(187,134,252,0.2);}
+.est-activo{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
+.est-inactivo{background:rgba(90,98,114,0.2);color:var(--txt2);border:1px solid var(--border);}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--txt2);font-family:var(--font-m);}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-bottom:10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.stats-row{grid-template-columns:1fr 1fr;}.form-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-brand">SMF · CMMS</span>
+  <span style="color:var(--txt2)">›</span>
+  <span style="font-family:var(--font-d);font-size:14px;font-weight:600">Panel de Usuarios</span>
+  <div class="topbar-right">
+    <span id="topbar-user" style="font-size:12px;color:var(--txt2);font-family:var(--font-m)"></span>
+    <a href="app.html" class="btn btn-secondary btn-sm">← Sistema</a>
+    <button class="btn btn-danger btn-sm" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="page-title">Gestión de Usuarios</div>
+  <div class="page-sub">Administra los accesos, roles y permisos del sistema · <span id="total-users-sub">—</span> usuarios registrados</div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)"   id="s-admin">—</div><div class="stat-lbl">Administradores</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--cyan)"  id="s-jefe">—</div><div class="stat-lbl">Jefes mant.</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)" id="s-supervisor">—</div><div class="stat-lbl">Supervisores</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)" id="s-tecnico">—</div><div class="stat-lbl">Técnicos</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--purple)"id="s-solicitante">—</div><div class="stat-lbl">Solicitantes</div></div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Usuarios registrados</div>
+      <div class="toolbar">
+        <input class="search-box" type="text" id="search" placeholder="Buscar nombre, correo…" oninput="filtrarUsuarios()">
+        <select class="filter-sel" id="filter-rol" onchange="filtrarUsuarios()">
+          <option value="">Todos los roles</option>
+          <option value="admin">Administrador</option>
+          <option value="jefe">Jefe Mantenimiento</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="tecnico">Técnico</option>
+          <option value="solicitante">Solicitante</option>
+        </select>
+        <select class="filter-sel" id="filter-est" onchange="filtrarUsuarios()">
+          <option value="">Todos</option>
+          <option value="activo">Activos</option>
+          <option value="inactivo">Inactivos</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">+ Nuevo usuario</button>
+      </div>
+    </div>
+    <div id="tabla-wrap">
+      <div class="loading"><div class="spinner"></div><br>Cargando usuarios…</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO / EDITAR USUARIO -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">Nuevo usuario</div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><span class="form-section">Datos personales</span></div>
+        <div class="form-group">
+          <label class="form-label">Nombres</label>
+          <input class="form-input" type="text" id="f-nombres" placeholder="Ej: Carlos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellidos</label>
+          <input class="form-input" type="text" id="f-apellidos" placeholder="Ej: Mendoza Torres">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Correo electrónico</label>
+          <input class="form-input" type="email" id="f-email" placeholder="usuario@santamonicafishing.com">
+          <span class="form-hint" id="f-email-hint">Este será el usuario de acceso al sistema</span>
+        </div>
+        <div class="form-group full"><span class="form-section">Acceso y permisos</span></div>
+        <div class="form-group">
+          <label class="form-label">Rol en el sistema</label>
+          <select class="form-select" id="f-rol">
+            <option value="admin">Administrador</option>
+            <option value="jefe">Jefe Mantenimiento</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="tecnico" selected>Técnico</option>
+            <option value="solicitante">Solicitante (Producción)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Especialidad / Área</label>
+          <select class="form-select" id="f-esp">
+            <option>Refrigeración industrial</option>
+            <option>Electricidad industrial</option>
+            <option>Mecánica / Soldadura</option>
+            <option>Frigorista</option>
+            <option>Calderista</option>
+            <option>Operador ósmosis</option>
+            <option>Producción</option>
+            <option>Administración</option>
+          </select>
+        </div>
+        <div class="form-group full" id="f-pass-group">
+          <label class="form-label">Contraseña inicial</label>
+          <input class="form-input" type="password" id="f-password" placeholder="Mínimo 8 caracteres">
+          <span class="form-hint">El usuario podrá cambiarla desde su perfil</span>
+        </div>
+        <div class="form-group full" id="f-estado-group" style="display:none">
+          <label class="form-label">Estado de la cuenta</label>
+          <select class="form-select" id="f-estado">
+            <option value="activo">Activo — puede ingresar al sistema</option>
+            <option value="inactivo">Inactivo — acceso bloqueado</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Teléfono (opcional)</label>
+          <input class="form-input" type="tel" id="f-tel" placeholder="9XX XXX XXX">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Observaciones</label>
+          <input class="form-input" type="text" id="f-obs" placeholder="Turno, horario especial, notas…">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar" onclick="guardarUsuario()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAR ACCIÓN -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title" id="confirm-titulo">Confirmar acción</div>
+      <button class="modal-close" onclick="document.getElementById('modal-confirm').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="font-size:14px;color:var(--txt1);line-height:1.6"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-confirm').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon">✅</span><div id="toast-msg"></div></div>
+
+<script type="module">
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  REEMPLAZA CON TU firebaseConfig
+// ─────────────────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyA6WmObur3fs93MiR7Muo-TMcHqLANaRQI",
+  authDomain:        "smf-cmms-paita.firebaseapp.com",
+  projectId:         "smf-cmms-paita",
+  storageBucket:     "smf-cmms-paita.firebasestorage.app",
+  messagingSenderId: "858930569794",
+  appId:             "1:858930569794:web:979ced8498c3d7e53ec3db"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut }
+                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, serverTimestamp }
+                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const ROL_META = {
+  admin:       {lbl:'Administrador',    cls:'rol-admin'},
+  jefe:        {lbl:'Jefe Mant.',       cls:'rol-jefe'},
+  supervisor:  {lbl:'Supervisor',       cls:'rol-supervisor'},
+  tecnico:     {lbl:'Técnico',          cls:'rol-tecnico'},
+  solicitante: {lbl:'Solicitante',      cls:'rol-solicitante'},
+};
+const AVATAR_COLORS = ['#00d4ff','#00e676','#ffb300','#ff9800','#bb86fc','#ff4444'];
+
+let todosUsuarios = [];
+let editandoUid   = null;
+
+// ─── Auth guard ───────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'index.html'; return; }
+  const snap = await getDoc(doc(db, 'usuarios', user.uid));
+  const rol  = snap.exists() ? snap.data().rol : 'tecnico';
+  if (rol !== 'admin') { window.location.href = 'app.html'; return; }
+  document.getElementById('topbar-user').textContent = user.email;
+  cargarUsuarios();
+});
+
+// ─── Cargar usuarios ─────────────────────────────────────────────────────────
+async function cargarUsuarios() {
+  document.getElementById('tabla-wrap').innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando usuarios…</div>';
+  try {
+    const snap = await getDocs(collection(db, 'usuarios'));
+    todosUsuarios = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    actualizarStats();
+    renderTabla(todosUsuarios);
+  } catch (e) {
+    document.getElementById('tabla-wrap').innerHTML = `<div class="loading">Error al cargar usuarios: ${e.message}</div>`;
+  }
+}
+
+function actualizarStats() {
+  const conteo = { admin:0, jefe:0, supervisor:0, tecnico:0, solicitante:0 };
+  todosUsuarios.forEach(u => { if(conteo[u.rol]!==undefined) conteo[u.rol]++; });
+  Object.entries(conteo).forEach(([k,v]) => {
+    const el = document.getElementById('s-'+k);
+    if(el) el.textContent = v;
+  });
+  document.getElementById('total-users-sub').textContent = todosUsuarios.length;
+}
+
+function renderTabla(lista) {
+  if (!lista.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<div class="loading">No hay usuarios que coincidan con el filtro.</div>';
+    return;
+  }
+  document.getElementById('tabla-wrap').innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th>Usuario</th><th>Correo</th><th>Rol</th><th>Especialidad</th>
+          <th>Teléfono</th><th>Estado</th><th>Registro</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>
+          ${lista.map(u => {
+            const meta = ROL_META[u.rol] || ROL_META.tecnico;
+            const ini  = ((u.nombres||'?')[0]+(u.apellidos||'?')[0]).toUpperCase();
+            const col  = AVATAR_COLORS[Object.keys(ROL_META).indexOf(u.rol)%AVATAR_COLORS.length];
+            const est  = u.estado==='inactivo' ? 'inactivo' : 'activo';
+            const fecha = u.creadoEn?.toDate ? u.creadoEn.toDate().toLocaleDateString('es-PE') : '—';
+            return `<tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="avatar" style="background:${col}22;color:${col};border:1px solid ${col}33">${ini}</div>
+                  <div>
+                    <div style="font-weight:500">${u.nombres||''} ${u.apellidos||''}</div>
+                    <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m)">${u.uid.slice(0,8)}…</div>
+                  </div>
+                </div>
+              </td>
+              <td class="mono">${u.email||'—'}</td>
+              <td><span class="badge ${meta.cls}">${meta.lbl}</span></td>
+              <td style="font-size:12px;color:var(--txt1)">${u.especialidad||'—'}</td>
+              <td class="mono">${u.telefono||'—'}</td>
+              <td><span class="badge ${est==='activo'?'est-activo':'est-inactivo'}">${est==='activo'?'Activo':'Inactivo'}</span></td>
+              <td class="mono">${fecha}</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn" title="Editar" onclick="abrirModalEditar('${u.uid}')">✏️</button>
+                  <button class="action-btn" title="${est==='activo'?'Desactivar':'Activar'}"
+                    onclick="toggleEstado('${u.uid}','${est}')">${est==='activo'?'🔒':'🔓'}</button>
+                  <button class="action-btn danger" title="Eliminar" onclick="confirmarEliminar('${u.uid}','${u.nombres} ${u.apellidos}')">🗑</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── Filtros ─────────────────────────────────────────────────────────────────
+window.filtrarUsuarios = function() {
+  const q   = document.getElementById('search').value.toLowerCase();
+  const rol = document.getElementById('filter-rol').value;
+  const est = document.getElementById('filter-est').value;
+  const res = todosUsuarios.filter(u => {
+    const nombre = `${u.nombres||''} ${u.apellidos||''} ${u.email||''}`.toLowerCase();
+    return (!q || nombre.includes(q)) && (!rol || u.rol===rol) && (!est || (u.estado||'activo')===est);
+  });
+  renderTabla(res);
+};
+
+// ─── Modal nuevo ──────────────────────────────────────────────────────────────
+window.abrirModalNuevo = function() {
+  editandoUid = null;
+  document.getElementById('modal-titulo').textContent = 'Nuevo usuario';
+  document.getElementById('btn-guardar').textContent  = 'Crear usuario';
+  document.getElementById('f-nombres').value  = '';
+  document.getElementById('f-apellidos').value= '';
+  document.getElementById('f-email').value    = '';
+  document.getElementById('f-email').disabled = false;
+  document.getElementById('f-password').value = '';
+  document.getElementById('f-rol').value      = 'tecnico';
+  document.getElementById('f-tel').value      = '';
+  document.getElementById('f-obs').value      = '';
+  document.getElementById('f-pass-group').style.display   = 'block';
+  document.getElementById('f-estado-group').style.display = 'none';
+  document.getElementById('f-email-hint').textContent = 'Este será el usuario de acceso al sistema';
+  document.getElementById('modal-usuario').classList.add('open');
+};
+
+window.abrirModalEditar = function(uid) {
+  const u = todosUsuarios.find(x => x.uid === uid);
+  if (!u) return;
+  editandoUid = uid;
+  document.getElementById('modal-titulo').textContent    = 'Editar usuario';
+  document.getElementById('btn-guardar').textContent     = 'Guardar cambios';
+  document.getElementById('f-nombres').value             = u.nombres   || '';
+  document.getElementById('f-apellidos').value           = u.apellidos || '';
+  document.getElementById('f-email').value               = u.email     || '';
+  document.getElementById('f-email').disabled            = true;
+  document.getElementById('f-rol').value                 = u.rol       || 'tecnico';
+  document.getElementById('f-esp').value                 = u.especialidad || 'Refrigeración industrial';
+  document.getElementById('f-tel').value                 = u.telefono  || '';
+  document.getElementById('f-obs').value                 = u.obs       || '';
+  document.getElementById('f-estado').value              = u.estado    || 'activo';
+  document.getElementById('f-pass-group').style.display  = 'none';
+  document.getElementById('f-estado-group').style.display= 'block';
+  document.getElementById('f-email-hint').textContent    = 'No se puede modificar el correo electrónico';
+  document.getElementById('modal-usuario').classList.add('open');
+};
+
+window.cerrarModal = function() {
+  document.getElementById('modal-usuario').classList.remove('open');
+};
+
+// ─── Guardar usuario ──────────────────────────────────────────────────────────
+window.guardarUsuario = async function() {
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    if (editandoUid) {
+      // Editar usuario existente (solo datos en Firestore, NO contraseña)
+      await updateDoc(doc(db, 'usuarios', editandoUid), {
+        nombres:     document.getElementById('f-nombres').value.trim(),
+        apellidos:   document.getElementById('f-apellidos').value.trim(),
+        rol:         document.getElementById('f-rol').value,
+        especialidad:document.getElementById('f-esp').value,
+        telefono:    document.getElementById('f-tel').value.trim(),
+        obs:         document.getElementById('f-obs').value.trim(),
+        estado:      document.getElementById('f-estado').value,
+        actualizadoEn: serverTimestamp(),
+      });
+      showToast('✅', 'Usuario actualizado correctamente');
+    } else {
+      // Crear usuario nuevo
+      const email    = document.getElementById('f-email').value.trim();
+      const password = document.getElementById('f-password').value;
+      const nombres  = document.getElementById('f-nombres').value.trim();
+      const apellidos= document.getElementById('f-apellidos').value.trim();
+
+      if (!nombres || !apellidos || !email || !password) {
+        showToast('⚠️', 'Completa todos los campos obligatorios');
+        btn.disabled = false; btn.textContent = 'Crear usuario'; return;
+      }
+      if (password.length < 8) {
+        showToast('⚠️', 'La contraseña debe tener al menos 8 caracteres');
+        btn.disabled = false; btn.textContent = 'Crear usuario'; return;
+      }
+
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, 'usuarios', cred.user.uid), {
+        uid:         cred.user.uid,
+        nombres, apellidos, email,
+        rol:         document.getElementById('f-rol').value,
+        especialidad:document.getElementById('f-esp').value,
+        telefono:    document.getElementById('f-tel').value.trim(),
+        obs:         document.getElementById('f-obs').value.trim(),
+        estado:      'activo',
+        creadoEn:    serverTimestamp(),
+      });
+      showToast('✅', `Usuario ${nombres} ${apellidos} creado`);
+    }
+
+    cerrarModal();
+    await cargarUsuarios();
+  } catch (e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Ese correo ya está registrado.',
+      'auth/invalid-email':        'El correo no es válido.',
+      'auth/weak-password':        'Contraseña muy débil.',
+    };
+    showToast('❌', msgs[e.code] || e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = editandoUid ? 'Guardar cambios' : 'Crear usuario';
+};
+
+// ─── Toggle estado ────────────────────────────────────────────────────────────
+window.toggleEstado = async function(uid, estadoActual) {
+  const nuevo = estadoActual === 'activo' ? 'inactivo' : 'activo';
+  await updateDoc(doc(db, 'usuarios', uid), { estado: nuevo });
+  showToast(nuevo==='activo'?'🔓':'🔒', `Cuenta ${nuevo==='activo'?'activada':'desactivada'}`);
+  await cargarUsuarios();
+};
+
+// ─── Eliminar ─────────────────────────────────────────────────────────────────
+window.confirmarEliminar = function(uid, nombre) {
+  document.getElementById('confirm-titulo').textContent = 'Eliminar usuario';
+  document.getElementById('confirm-msg').textContent    = `¿Estás seguro de que quieres eliminar a ${nombre}? Esta acción no se puede deshacer y el usuario perderá el acceso inmediatamente.`;
+  document.getElementById('confirm-ok').onclick = async () => {
+    document.getElementById('modal-confirm').classList.remove('open');
+    await updateDoc(doc(db, 'usuarios', uid), { estado: 'eliminado' });
+    showToast('🗑', `Usuario ${nombre} eliminado`);
+    await cargarUsuarios();
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+};
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+window.doLogout = async function() {
+  await signOut(auth);
+  window.location.href = 'index.html';
+};
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(icon, msg) {
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  const t = document.getElementById('toast');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// Cerrar modales al hacer clic fuera
+document.querySelectorAll('.modal-overlay').forEach(m =>
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
+);
+</script>
+</body>
+</html>
