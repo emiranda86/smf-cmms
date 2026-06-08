@@ -322,7 +322,7 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
         <div><div class="page-h1">Gestión de Activos</div><div class="page-sub">Jerarquía multinivel — Planta Paita</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary btn-sm" onclick="window.open('smf-activos.html','_blank')">🌳 Árbol completo</button>
-          <button class="btn btn-primary btn-sm" id="btn-nuevo-activo" onclick="abrirModalActivo()">+ Nuevo activo</button>
+          <button class="btn btn-primary btn-sm" id="btn-nuevo-activo" onclick="abrirNuevoActivo(null)">+ Nuevo activo</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:300px 1fr;gap:14px">
@@ -637,25 +637,51 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
   </div>
 </div>
 
-<!-- ══ MODAL: EDITAR ACTIVO ══ -->
+<!-- ══ MODAL UNIFICADO: CREAR / EDITAR ACTIVO ══ -->
 <div class="modal-overlay" id="modal-edit-activo">
-  <div class="modal" style="max-width:620px">
+  <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <div class="modal-title" id="ea-titulo">Editar activo</div>
+      <div class="modal-title" id="ea-titulo">Nuevo activo</div>
       <button class="modal-close" onclick="cerrarModal('modal-edit-activo')">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="ea-id">
+      <input type="hidden" id="ea-padre-id">
       <div class="form-grid">
+
+        <!-- Sección jerarquía — solo al crear -->
+        <div id="ea-sec-jerarquia" class="form-group full" style="display:none">
+          <label class="form-label">Nodo padre (activo al que pertenece)</label>
+          <select class="form-select" id="ea-padre-sel"></select>
+        </div>
+
+        <!-- Tipo y criticidad -->
+        <div class="form-group">
+          <label class="form-label">Tipo de nodo</label>
+          <select class="form-select" id="ea-tipo">
+            <option value="PLANTA">Planta</option>
+            <option value="AREA">Área</option>
+            <option value="SUBAREA">Subárea</option>
+            <option value="SISTEMA">Sistema</option>
+            <option value="EQUIPO" selected>Equipo</option>
+            <option value="COMPONENTE">Componente</option>
+            <option value="SUBCOMPONENTE">Subcomponente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Criticidad</label>
+          <select class="form-select" id="ea-crit">
+            <option value="A">A — Alta</option>
+            <option value="B" selected>B — Media</option>
+            <option value="C">C — Baja</option>
+          </select>
+        </div>
+
         <!-- Identificación -->
         <div class="form-section">Identificación</div>
-        <div class="form-group full">
-          <label class="form-label">Nombre del activo</label>
-          <input class="form-input" type="text" id="ea-nombre">
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Descripción</label>
-          <textarea class="form-textarea" id="ea-desc" style="min-height:60px"></textarea>
+        <div class="form-group" id="ea-cod-group">
+          <label class="form-label">Código único</label>
+          <input class="form-input" type="text" id="ea-cod" placeholder="Ej: RF-GRAM-01-VEN-01" style="font-family:var(--font-m)">
         </div>
         <div class="form-group">
           <label class="form-label">Estado</label>
@@ -666,24 +692,24 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
             <option value="baja">Baja</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Criticidad</label>
-          <select class="form-select" id="ea-crit">
-            <option value="A">A — Alta</option>
-            <option value="B">B — Media</option>
-            <option value="C">C — Baja</option>
-          </select>
+        <div class="form-group full">
+          <label class="form-label">Nombre del activo</label>
+          <input class="form-input" type="text" id="ea-nombre" placeholder="Nombre descriptivo del activo">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-textarea" id="ea-desc" placeholder="Función y características principales…" style="min-height:56px"></textarea>
         </div>
 
         <!-- Ficha técnica -->
         <div class="form-section">Ficha técnica</div>
         <div class="form-group">
           <label class="form-label">Marca</label>
-          <input class="form-input" type="text" id="ea-marca" placeholder="Ej: Gram, WEG, Grundfos">
+          <input class="form-input" type="text" id="ea-marca" placeholder="Ej: WEG, Grundfos, Gram">
         </div>
         <div class="form-group">
-          <label class="form-label">Modelo</label>
-          <input class="form-input" type="text" id="ea-modelo" placeholder="Ej: SAB 163L, CR45-4">
+          <label class="form-label">Modelo / Referencia</label>
+          <input class="form-input" type="text" id="ea-modelo" placeholder="Ej: W22-7.5HP, CR45-4">
         </div>
         <div class="form-group">
           <label class="form-label">N° de serie</label>
@@ -695,72 +721,93 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
         </div>
         <div class="form-group">
           <label class="form-label">Ubicación física</label>
-          <input class="form-input" type="text" id="ea-ubicacion" placeholder="Ej: Sala Máquinas, Posición 1">
+          <input class="form-input" type="text" id="ea-ubicacion" placeholder="Ej: Sala Máquinas, Posición 3">
         </div>
         <div class="form-group">
           <label class="form-label">Responsable</label>
-          <input class="form-input" type="text" id="ea-resp" placeholder="Nombre del técnico responsable">
+          <input class="form-input" type="text" id="ea-resp" placeholder="Técnico responsable">
         </div>
 
-        <!-- Datos eléctricos — motores y bombas -->
-        <div class="form-section" id="ea-lbl-elec" style="display:none">Datos eléctricos</div>
-        <div id="ea-sec-elec" style="display:none;grid-column:1/-1;display:none;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="form-group">
-            <label class="form-label">Voltaje (V)</label>
-            <input class="form-input" type="text" id="ea-voltaje" placeholder="Ej: 380V, 440V, 460V">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Amperaje nominal (A)</label>
-            <input class="form-input" type="text" id="ea-amperaje" placeholder="Ej: 45A, 120A">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Potencia</label>
-            <input class="form-input" type="text" id="ea-potencia" placeholder="Ej: 30 kW, 160 HP">
-          </div>
-        </div>
-
-        <!-- Datos refrigeración — compresores -->
-        <div class="form-section" id="ea-lbl-refrig" style="display:none">Datos de refrigeración</div>
-        <div id="ea-sec-refrig" style="display:none;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="form-group">
-            <label class="form-label">Refrigerante</label>
-            <input class="form-input" type="text" id="ea-refrigerante" placeholder="Ej: R22, R404A, NH3">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Temp. de operación (°C)</label>
-            <input class="form-input" type="text" id="ea-tempOp" placeholder="Ej: -25°C a -30°C">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Presión succión (bar)</label>
-            <input class="form-input" type="text" id="ea-presionS" placeholder="Ej: 2.5 bar">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Presión descarga (bar)</label>
-            <input class="form-input" type="text" id="ea-presionD" placeholder="Ej: 14 bar">
+        <!-- Datos técnicos — aparecen según tipo detectado -->
+        <div id="ea-sec-elec" style="display:none;grid-column:1/-1">
+          <div class="form-section" style="margin-bottom:10px">Datos eléctricos</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label">Voltaje (V)</label>
+              <input class="form-input" type="text" id="ea-voltaje" placeholder="Ej: 380V">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amperaje (A)</label>
+              <input class="form-input" type="text" id="ea-amperaje" placeholder="Ej: 45A">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Potencia</label>
+              <input class="form-input" type="text" id="ea-potencia" placeholder="Ej: 30 kW">
+            </div>
           </div>
         </div>
 
-        <!-- Datos bombas -->
-        <div class="form-section" id="ea-lbl-bomba" style="display:none">Datos operativos — bomba</div>
-        <div id="ea-sec-bomba" style="display:none;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="form-group">
-            <label class="form-label">Caudal (m³/h)</label>
-            <input class="form-input" type="text" id="ea-caudal" placeholder="Ej: 45 m³/h">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Presión (bar)</label>
-            <input class="form-input" type="text" id="ea-presion" placeholder="Ej: 60 bar">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Temp. de operación (°C)</label>
-            <input class="form-input" type="text" id="ea-tempOp2" placeholder="Ej: 25°C">
+        <div id="ea-sec-refrig" style="display:none;grid-column:1/-1">
+          <div class="form-section" style="margin-bottom:10px">Datos de refrigeración</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label">Refrigerante</label>
+              <input class="form-input" type="text" id="ea-refrigerante" placeholder="Ej: R22, R404A, NH3">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Temp. operación (°C)</label>
+              <input class="form-input" type="text" id="ea-tempOp" placeholder="Ej: -25°C a -30°C">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presión succión (bar)</label>
+              <input class="form-input" type="text" id="ea-presionS" placeholder="Ej: 2.5 bar">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presión descarga (bar)</label>
+              <input class="form-input" type="text" id="ea-presionD" placeholder="Ej: 14 bar">
+            </div>
           </div>
         </div>
+
+        <div id="ea-sec-bomba" style="display:none;grid-column:1/-1">
+          <div class="form-section" style="margin-bottom:10px">Datos operativos — bomba</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label">Caudal (m³/h)</label>
+              <input class="form-input" type="text" id="ea-caudal" placeholder="Ej: 45 m³/h">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presión (bar)</label>
+              <input class="form-input" type="text" id="ea-presion" placeholder="Ej: 60 bar">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Temp. operación (°C)</label>
+              <input class="form-input" type="text" id="ea-tempOp2" placeholder="Ej: 25°C">
+            </div>
+          </div>
+        </div>
+
+        <!-- Selector manual de campos técnicos -->
+        <div class="form-group full" style="margin-top:4px">
+          <label class="form-label">¿Mostrar campos adicionales?</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="chk-elec"   onchange="toggleCampos()" style="accent-color:var(--cyan)"> Datos eléctricos
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="chk-refrig" onchange="toggleCampos()" style="accent-color:var(--cyan)"> Refrigeración
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="chk-bomba"  onchange="toggleCampos()" style="accent-color:var(--cyan)"> Bomba
+            </label>
+          </div>
+        </div>
+
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-edit-activo')">Cancelar</button>
-      <button class="btn btn-primary" id="ea-btn-guardar" onclick="guardarEditarActivo()">Guardar cambios</button>
+      <button class="btn btn-primary" id="ea-btn-guardar" onclick="guardarActivo()">Guardar</button>
     </div>
   </div>
 </div>
@@ -785,7 +832,7 @@ const firebaseConfig = {
 import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut }
                             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc,
+import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, setDoc,
          query, where, orderBy, limit, serverTimestamp, increment }
                             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -1119,6 +1166,7 @@ async function cargarActivos() {
 
 // ─── ÁRBOL COLAPSABLE ─────────────────────────────────────────────────────────
 const _expandidos = new Set(['PLT-001','OI-000','RF-000','CAL-000','PRD-000','INF-000']);
+let selectedActivoId = null;
 
 function renderArbolActivos(lista) {
   const tree = document.getElementById('activos-tree');
@@ -1128,123 +1176,117 @@ function renderArbolActivos(lista) {
   }
   const byPadre = {};
   lista.forEach(a=>{ (byPadre[a.padreId||'ROOT']=byPadre[a.padreId||'ROOT']||[]).push(a); });
-
   function renderNodo(a, depth) {
-    const hijos   = byPadre[a.id]||[];
-    const hasCh   = hijos.length > 0;
-    const isOpen  = _expandidos.has(a.id);
-    const icon    = TIPO_ICONS[a.tipo]||'🔩';
-    const dotC    = a.estado==='operativo'?'#00e676':a.estado==='detenido'?'#ff4444':'#ffb300';
-    const selCls  = selectedActivoId===a.id ? 'background:rgba(0,212,255,0.1);border-left:2px solid var(--cyan);color:var(--cyan)' : '';
+    const hijos = byPadre[a.id]||[];
+    const hasCh = hijos.length > 0;
+    const isOpen= _expandidos.has(a.id);
+    const icon  = TIPO_ICONS[a.tipo]||'🔩';
+    const dotC  = a.estado==='operativo'?'#00e676':a.estado==='detenido'?'#ff4444':'#ffb300';
+    const isSel = selectedActivoId===a.id;
     return `<div id="tree-node-${a.id}">
-      <div class="tree-row" style="padding-left:${6+depth*14}px;${selCls}"
-           onclick="seleccionarActivo('${a.id}')">
-        <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;
-              font-size:9px;color:var(--txt2);cursor:pointer;flex-shrink:0;
-              transform:${hasCh&&isOpen?'rotate(90deg)':'rotate(0deg)'};transition:transform .15s;
-              opacity:${hasCh?1:0};pointer-events:${hasCh?'auto':'none'}"
-              onclick="event.stopPropagation();toggleArbol('${a.id}')">▶</span>
+      <div onclick="seleccionarActivo('${a.id}')"
+        style="display:flex;align-items:center;height:28px;padding-left:${6+depth*14}px;cursor:pointer;
+               border-left:2px solid ${isSel?'var(--cyan)':'transparent'};
+               background:${isSel?'rgba(0,212,255,0.08)':'transparent'};
+               transition:background .1s">
+        <span onclick="event.stopPropagation();toggleArbol('${a.id}')"
+          style="width:14px;font-size:9px;color:var(--txt2);flex-shrink:0;
+                 transform:${hasCh&&isOpen?'rotate(90deg)':'rotate(0deg)'};transition:transform .15s;
+                 opacity:${hasCh?1:0};pointer-events:${hasCh?'auto':'none'};cursor:pointer">▶</span>
         <span style="font-size:12px;flex-shrink:0;margin:0 4px">${icon}</span>
-        <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.nombre}</span>
-        <span style="width:6px;height:6px;border-radius:50%;background:${dotC};flex-shrink:0;margin-left:4px"></span>
+        <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                     color:${isSel?'var(--cyan)':'var(--txt1)'}">${a.nombre}</span>
+        <span style="width:6px;height:6px;border-radius:50%;background:${dotC};flex-shrink:0;margin:0 6px"></span>
       </div>
-      <div id="tree-children-${a.id}" style="display:${hasCh&&isOpen?'block':'none'}">
-        ${hasCh ? hijos.map(h=>renderNodo(h,depth+1)).join('') : ''}
+      <div id="tree-ch-${a.id}" style="display:${hasCh&&isOpen?'block':'none'}">
+        ${hasCh?hijos.map(h=>renderNodo(h,depth+1)).join(''):''}
       </div>
     </div>`;
   }
-  const raices = byPadre['ROOT']||[];
-  tree.innerHTML = raices.map(r=>renderNodo(r,0)).join('');
+  tree.innerHTML = (byPadre['ROOT']||[]).map(r=>renderNodo(r,0)).join('');
 }
 
 window.toggleArbol = function(id) {
   if (_expandidos.has(id)) _expandidos.delete(id); else _expandidos.add(id);
-  const ch = document.getElementById('tree-children-'+id);
-  const nd = document.getElementById('tree-node-'+id);
+  const ch  = document.getElementById('tree-ch-'+id);
+  const nd  = document.getElementById('tree-node-'+id);
   if (ch) ch.style.display = _expandidos.has(id)?'block':'none';
-  // Rotar flecha
   if (nd) {
-    const arrow = nd.querySelector('.tree-row > span:first-child');
-    if (arrow) arrow.style.transform = _expandidos.has(id)?'rotate(90deg)':'rotate(0deg)';
+    const arr = nd.querySelector('span[onclick*="toggleArbol"]');
+    if (arr) arr.style.transform = _expandidos.has(id)?'rotate(90deg)':'rotate(0deg)';
   }
 };
 
 window.filtrarActivos = function(q) {
-  const filtrados = q
-    ? allActivos.filter(a=>a.nombre.toLowerCase().includes(q.toLowerCase())||( a.cod||'').toLowerCase().includes(q.toLowerCase()))
-    : allActivos;
+  const filtrados = q ? allActivos.filter(a=>
+    a.nombre.toLowerCase().includes(q.toLowerCase())||(a.cod||'').toLowerCase().includes(q.toLowerCase())
+  ) : allActivos;
   renderArbolActivos(filtrados);
 };
 
-// ─── FICHA DE ACTIVO CON CAMPOS EXTENDIDOS ────────────────────────────────────
-let selectedActivoId = null;
-
-// Campos técnicos según tipo de activo
-function fichasTecnicas(a) {
-  const tipo = (a.tipo||'').toUpperCase();
-  const nombre = (a.nombre||'').toLowerCase();
-  const esElectrico  = ['motor','bomba','compresor','ventilador','dosificadora'].some(k=>nombre.includes(k));
-  const esCompresor  = nombre.includes('compresor');
-  const esBomba      = nombre.includes('bomba');
-  const esCondensador= nombre.includes('condensador');
-
-  // Campos eléctricos
-  const elec = esElectrico ? `
-    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
-         text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px;
-         border-bottom:1px solid rgba(0,212,255,0.15);margin-bottom:4px">Datos eléctricos</div>
-    ${campo('VOLTAJE (V)',    a.voltaje)}
-    ${campo('AMPERAJE (A)',   a.amperaje)}
-    ${campo('POTENCIA',       a.potencia)}` : '';
-
-  // Campos de refrigerante
-  const refrig = esCompresor ? `
-    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
-         text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px;
-         border-bottom:1px solid rgba(0,212,255,0.15);margin-bottom:4px">Datos de refrigeración</div>
-    ${campo('REFRIGERANTE',         a.refrigerante)}
-    ${campo('TEMP. OPERACIÓN (°C)', a.tempOperacion)}
-    ${campo('PRESIÓN SUCCIÓN',      a.presionSuccion)}
-    ${campo('PRESIÓN DESCARGA',     a.presionDescarga)}` : '';
-
-  // Campos de bomba
-  const bomba = esBomba && !esCompresor ? `
-    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
-         text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px;
-         border-bottom:1px solid rgba(0,212,255,0.15);margin-bottom:4px">Datos operativos</div>
-    ${campo('CAUDAL (m³/h)',        a.caudal)}
-    ${campo('PRESIÓN (bar)',         a.presion)}
-    ${campo('TEMP. OPERACIÓN (°C)', a.tempOperacion)}` : '';
-
-  return elec + refrig + bomba;
+// ─── FICHA DEL ACTIVO ─────────────────────────────────────────────────────────
+function campoFicha(lbl, val) {
+  return `<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px">
+    <div style="font-size:9px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px">${lbl}</div>
+    <div style="font-size:13px;font-weight:500">${val||'<span style="color:var(--txt2);font-size:11px;font-style:italic">Sin datos</span>'}</div>
+  </div>`;
 }
 
-function campo(lbl, val) {
-  return `<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px">
-    <div style="font-size:10px;font-family:var(--font-m);color:var(--txt2);margin-bottom:3px">${lbl}</div>
-    <div style="font-size:13px;font-weight:500">${val||'<span style="color:var(--txt2);font-size:11px">Sin datos — editar</span>'}</div>
-  </div>`;
+function fichaExtendida(a) {
+  const n = (a.nombre||'').toLowerCase();
+  const tieneElec  = !!(a.voltaje||a.amperaje||a.potencia);
+  const tieneRefrig= !!(a.refrigerante||a.tempOperacion||a.presionSuccion);
+  const tieneBomba = !!(a.caudal||a.presion);
+  if (!tieneElec && !tieneRefrig && !tieneBomba) return '';
+  let html = '';
+  if (tieneElec) html += `
+    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
+         text-transform:uppercase;letter-spacing:1px;padding:6px 0 4px;
+         border-bottom:1px solid rgba(0,212,255,0.15);margin-top:4px">Datos eléctricos</div>
+    ${campoFicha('VOLTAJE',a.voltaje)}
+    ${campoFicha('AMPERAJE',a.amperaje)}
+    ${campoFicha('POTENCIA',a.potencia)}`;
+  if (tieneRefrig) html += `
+    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
+         text-transform:uppercase;letter-spacing:1px;padding:6px 0 4px;
+         border-bottom:1px solid rgba(0,212,255,0.15);margin-top:4px">Refrigeración</div>
+    ${campoFicha('REFRIGERANTE',a.refrigerante)}
+    ${campoFicha('TEMP. OPERACIÓN',a.tempOperacion)}
+    ${campoFicha('PRESIÓN SUCCIÓN',a.presionSuccion)}
+    ${campoFicha('PRESIÓN DESCARGA',a.presionDescarga)}`;
+  if (tieneBomba) html += `
+    <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
+         text-transform:uppercase;letter-spacing:1px;padding:6px 0 4px;
+         border-bottom:1px solid rgba(0,212,255,0.15);margin-top:4px">Datos operativos</div>
+    ${campoFicha('CAUDAL',a.caudal)}
+    ${campoFicha('PRESIÓN',a.presion)}
+    ${campoFicha('TEMP. OPERACIÓN',a.tempOp2||a.tempOperacion)}`;
+  return html;
 }
 
 window.seleccionarActivo = function(id) {
   const a = allActivos.find(x=>x.id===id); if(!a) return;
   selectedActivoId = id;
-  // Refrescar selección visual
-  document.querySelectorAll('.tree-row').forEach(r=>{
-    r.style.background=''; r.style.borderLeft=''; r.style.color='';
+  // Refrescar visual del árbol sin rerenderizar todo
+  document.querySelectorAll('[id^="tree-node-"]').forEach(nd=>{
+    const row = nd.querySelector('div');
+    if (!row) return;
+    const nid = nd.id.replace('tree-node-','');
+    row.style.background   = nid===id?'rgba(0,212,255,0.08)':'transparent';
+    row.style.borderLeft   = nid===id?'2px solid var(--cyan)':'2px solid transparent';
+    const lbl = row.querySelector('span:nth-child(3)');
+    if (lbl) lbl.style.color = nid===id?'var(--cyan)':'var(--txt1)';
   });
-  const nd = document.getElementById('tree-node-'+id);
-  if (nd) {
-    const row = nd.querySelector('.tree-row');
-    if (row) { row.style.background='rgba(0,212,255,0.08)'; row.style.borderLeft='2px solid var(--cyan)'; }
-  }
+
   const critC = a.crit==='A'?'var(--red)':a.crit==='B'?'var(--amber)':'var(--green)';
-  const puedeEditar = ['admin','jefe','supervisor'].includes(currentPerfil?.rol);
+  const puedeEditar   = ['admin','jefe','supervisor'].includes(currentPerfil?.rol);
+  const puedeEliminar = ['admin','jefe'].includes(currentPerfil?.rol);
+  const otRecientes   = allOT.filter(o=>o.activoId===id).slice(0,5);
 
   document.getElementById('activo-ficha').innerHTML = `
     <div class="card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
-        <div style="flex:1">
+        <div style="flex:1;min-width:0">
           <div style="font-family:var(--font-m);font-size:10px;color:var(--txt2);margin-bottom:4px">${a.cod||a.id}</div>
           <div style="font-family:var(--font-d);font-size:18px;font-weight:700;line-height:1.2">${TIPO_ICONS[a.tipo]||'🔩'} ${a.nombre}</div>
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
@@ -1254,126 +1296,212 @@ window.seleccionarActivo = function(id) {
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+          ${puedeEditar?`<button class="btn btn-secondary btn-sm" onclick="abrirNuevoActivo('${a.id}')">+ Agregar componente</button>`:''}
           ${puedeEditar?`<button class="btn btn-secondary btn-sm" onclick="abrirEditarActivo('${a.id}')">✏️ Editar</button>`:''}
+          ${puedeEliminar?`<button class="btn btn-danger btn-sm" onclick="eliminarActivo('${a.id}','${a.nombre.replace(/'/g,"\\'")}')">🗑</button>`:''}
           <button class="btn btn-primary btn-sm" onclick="abrirModalOTDesdeActivo('${a.id}')">+ Nueva OT</button>
         </div>
       </div>
-      <p style="font-size:12px;color:var(--txt1);line-height:1.6;margin-bottom:14px">${a.desc||'Sin descripción registrada.'}</p>
-
+      <p style="font-size:12px;color:var(--txt1);line-height:1.6;margin-bottom:14px">${a.desc||'Sin descripción.'}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <!-- Datos básicos siempre visibles -->
         <div style="grid-column:1/-1;font-size:10px;font-family:var(--font-m);color:var(--cyan);
              text-transform:uppercase;letter-spacing:1px;padding:4px 0;
-             border-bottom:1px solid rgba(0,212,255,0.15);margin-bottom:4px">Identificación</div>
-        ${campo('MARCA',      a.marca)}
-        ${campo('MODELO',     a.modelo)}
-        ${campo('N° SERIE',   a.serie)}
-        ${campo('UBICACIÓN',  a.ubicacion)}
-        ${campo('RESPONSABLE',a.resp)}
-        ${campo('F. INSTALACIÓN', a.finst)}
-
-        <!-- Campos técnicos según tipo -->
-        ${fichasTecnicas(a)}
+             border-bottom:1px solid rgba(0,212,255,0.15)">Identificación</div>
+        ${campoFicha('MARCA',     a.marca)}
+        ${campoFicha('MODELO',    a.modelo)}
+        ${campoFicha('N° SERIE',  a.serie)}
+        ${campoFicha('UBICACIÓN', a.ubicacion)}
+        ${campoFicha('RESPONSABLE',a.resp)}
+        ${campoFicha('F. INSTALACIÓN',a.finst)}
+        ${fichaExtendida(a)}
       </div>
     </div>
-
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">OT recientes de este activo</div>
         <button class="btn btn-secondary btn-sm" onclick="abrirModalOTDesdeActivo('${a.id}')">+ Nueva OT</button>
       </div>
-      ${allOT.filter(o=>o.activoId===id).slice(0,5).map(o=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span class="hl">${o.codigo}</span>
-          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descripcion?.slice(0,60)||'—'}</span>
-          <span class="status ${o.estado}">${o.estado}</span>
-        </div>`).join('') || '<div style="color:var(--txt2);font-size:12px;padding:8px 0">Sin OT registradas para este activo</div>'}
+      ${otRecientes.length
+        ? otRecientes.map(o=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span class="hl">${o.codigo}</span>
+              <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descripcion?.slice(0,60)||'—'}</span>
+              <span class="status ${o.estado}">${o.estado}</span>
+            </div>`).join('')
+        : '<div style="color:var(--txt2);font-size:12px;padding:10px 0">Sin OT registradas para este activo</div>'}
     </div>`;
 };
 
-// ─── EDITAR ACTIVO ─────────────────────────────────────────────────────────────
-window.abrirEditarActivo = function(id) {
-  const a = allActivos.find(x=>x.id===id); if(!a) return;
-  const nombre = (a.nombre||'').toLowerCase();
-  const esElec = ['motor','bomba','compresor','ventilador','dosificadora'].some(k=>nombre.includes(k));
-  const esComp = nombre.includes('compresor');
-  const esBomba= nombre.includes('bomba');
-
-  document.getElementById('modal-edit-activo').classList.add('open');
-  document.getElementById('ea-titulo').textContent  = `Editar — ${a.nombre}`;
-  document.getElementById('ea-id').value            = a.id;
-  document.getElementById('ea-nombre').value        = a.nombre||'';
-  document.getElementById('ea-desc').value          = a.desc||'';
-  document.getElementById('ea-marca').value         = a.marca||'';
-  document.getElementById('ea-modelo').value        = a.modelo||'';
-  document.getElementById('ea-serie').value         = a.serie||'';
-  document.getElementById('ea-ubicacion').value     = a.ubicacion||'';
-  document.getElementById('ea-finst').value         = a.finst||'';
-  document.getElementById('ea-estado').value        = a.estado||'operativo';
-  document.getElementById('ea-crit').value          = a.crit||'B';
-  document.getElementById('ea-resp').value          = a.resp||'';
-  // Eléctricos
-  document.getElementById('ea-voltaje').value       = a.voltaje||'';
-  document.getElementById('ea-amperaje').value      = a.amperaje||'';
-  document.getElementById('ea-potencia').value      = a.potencia||'';
-  // Refrigerante
-  document.getElementById('ea-refrigerante').value  = a.refrigerante||'';
-  document.getElementById('ea-tempOp').value        = a.tempOperacion||'';
-  document.getElementById('ea-presionS').value      = a.presionSuccion||'';
-  document.getElementById('ea-presionD').value      = a.presionDescarga||'';
-  // Bomba
-  document.getElementById('ea-caudal').value        = a.caudal||'';
-  document.getElementById('ea-presion').value       = a.presion||'';
-
-  // Mostrar/ocultar secciones según tipo
-  document.getElementById('ea-sec-elec').style.display   = esElec ?'grid':'none';
-  document.getElementById('ea-sec-refrig').style.display = esComp ?'grid':'none';
-  document.getElementById('ea-sec-bomba').style.display  = (esBomba&&!esComp)?'grid':'none';
+// ─── CREAR / EDITAR ACTIVO ────────────────────────────────────────────────────
+window.toggleCampos = function() {
+  document.getElementById('ea-sec-elec').style.display   = document.getElementById('chk-elec').checked  ?'block':'none';
+  document.getElementById('ea-sec-refrig').style.display = document.getElementById('chk-refrig').checked?'block':'none';
+  document.getElementById('ea-sec-bomba').style.display  = document.getElementById('chk-bomba').checked ?'block':'none';
 };
 
-window.guardarEditarActivo = async function() {
-  const id = document.getElementById('ea-id').value;
-  if (!id) return;
+function limpiarFormActivo() {
+  ['ea-id','ea-padre-id','ea-cod','ea-nombre','ea-desc','ea-marca','ea-modelo',
+   'ea-serie','ea-ubicacion','ea-resp','ea-voltaje','ea-amperaje','ea-potencia',
+   'ea-refrigerante','ea-tempOp','ea-presionS','ea-presionD',
+   'ea-caudal','ea-presion','ea-tempOp2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ea-estado').value  = 'operativo';
+  document.getElementById('ea-crit').value    = 'B';
+  document.getElementById('ea-tipo').value    = 'EQUIPO';
+  document.getElementById('ea-finst').value   = '';
+  ['chk-elec','chk-refrig','chk-bomba'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  toggleCampos();
+}
+
+function popularPadreSel(selectedId) {
+  const sel = document.getElementById('ea-padre-sel');
+  sel.innerHTML = '<option value="">— Sin padre (raíz) —</option>' +
+    allActivos.map(a=>{
+      const depth = (() => { let d=0,n=allActivos.find(x=>x.id===a.padreId); while(n){d++;n=allActivos.find(x=>x.id===n.padreId);} return d; })();
+      return `<option value="${a.id}" ${a.id===selectedId?'selected':''}>${'　'.repeat(depth)}${TIPO_ICONS[a.tipo]||''} ${a.nombre}</option>`;
+    }).join('');
+}
+
+window.abrirNuevoActivo = function(padreId) {
+  limpiarFormActivo();
+  document.getElementById('ea-titulo').textContent = padreId ? '+ Agregar componente' : '+ Nuevo activo';
+  document.getElementById('ea-btn-guardar').textContent = 'Crear activo';
+  document.getElementById('ea-sec-jerarquia').style.display = 'block';
+  document.getElementById('ea-cod-group').style.display    = 'block';
+  document.getElementById('ea-cod-group').querySelector('input').disabled = false;
+  popularPadreSel(padreId||'');
+  if (padreId) {
+    document.getElementById('ea-padre-id').value = padreId;
+    const padre = allActivos.find(x=>x.id===padreId);
+    const orden = ['PLANTA','AREA','SUBAREA','SISTEMA','EQUIPO','COMPONENTE','SUBCOMPONENTE'];
+    const idx   = orden.indexOf(padre?.tipo||'EQUIPO');
+    document.getElementById('ea-tipo').value = orden[Math.min(idx+1, orden.length-1)];
+    // Sugerir código
+    const hijos = allActivos.filter(a=>a.padreId===padreId);
+    document.getElementById('ea-cod').value = `${padreId}-${String(hijos.length+1).padStart(2,'0')}`;
+  }
+  document.getElementById('modal-edit-activo').classList.add('open');
+};
+
+window.abrirEditarActivo = function(id) {
+  const a = allActivos.find(x=>x.id===id); if(!a) return;
+  limpiarFormActivo();
+  document.getElementById('ea-titulo').textContent = `✏️ Editar — ${a.nombre}`;
+  document.getElementById('ea-btn-guardar').textContent = 'Guardar cambios';
+  document.getElementById('ea-sec-jerarquia').style.display = 'none';
+  document.getElementById('ea-cod-group').style.display    = 'block';
+  document.getElementById('ea-cod-group').querySelector('input').disabled = true;
+  document.getElementById('ea-id').value       = a.id;
+  document.getElementById('ea-cod').value      = a.cod||a.id;
+  document.getElementById('ea-tipo').value     = a.tipo||'EQUIPO';
+  document.getElementById('ea-crit').value     = a.crit||'B';
+  document.getElementById('ea-nombre').value   = a.nombre||'';
+  document.getElementById('ea-desc').value     = a.desc||'';
+  document.getElementById('ea-estado').value   = a.estado||'operativo';
+  document.getElementById('ea-marca').value    = a.marca||'';
+  document.getElementById('ea-modelo').value   = a.modelo||'';
+  document.getElementById('ea-serie').value    = a.serie||'';
+  document.getElementById('ea-finst').value    = a.finst||'';
+  document.getElementById('ea-ubicacion').value= a.ubicacion||'';
+  document.getElementById('ea-resp').value     = a.resp||'';
+  // Campos técnicos
+  const tieneE = !!(a.voltaje||a.amperaje||a.potencia);
+  const tieneR = !!(a.refrigerante||a.tempOperacion||a.presionSuccion);
+  const tieneB = !!(a.caudal||a.presion);
+  document.getElementById('chk-elec').checked   = tieneE;
+  document.getElementById('chk-refrig').checked = tieneR;
+  document.getElementById('chk-bomba').checked  = tieneB;
+  toggleCampos();
+  if (tieneE) {
+    document.getElementById('ea-voltaje').value  = a.voltaje||'';
+    document.getElementById('ea-amperaje').value = a.amperaje||'';
+    document.getElementById('ea-potencia').value = a.potencia||'';
+  }
+  if (tieneR) {
+    document.getElementById('ea-refrigerante').value = a.refrigerante||'';
+    document.getElementById('ea-tempOp').value       = a.tempOperacion||'';
+    document.getElementById('ea-presionS').value     = a.presionSuccion||'';
+    document.getElementById('ea-presionD').value     = a.presionDescarga||'';
+  }
+  if (tieneB) {
+    document.getElementById('ea-caudal').value  = a.caudal||'';
+    document.getElementById('ea-presion').value = a.presion||'';
+    document.getElementById('ea-tempOp2').value = a.tempOp2||'';
+  }
+  document.getElementById('modal-edit-activo').classList.add('open');
+};
+
+window.guardarActivo = async function() {
+  const isEdit = !!document.getElementById('ea-id').value;
+  const nombre = document.getElementById('ea-nombre').value.trim();
+  if (!nombre) { showToast('⚠️','El nombre es obligatorio',''); return; }
   const btn = document.getElementById('ea-btn-guardar');
-  btn.disabled = true; btn.textContent = 'Guardando…';
+  btn.disabled=true; btn.textContent='Guardando…';
   try {
     const datos = {
-      nombre:       document.getElementById('ea-nombre').value.trim(),
+      nombre,
+      tipo:         document.getElementById('ea-tipo').value,
+      crit:         document.getElementById('ea-crit').value,
+      estado:       document.getElementById('ea-estado').value,
       desc:         document.getElementById('ea-desc').value.trim(),
       marca:        document.getElementById('ea-marca').value.trim(),
       modelo:       document.getElementById('ea-modelo').value.trim(),
       serie:        document.getElementById('ea-serie').value.trim(),
-      ubicacion:    document.getElementById('ea-ubicacion').value.trim(),
       finst:        document.getElementById('ea-finst').value,
-      estado:       document.getElementById('ea-estado').value,
-      crit:         document.getElementById('ea-crit').value,
+      ubicacion:    document.getElementById('ea-ubicacion').value.trim(),
       resp:         document.getElementById('ea-resp').value.trim(),
-      // Eléctricos
-      voltaje:      document.getElementById('ea-voltaje').value.trim(),
-      amperaje:     document.getElementById('ea-amperaje').value.trim(),
-      potencia:     document.getElementById('ea-potencia').value.trim(),
-      // Refrigerante
-      refrigerante: document.getElementById('ea-refrigerante').value.trim(),
-      tempOperacion:document.getElementById('ea-tempOp').value.trim(),
-      presionSuccion:document.getElementById('ea-presionS').value.trim(),
-      presionDescarga:document.getElementById('ea-presionD').value.trim(),
-      // Bomba
-      caudal:       document.getElementById('ea-caudal').value.trim(),
-      presion:      document.getElementById('ea-presion').value.trim(),
+      voltaje:      document.getElementById('ea-voltaje').value.trim()||null,
+      amperaje:     document.getElementById('ea-amperaje').value.trim()||null,
+      potencia:     document.getElementById('ea-potencia').value.trim()||null,
+      refrigerante: document.getElementById('ea-refrigerante').value.trim()||null,
+      tempOperacion:document.getElementById('ea-tempOp').value.trim()||null,
+      presionSuccion:document.getElementById('ea-presionS').value.trim()||null,
+      presionDescarga:document.getElementById('ea-presionD').value.trim()||null,
+      caudal:       document.getElementById('ea-caudal').value.trim()||null,
+      presion:      document.getElementById('ea-presion').value.trim()||null,
       actualizadoEn: serverTimestamp(),
     };
-    await updateDoc(doc(db,'activos',id), datos);
-    // Actualizar local
-    const idx = allActivos.findIndex(x=>x.id===id);
-    if (idx>=0) allActivos[idx] = {...allActivos[idx], ...datos};
-    cerrarModal('modal-edit-activo');
-    showToast('✅','Activo actualizado',datos.nombre);
-    seleccionarActivo(id); // refrescar ficha
-  } catch(e){ showToast('❌','Error al guardar',e.message); }
-  btn.disabled=false; btn.textContent='Guardar cambios';
+    if (isEdit) {
+      const id = document.getElementById('ea-id').value;
+      await updateDoc(doc(db,'activos',id), datos);
+      const idx = allActivos.findIndex(x=>x.id===id);
+      if (idx>=0) allActivos[idx]={...allActivos[idx],...datos};
+      cerrarModal('modal-edit-activo');
+      showToast('✅','Activo actualizado',nombre);
+      seleccionarActivo(id);
+    } else {
+      const cod    = document.getElementById('ea-cod').value.trim();
+      const padreId= document.getElementById('ea-padre-sel').value||null;
+      if (!cod) { showToast('⚠️','El código es obligatorio',''); btn.disabled=false; btn.textContent='Crear activo'; return; }
+      if (allActivos.find(a=>a.id===cod)) { showToast('⚠️','Ese código ya existe',''); btn.disabled=false; btn.textContent='Crear activo'; return; }
+      const nuevo = { ...datos, id:cod, cod, padreId, fallas:[], repuestos:[], creadoPor:currentUser.uid, creadoEn:serverTimestamp() };
+      await setDoc(doc(db,'activos',cod), nuevo);
+      allActivos.push(nuevo);
+      if (padreId) { _expandidos.add(padreId); _expandidos.add(cod); }
+      cerrarModal('modal-edit-activo');
+      showToast('✅',`${nombre} creado`,cod);
+      renderArbolActivos(allActivos);
+      seleccionarActivo(cod);
+    }
+  } catch(e){ showToast('❌','Error',e.message); }
+  btn.disabled=false; btn.textContent=isEdit?'Guardar cambios':'Crear activo';
 };
 
-window.abrirModalActivo = function() { document.getElementById('modal-ot').classList.add('open'); };
+window.eliminarActivo = async function(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?\n\nSe elimina solo este nodo. Los componentes hijos quedarán sin padre.\n\nEsta acción no se puede deshacer.`)) return;
+  try {
+    await updateDoc(doc(db,'activos',id),{estado:'baja',eliminado:true,actualizadoEn:serverTimestamp()});
+    allActivos = allActivos.filter(a=>a.id!==id);
+    document.getElementById('activo-ficha').innerHTML = '<div class="empty"><div class="empty-icon">🗑</div><div class="empty-title">Activo eliminado</div></div>';
+    renderArbolActivos(allActivos);
+    showToast('🗑',`"${nombre}" eliminado`,'');
+  } catch(e){ showToast('❌','Error al eliminar',e.message); }
+};
+
+window.abrirModalActivo = function() { abrirNuevoActivo(null); };
 
 window.abrirModalOTDesdeActivo = function(activoId) {
   const a = allActivos.find(x=>x.id===activoId);
