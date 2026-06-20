@@ -161,6 +161,12 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
 .plantilla-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;transition:all .15s;}
 .plantilla-card:hover{border-color:var(--border2);}
 .plantilla-icon{font-size:26px;margin-bottom:8px;}
+.anual-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.anual-mes{font-size:11px;font-family:var(--font-m);color:var(--txt2);width:32px;flex-shrink:0;}
+.anual-track{flex:1;height:20px;background:var(--bg4);border-radius:4px;overflow:hidden;position:relative;}
+.anual-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
+.anual-pct{font-size:10px;font-family:var(--font-m);color:var(--bg0);font-weight:500;}
+.anual-val{font-size:11px;font-family:var(--font-m);color:var(--txt2);width:80px;text-align:right;flex-shrink:0;}
 .kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
 .kanban-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .kanban-lbl{font-size:12px;font-weight:600;}
@@ -415,24 +421,19 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
       <div id="pmp-view-anual" style="display:none">
         <div class="card">
           <div class="card-hdr">
-            <div class="card-title">Cumplimiento de cumplimiento — Año actual</div>
-            <span class="badge cyan" id="anual-año-label">—</span>
+            <div class="card-title">Cumplimiento PMP — Año <span id="anual-año-label">—</span></div>
+            <span class="badge cyan">Enero – Diciembre</span>
           </div>
-          <div id="anual-barras" style="display:flex;align-items:flex-end;gap:8px;height:200px;padding:10px 4px 4px"></div>
+          <div id="pmp-anual-bars"></div>
         </div>
-        <div class="kpi-grid">
-          <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Ejecutadas en el año</div><div class="kpi-value green" id="anual-k-ejecutadas">—</div></div>
-          <div class="kpi-card cyan"><span class="kpi-icon">📊</span><div class="kpi-label">% Cumplimiento anual</div><div class="kpi-value cyan" id="anual-k-pct">—</div></div>
-          <div class="kpi-card amber"><span class="kpi-icon">📅</span><div class="kpi-label">Total programadas</div><div class="kpi-value amber" id="anual-k-total">—</div></div>
-          <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Mes con más vencidas</div><div class="kpi-value red" id="anual-k-peor-mes" style="font-size:18px">—</div></div>
-        </div>
-        <div class="card">
-          <div class="card-title" style="margin-bottom:10px">Detalle por mes</div>
-          <div class="tbl-wrap">
-            <table class="tbl">
-              <thead><tr><th>Mes</th><th>Programadas</th><th>Ejecutadas</th><th>Vencidas</th><th>% Cumplimiento</th></tr></thead>
-              <tbody id="anual-tbody"></tbody>
-            </table>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Actividades por área</div>
+            <div id="pmp-area-bars"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Distribución por tipo</div>
+            <div id="pmp-tipo-bars"></div>
           </div>
         </div>
       </div>
@@ -2545,13 +2546,16 @@ function renderGanttMensual() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RESUMEN ANUAL — cumplimiento mes a mes
+// RESUMEN ANUAL — formato original: barras horizontales por mes + área + tipo
 // ═══════════════════════════════════════════════════════════════════════════════
 function renderResumenAnual() {
   const añoActual = new Date().getFullYear();
   document.getElementById('anual-año-label').textContent = añoActual;
+  const hoy = new Date();
 
-  const datosMes = MESES_ES.map((nombreMes, m) => {
+  // ─── Datos mensuales reales desde Firestore ──────────────────────────────────
+  const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const datosMes = MESES_CORTO.map((mesCorto, m) => {
     const programadas = allPmpActividades.filter(a => {
       const f = a.proximaFecha ? new Date(a.proximaFecha) : null;
       return f && f.getMonth()===m && f.getFullYear()===añoActual;
@@ -2560,54 +2564,95 @@ function renderResumenAnual() {
       const f = a.ultimaEjecucion ? new Date(a.ultimaEjecucion) : null;
       return f && f.getMonth()===m && f.getFullYear()===añoActual;
     });
-    const hoy = new Date();
-    const vencidas = programadas.filter(a => {
-      const f = new Date(a.proximaFecha);
-      return f < hoy && !(a.ultimaEjecucion && new Date(a.ultimaEjecucion) >= f);
-    });
-    const totalProg = programadas.length;
-    const pct = totalProg>0 ? Math.round((ejecutadas.length/totalProg)*100) : (ejecutadas.length>0?100:0);
-    return { mes:nombreMes, programadas:totalProg, ejecutadas:ejecutadas.length, vencidas:vencidas.length, pct };
+    const prog = programadas.length;
+    const ej   = ejecutadas.length;
+    const pct  = prog>0 ? (ej/prog*100) : 0;
+    const esFuturo = new Date(añoActual, m, 1) > hoy && prog===0;
+    return { mes:mesCorto, prog, ej, pct, futuro: esFuturo };
   });
 
-  // Barras
-  const maxVal = Math.max(...datosMes.map(d=>Math.max(d.programadas,d.ejecutadas,1)));
-  const barrasEl = document.getElementById('anual-barras');
-  barrasEl.innerHTML = datosMes.map(d => {
-    const hEj  = Math.max((d.ejecutadas/maxVal)*160, d.ejecutadas>0?6:0);
-    const hProg= Math.max((d.programadas/maxVal)*160, d.programadas>0?6:0);
-    const esMesActual = MESES_ES[new Date().getMonth()]===d.mes;
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-      <div style="display:flex;gap:3px;align-items:flex-end;height:160px">
-        <div style="width:14px;height:${hProg}px;background:rgba(0,212,255,0.35);border-radius:3px 3px 0 0" title="Programadas: ${d.programadas}"></div>
-        <div style="width:14px;height:${hEj}px;background:var(--green);border-radius:3px 3px 0 0" title="Ejecutadas: ${d.ejecutadas}"></div>
-      </div>
-      <div style="font-size:9px;font-family:var(--font-m);color:${esMesActual?'var(--cyan)':'var(--txt2)'}">${d.mes.slice(0,3)}</div>
-    </div>`;
-  }).join('');
+  // ─── Barras mensuales (formato horizontal original) ──────────────────────────
+  const anualEl = document.getElementById('pmp-anual-bars');
+  if (anualEl) {
+    anualEl.innerHTML = datosMes.map(m => {
+      const color = m.futuro ? '#242938' : m.pct >= 90 ? '#00e676' : m.pct >= 75 ? '#ffb300' : m.pct > 0 ? '#ff4444' : '#242938';
+      return `<div class="anual-row">
+        <span class="anual-mes">${m.mes}</span>
+        <div class="anual-track">
+          <div class="anual-fill" style="width:${m.futuro?0:m.pct}%;background:${color}">
+            ${!m.futuro && m.pct > 0 ? `<span class="anual-pct">${m.pct.toFixed(1)}%</span>` : ''}
+          </div>
+        </div>
+        <span class="anual-val">${m.futuro ? '—' : m.ej+'/'+m.prog+' act.'}</span>
+      </div>`;
+    }).join('');
+  }
 
-  // KPIs
-  const totalEj  = datosMes.reduce((s,d)=>s+d.ejecutadas,0);
-  const totalProg= datosMes.reduce((s,d)=>s+d.programadas,0);
-  const pctAnual = totalProg>0 ? Math.round((totalEj/totalProg)*100) : 0;
-  const peorMes  = datosMes.reduce((peor,d)=> d.vencidas>(peor?.vencidas||0) ? d : peor, null);
+  // ─── Actividades por área (derivado del árbol de activos real) ──────────────
+  // Mapea cada actividad PMP a su área raíz usando el activo vinculado
+  const areaMap = {};
+  allPmpActividades.forEach(a => {
+    const activo = allActivos.find(x=>x.id===a.activoId);
+    let areaNombre = 'Sin área';
+    if (activo) {
+      // Sube por el árbol hasta encontrar el nodo de tipo AREA
+      let nodo = activo;
+      let safety = 0;
+      while (nodo && nodo.tipo!=='AREA' && nodo.padreId && safety<10) {
+        nodo = allActivos.find(x=>x.id===nodo.padreId);
+        safety++;
+      }
+      areaNombre = nodo?.nombre || activo.area || 'Sin área';
+    }
+    if (!areaMap[areaNombre]) areaMap[areaNombre] = {total:0, ej:0};
+    areaMap[areaNombre].total++;
+    if (a.ultimaEjecucion) areaMap[areaNombre].ej++;
+  });
+  const areaData = Object.entries(areaMap).map(([label,v])=>({
+    label, total:v.total, ej:v.ej, pct: v.total>0 ? Math.round((v.ej/v.total)*100) : 0
+  })).sort((a,b)=>b.total-a.total);
 
-  document.getElementById('anual-k-ejecutadas').textContent = totalEj;
-  document.getElementById('anual-k-pct').textContent        = pctAnual+'%';
-  document.getElementById('anual-k-total').textContent      = totalProg;
-  document.getElementById('anual-k-peor-mes').textContent   = peorMes && peorMes.vencidas>0 ? `${peorMes.mes} (${peorMes.vencidas})` : 'Ninguno';
+  const areaEl = document.getElementById('pmp-area-bars');
+  if (areaEl) {
+    if (!areaData.length) {
+      areaEl.innerHTML = '<div style="color:var(--txt2);font-size:12px;padding:10px 0">Sin actividades asignadas aún</div>';
+    } else {
+      areaEl.innerHTML = areaData.map(a => {
+        const color = a.pct>=90?'#00e676':a.pct>=80?'#ffb300':'#ff4444';
+        return `<div class="anual-row">
+          <span class="anual-mes" style="width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.label}">${a.label}</span>
+          <div class="anual-track"><div class="anual-fill" style="width:${a.pct}%;background:${color}">
+            <span class="anual-pct">${a.pct}%</span>
+          </div></div>
+          <span class="anual-val">${a.ej}/${a.total}</span>
+        </div>`;
+      }).join('');
+    }
+  }
 
-  // Tabla
-  document.getElementById('anual-tbody').innerHTML = datosMes.map(d => {
-    const pctCol = d.pct>=90?'var(--green)':d.pct>=70?'var(--amber)':'var(--red)';
-    return `<tr>
-      <td style="font-weight:500">${d.mes}</td>
-      <td class="mono">${d.programadas}</td>
-      <td class="mono" style="color:var(--green)">${d.ejecutadas}</td>
-      <td class="mono" style="color:${d.vencidas>0?'var(--red)':'var(--txt2)'}">${d.vencidas}</td>
-      <td><span style="font-family:var(--font-m);font-weight:600;color:${pctCol}">${d.pct}%</span></td>
-    </tr>`;
-  }).join('');
+  // ─── Distribución por tipo (frecuencia de la plantilla) ──────────────────────
+  const tipoColores = {semanal:'#00d4ff', mensual:'#00e676', trimestral:'#bb86fc', semestral:'#ffb300', anual:'#ff9800'};
+  const tipoMap = {};
+  allPmpActividades.forEach(a => {
+    const k = a.frecuencia || 'mensual';
+    tipoMap[k] = (tipoMap[k]||0) + 1;
+  });
+  const totalTipo = Object.values(tipoMap).reduce((s,v)=>s+v,0);
+  const tipoEl = document.getElementById('pmp-tipo-bars');
+  if (tipoEl) {
+    if (!totalTipo) {
+      tipoEl.innerHTML = '<div style="color:var(--txt2);font-size:12px;padding:10px 0">Sin actividades asignadas aún</div>';
+    } else {
+      tipoEl.innerHTML = Object.entries(tipoMap).sort((a,b)=>b[1]-a[1]).map(([k,n]) => `
+        <div class="anual-row">
+          <span class="anual-mes" style="width:90px">${FREC_LABEL[k]||k}</span>
+          <div class="anual-track"><div class="anual-fill" style="width:${(n/totalTipo*100).toFixed(1)}%;background:${tipoColores[k]||'#5a6272'}">
+            <span class="anual-pct">${(n/totalTipo*100).toFixed(0)}%</span>
+          </div></div>
+          <span class="anual-val">${n} act.</span>
+        </div>`).join('');
+    }
+  }
 }
 
 // Hook showPage para cargar PMP al entrar
