@@ -328,6 +328,10 @@ canvas.spark{width:100%;height:44px;}
       <span class="nav-icon">❄️</span><span class="nav-label">Refrigeración</span>
       <span class="nav-badge" id="badge-ref">—</span>
     </div>
+    <div class="nav-item" id="nav-osmosis" onclick="showPage('osmosis',this)">
+      <span class="nav-icon">💧</span><span class="nav-label">Ósmosis Inversa</span>
+      <span class="nav-badge" id="badge-osm">—</span>
+    </div>
     <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
       <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
     </div>
@@ -922,6 +926,159 @@ canvas.spark{width:100%;height:44px;}
       </div>
     </div>
 
+    <!-- ══ ÓSMOSIS INVERSA ══ -->
+    <div class="page" id="page-osmosis">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">Planta de Ósmosis Inversa</div>
+          <div class="page-sub" id="osm-resumen">— módulos · — m³/día capacidad instalada</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-left:auto">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalLecturaOsm()">+ Registrar lectura</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="osm-tab-estado" onclick="osmTab('estado')">Estado actual</button>
+        <button class="pmp-tab" id="osm-tab-tend" onclick="osmTab('tend')">Tendencias</button>
+        <button class="pmp-tab" id="osm-tab-memb" onclick="osmTab('memb')">Membranas</button>
+        <button class="pmp-tab" id="osm-tab-filtros" onclick="osmTab('filtros')">Filtros y dosificación</button>
+      </div>
+
+      <!-- TAB: ESTADO -->
+      <div id="osm-view-estado">
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">💧</span>
+            <div class="kpi-label">Producción hoy</div>
+            <div class="kpi-value cyan" id="osm-k-prod">—</div>
+            <div class="kpi-sub" id="osm-k-prod-sub">m³ · — capacidad</div>
+          </div>
+          <div class="kpi-card green"><span class="kpi-icon">🔬</span>
+            <div class="kpi-label">Conductividad</div>
+            <div class="kpi-value green" id="osm-k-cond">—</div>
+            <div class="kpi-sub">µS/cm · límite 500</div>
+          </div>
+          <div class="kpi-card green"><span class="kpi-icon">⚗️</span>
+            <div class="kpi-label">pH permeado</div>
+            <div class="kpi-value green" id="osm-k-ph">—</div>
+            <div class="kpi-sub">Rango: 6.5 – 8.5</div>
+          </div>
+          <div class="kpi-card amber"><span class="kpi-icon">💯</span>
+            <div class="kpi-label">Rechazo de sales</div>
+            <div class="kpi-value amber" id="osm-k-rec">—</div>
+            <div class="kpi-sub">Mínimo requerido 96%</div>
+          </div>
+        </div>
+
+        <!-- Módulos lado a lado -->
+        <div id="osm-modulos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando módulos…</div>
+        </div>
+
+        <!-- Dosificación química (mejora — no estaba en el original) -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Sistema de dosificación química</div>
+            <span class="badge cyan">Cloro · Bisulfito · Antiincrustante</span>
+          </div>
+          <div id="osm-dosificacion-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div class="loading-row" style="grid-column:1/-1">Cargando…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TENDENCIAS -->
+      <div id="osm-view-tend" style="display:none">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Módulo:</span>
+          <select class="filter-sel" id="osm-mod-sel" onchange="renderTendenciasOsm()"></select>
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="osm-period-sel" onchange="renderTendenciasOsm()">
+            <option value="7">Últimos 7 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Producción m³</span>
+              <span id="osm-tend-prod-cur" style="font-family:var(--font-m);font-size:12px;color:var(--cyan)">— m³</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="osm-chart-prod"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Conductividad permeado</span>
+              <span id="osm-tend-cond-cur" style="font-family:var(--font-m);font-size:12px;color:var(--green)">— µS/cm</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="osm-chart-cond"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Presión membranas</span>
+              <span id="osm-tend-pm-cur" style="font-family:var(--font-m);font-size:12px;color:var(--amber)">— bar</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="osm-chart-pm"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Rendimiento producto/entrada %</span>
+              <span id="osm-tend-rend-cur" style="font-family:var(--font-m);font-size:12px;color:var(--green)">— %</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="osm-chart-rend"></canvas></div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Registro de lecturas</span>
+            <span class="badge cyan" id="osm-tend-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>Fecha / Hora</th><th>Caudal entr. (m³/h)</th><th>Caudal prod. (m³/h)</th>
+              <th>P. entrada (bar)</th><th>P. membranas (bar)</th><th>Conductividad</th>
+              <th>pH</th><th>Rendimiento</th><th>Técnico</th>
+            </tr></thead>
+            <tbody id="osm-tend-tbody"><tr><td colspan="9" class="loading-row">Selecciona un módulo</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: MEMBRANAS -->
+      <div id="osm-view-memb" style="display:none">
+        <div id="osm-memb-grids" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando membranas…</div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><span class="card-title">Membranas en vigilancia o reemplazo</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Módulo</th><th>Housing</th><th>Posición</th><th>Código</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="osm-memb-detail-tbody"><tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:16px">Sin datos de desgaste registrados aún</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: FILTROS Y DOSIFICACIÓN -->
+      <div id="osm-view-filtros" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><span class="card-title">Filtros multimedia (pre-tratamiento)</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Filtro</th><th>Módulo</th><th>Ubicación</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="osm-fmm-tbody"></tbody>
+          </table></div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><span class="card-title">Filtros cartucho (5µm y 1µm)</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Filtro</th><th>Micraje</th><th>Módulo</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="osm-fca-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ LECTURAS ══ -->
     <div class="page" id="page-lecturas">
       <div class="page-header">
@@ -1457,7 +1614,47 @@ canvas.spark{width:100%;height:44px;}
   </div>
 </div>
 
-<!-- ══ MODAL: LECTURA COMPLETA DE COMPRESOR ══ -->
+<!-- ══ MODAL: LECTURA DE ÓSMOSIS ══ -->
+<div class="modal-overlay" id="modal-lectura-osm">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title">Registrar lectura — Módulo Ósmosis</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura-osm')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Módulo</label>
+          <select class="form-select" id="lo-modulo"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Turno</label>
+          <select class="form-select" id="lo-turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Caudal entrada (m³/h)</label>
+          <input class="form-input" type="number" id="lo-caudal-ent" step="0.1" placeholder="Ej: 28.4" oninput="calcularRendimientoOsm()"></div>
+        <div class="form-group"><label class="form-label">Caudal producto (m³/h)</label>
+          <input class="form-input" type="number" id="lo-caudal-prod" step="0.1" placeholder="Ej: 11.2" oninput="calcularRendimientoOsm()"></div>
+        <div class="form-group"><label class="form-label">Rendimiento (calculado)</label>
+          <input class="form-input" type="text" id="lo-rendimiento" readonly style="color:var(--cyan)" placeholder="—"></div>
+        <div class="form-group"><label class="form-label">Presión entrada (bar)</label>
+          <input class="form-input" type="number" id="lo-presion-ent" step="0.1" placeholder="Ej: 6.2"></div>
+        <div class="form-group"><label class="form-label">Presión membranas (bar)</label>
+          <input class="form-input" type="number" id="lo-presion-mem" step="0.5" placeholder="Ej: 54"></div>
+        <div class="form-group"><label class="form-label">Conductividad (µS/cm)</label>
+          <input class="form-input" type="number" id="lo-conductividad" step="1" placeholder="Ej: 148"></div>
+        <div class="form-group"><label class="form-label">pH permeado</label>
+          <input class="form-input" type="number" id="lo-ph" step="0.01" placeholder="Ej: 7.2"></div>
+        <div class="form-group"><label class="form-label">ORP (mV)</label>
+          <input class="form-input" type="number" id="lo-orp" step="1" placeholder="Ej: 245"></div>
+        <div class="form-group full"><label class="form-label">Observaciones</label>
+          <textarea class="form-textarea" id="lo-obs" style="min-height:56px" placeholder="Novedades del turno…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura-osm')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLecturaOsm()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-lectura-ref">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
@@ -3070,6 +3267,353 @@ const _showPageRef = window.showPage;
 window.showPage = function(name, el) {
   _showPageRef(name, el);
   if (name==='refrigeracion') cargarRefrigeracion();
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO ÓSMOSIS INVERSA — Estado + Tendencias + Membranas + Filtros/Dosificación
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allModulosOsm = [];     // SISTEMA tipo, nombre contiene "Módulo Ósmosis"
+let allLecturasOsm = [];    // lecturas tipo=osmosis
+let allMembranasOsm = [];   // SUBCOMPONENTE bajo housings de membranas
+let allFiltrosMM = [];      // filtros multimedia (EQUIPO con "Filtro multimedia" en nombre)
+let allFiltrosCA = [];      // filtros cartucho (EQUIPO con "Filtro cartucho" en nombre)
+let allDosificadoresOsm = [];
+const osmTendCharts = {};
+
+window.osmTab = function(tab) {
+  ['estado','tend','memb','filtros'].forEach(t=>{
+    document.getElementById('osm-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('osm-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='tend')    renderTendenciasOsm();
+  if (tab==='memb')    renderMembranasOsm();
+  if (tab==='filtros') renderFiltrosOsm();
+};
+
+async function cargarOsmosis() {
+  try {
+    allModulosOsm = allActivos.filter(a => a.tipo==='SISTEMA' && (a.nombre||'').toLowerCase().includes('módulo ósmosis'));
+    allMembranasOsm = allActivos.filter(a => a.tipo==='SUBCOMPONENTE' && (a.nombre||'').toLowerCase().includes('membrana'));
+    allFiltrosMM = allActivos.filter(a => a.tipo==='EQUIPO' && (a.nombre||'').toLowerCase().includes('filtro multimedia'));
+    allFiltrosCA = allActivos.filter(a => a.tipo==='EQUIPO' && (a.nombre||'').toLowerCase().includes('filtro cartucho'));
+    allDosificadoresOsm = allActivos.filter(a => a.tipo==='EQUIPO' && (a.nombre||'').toLowerCase().includes('bomba dosificadora'));
+
+    const snap = await getDocs(query(collection(db,'lecturas'), where('tipo','==','osmosis'), orderBy('creadoEn','desc'), limit(500)));
+    allLecturasOsm = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const capacidadTotal = allModulosOsm.length * 250; // ~250 m³/día por módulo según diseño
+    document.getElementById('osm-resumen').textContent = `${allModulosOsm.length} módulos · ${capacidadTotal} m³/día capacidad instalada · ${allMembranasOsm.length} membranas`;
+    document.getElementById('badge-osm').textContent = '—';
+
+    renderEstadoOsm();
+    poblarSelectsOsm();
+  } catch(e){ console.error('Error cargando Ósmosis:', e); }
+}
+
+function ultimaLecturaModulo(modulo) {
+  const lecs = allLecturasOsm.filter(l => l.moduloId===modulo.id || l.modulo===modulo.nombre);
+  return lecs.length ? lecs[0] : null;
+}
+
+// ─── TAB ESTADO ──────────────────────────────────────────────────────────────────
+function renderEstadoOsm() {
+  const conLecturas = allModulosOsm.map(m=>({mod:m, lec:ultimaLecturaModulo(m)})).filter(x=>x.lec);
+
+  // KPIs globales (suma/promedio de los módulos con lectura)
+  const prodTotal = conLecturas.reduce((s,x)=>s+(parseFloat(x.lec.caudalProducto)||0),0);
+  const capInstalada = allModulosOsm.length*250;
+  const condProm = conLecturas.length ? conLecturas.reduce((s,x)=>s+(parseFloat(x.lec.conductividad)||0),0)/conLecturas.length : null;
+  const phProm   = conLecturas.length ? conLecturas.reduce((s,x)=>s+(parseFloat(x.lec.ph)||0),0)/conLecturas.length : null;
+  // Rechazo de sales estimado: 100 - (conductividad_permeado / conductividad_entrada_tipica * 100). Usamos 35000 µS/cm típico agua mar.
+  const rechazoProm = condProm!=null ? (100 - (condProm/35000*100)) : null;
+
+  document.getElementById('osm-k-prod').textContent = conLecturas.length ? prodTotal.toFixed(0) : '—';
+  document.getElementById('osm-k-prod-sub').textContent = capInstalada>0 ? `m³/h · ${Math.min(Math.round((prodTotal/(capInstalada/24))*100),999)}% capacidad` : 'm³/h';
+  document.getElementById('osm-k-cond').textContent = condProm!=null ? condProm.toFixed(0) : '—';
+  document.getElementById('osm-k-ph').textContent   = phProm!=null ? phProm.toFixed(1) : '—';
+  document.getElementById('osm-k-rec').textContent  = rechazoProm!=null ? rechazoProm.toFixed(1)+'%' : '—';
+
+  // Módulos lado a lado
+  const grid = document.getElementById('osm-modulos-grid');
+  if (!allModulosOsm.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">💧</div><div class="empty-sub">Sin módulos de ósmosis registrados en el árbol de activos</div></div>';
+  } else {
+    grid.innerHTML = allModulosOsm.map(m => {
+      const lec = ultimaLecturaModulo(m);
+      const estCls = m.estado==='detenido'?'red':'green';
+      const estLbl = m.estado==='detenido'?'Detenido':'Operativo';
+      const rendimiento = (lec && lec.caudalEntrada>0) ? (lec.caudalProducto/lec.caudalEntrada*100) : null;
+      const pmCls = (lec && lec.presionMembranas>56) ? 'warn' : (lec?'ok':'');
+      return `<div class="card">
+        <div class="card-hdr">
+          <div class="card-title">${m.nombre}</div>
+          <span class="badge ${estCls}">${estLbl}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="reading-item"><div class="reading-label">Caudal entrada</div><div class="reading-val ${lec?'ok':''}">${lec?.caudalEntrada!=null?lec.caudalEntrada+' m³/h':'—'}</div></div>
+          <div class="reading-item"><div class="reading-label">Caudal producto</div><div class="reading-val ${lec?'ok':''}">${lec?.caudalProducto!=null?lec.caudalProducto+' m³/h':'—'}</div></div>
+          <div class="reading-item"><div class="reading-label">P. entrada</div><div class="reading-val ${lec?'ok':''}">${lec?.presionEntrada!=null?lec.presionEntrada+' bar':'—'}</div></div>
+          <div class="reading-item"><div class="reading-label">P. membranas</div><div class="reading-val ${pmCls}">${lec?.presionMembranas!=null?lec.presionMembranas+' bar':'—'}</div></div>
+          <div class="reading-item"><div class="reading-label">ORP</div><div class="reading-val ${lec?'ok':''}">${lec?.orp!=null?'+'+lec.orp+' mV':'—'}</div></div>
+          <div class="reading-item"><div class="reading-label">Rendimiento</div><div class="reading-val ${lec?'ok':''}">${rendimiento!=null?rendimiento.toFixed(1)+'%':'—'}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Dosificación química (mejora sobre el original)
+  const dosGrid = document.getElementById('osm-dosificacion-grid');
+  if (!allDosificadoresOsm.length) {
+    dosGrid.innerHTML = '<div style="grid-column:1/-1;color:var(--txt2);font-size:12px;padding:10px 0">Sin bombas dosificadoras registradas</div>';
+  } else {
+    const iconMap = {cloro:'🧪',bisulfito:'⚗️',antiincrustante:'💧'};
+    dosGrid.innerHTML = allDosificadoresOsm.map(d=>{
+      const tipo = (d.nombre||'').toLowerCase().includes('cloro')?'cloro':(d.nombre||'').toLowerCase().includes('bisulfito')?'bisulfito':'antiincrustante';
+      const estCls = d.estado==='detenido'?'detenido':'operativo';
+      return `<div style="background:var(--bg3);border-radius:var(--r);padding:12px;cursor:pointer" onclick="seleccionarActivo('${d.id}');showPage('activos',document.querySelectorAll('.nav-item')[3])">
+        <div style="font-size:18px;margin-bottom:6px">${iconMap[tipo]||'💧'}</div>
+        <div style="font-size:12px;font-weight:500">${d.nombre}</div>
+        <div style="font-size:10px;color:var(--txt2);margin-top:2px">${d.cod||d.id}</div>
+        <span class="status ${estCls}" style="font-size:10px;margin-top:8px;display:inline-block">${d.estado==='detenido'?'Detenido':'Operativo'}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ─── TAB TENDENCIAS ──────────────────────────────────────────────────────────────
+function poblarSelectsOsm() {
+  const sel = document.getElementById('osm-mod-sel');
+  if (sel) sel.innerHTML = allModulosOsm.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+}
+
+function buildChartOsm(canvasId, labels, dataset, color, limitLines) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (osmTendCharts[canvasId]) osmTendCharts[canvasId].destroy();
+  const plugin = {
+    id:'limits-'+canvasId,
+    afterDraw(chart){
+      const {ctx, scales:{x,y}} = chart;
+      (limitLines||[]).forEach(lim=>{
+        if (lim.value===undefined) return;
+        const yPx = y.getPixelForValue(lim.value);
+        if (yPx<y.top||yPx>y.bottom) return;
+        ctx.save(); ctx.setLineDash([4,3]); ctx.strokeStyle=lim.color||'rgba(255,68,68,0.5)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(x.left,yPx); ctx.lineTo(x.right,yPx); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle=lim.color||'rgba(255,68,68,0.7)';
+        ctx.font='9px DM Mono, monospace'; ctx.textAlign='right'; ctx.fillText(lim.label, x.right-2, yPx-3);
+        ctx.restore();
+      });
+    }
+  };
+  osmTendCharts[canvasId] = new Chart(canvas, {
+    type:'line',
+    data:{labels, datasets:[{data:dataset,borderColor:color,backgroundColor:color+'18',borderWidth:1.5,pointRadius:labels.length<=10?3:0,pointHoverRadius:4,fill:true,tension:0.35}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#111318',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#9ba3b2',bodyColor:'#f0f2f5',titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:11}}},
+      scales:{x:{ticks:{color:'#5a6272',font:{family:'DM Mono',size:9},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)',lineWidth:0.5},border:{color:'rgba(255,255,255,0.07)'}},
+              y:{ticks:{color:'#5a6272',font:{family:'DM Mono',size:9}},grid:{color:'rgba(255,255,255,0.04)',lineWidth:0.5},border:{color:'rgba(255,255,255,0.07)'}}}},
+    plugins:[plugin]
+  });
+}
+
+window.renderTendenciasOsm = function() {
+  const modId = document.getElementById('osm-mod-sel')?.value;
+  const dias  = parseInt(document.getElementById('osm-period-sel')?.value||'30');
+  const mod   = allModulosOsm.find(m=>m.id===modId);
+  if (!mod) { document.getElementById('osm-tend-tbody').innerHTML = '<tr><td colspan="9" class="loading-row">Selecciona un módulo</td></tr>'; return; }
+
+  const desde = new Date(); desde.setDate(desde.getDate()-dias);
+  const lecturas = allLecturasOsm
+    .filter(l => (l.moduloId===mod.id||l.modulo===mod.nombre) && l.creadoEn?.toDate && l.creadoEn.toDate()>=desde)
+    .sort((a,b)=>a.creadoEn.toDate()-b.creadoEn.toDate());
+
+  if (!lecturas.length) {
+    ['osm-chart-prod','osm-chart-cond','osm-chart-pm','osm-chart-rend'].forEach(id=>{ if(osmTendCharts[id]){osmTendCharts[id].destroy();delete osmTendCharts[id];} });
+    document.getElementById('osm-tend-count').textContent = '0 registros';
+    document.getElementById('osm-tend-tbody').innerHTML = `<tr><td colspan="9"><div class="empty" style="height:100px"><div class="empty-icon">📭</div><div class="empty-sub">Sin lecturas de ${mod.nombre} en este período</div></div></td></tr>`;
+    return;
+  }
+
+  ensureChartJsLocal(() => {
+    const labels = lecturas.map(l=>l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+    const prodArr = lecturas.map(l=>parseFloat(l.caudalProducto)||0);
+    const condArr = lecturas.map(l=>parseFloat(l.conductividad)||0);
+    const pmArr   = lecturas.map(l=>parseFloat(l.presionMembranas)||0);
+    const rendArr = lecturas.map(l=> l.caudalEntrada>0 ? (l.caudalProducto/l.caudalEntrada*100) : 0);
+
+    document.getElementById('osm-tend-prod-cur').textContent = prodArr[prodArr.length-1].toFixed(1)+' m³';
+    document.getElementById('osm-tend-cond-cur').textContent = condArr[condArr.length-1].toFixed(0)+' µS/cm';
+    document.getElementById('osm-tend-pm-cur').textContent   = pmArr[pmArr.length-1].toFixed(1)+' bar';
+    document.getElementById('osm-tend-rend-cur').textContent = rendArr[rendArr.length-1].toFixed(1)+' %';
+
+    buildChartOsm('osm-chart-prod', labels, prodArr, '#00d4ff', []);
+    buildChartOsm('osm-chart-cond', labels, condArr, '#00e676', [{value:500,label:'Límite 500',color:'rgba(255,68,68,0.6)'}]);
+    buildChartOsm('osm-chart-pm',   labels, pmArr,   '#ffb300', [{value:60,label:'Alerta 60',color:'rgba(255,68,68,0.6)'}]);
+    buildChartOsm('osm-chart-rend', labels, rendArr, '#00e676', [{value:35,label:'Mínimo 35%',color:'rgba(255,68,68,0.6)'}]);
+  });
+
+  document.getElementById('osm-tend-count').textContent = lecturas.length+' registros';
+  document.getElementById('osm-tend-tbody').innerHTML = [...lecturas].reverse().map(l=>{
+    const fecha = l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const rend = l.caudalEntrada>0 ? (l.caudalProducto/l.caudalEntrada*100).toFixed(1)+'%' : '—';
+    return `<tr>
+      <td class="mono">${fecha}</td>
+      <td class="mono">${l.caudalEntrada??'—'}</td>
+      <td class="mono">${l.caudalProducto??'—'}</td>
+      <td class="mono">${l.presionEntrada??'—'}</td>
+      <td class="mono">${l.presionMembranas??'—'}</td>
+      <td class="mono">${l.conductividad??'—'}</td>
+      <td class="mono">${l.ph??'—'}</td>
+      <td class="mono" style="color:var(--green)">${rend}</td>
+      <td style="font-size:12px">${l.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('');
+};
+
+// ─── TAB MEMBRANAS ───────────────────────────────────────────────────────────────
+function renderMembranasOsm() {
+  const grids = document.getElementById('osm-memb-grids');
+  if (!allModulosOsm.length) {
+    grids.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-sub">Sin módulos registrados</div></div>';
+    return;
+  }
+  grids.innerHTML = allModulosOsm.map(m => {
+    const membranasModulo = allMembranasOsm.filter(mb => esDescendienteDe(mb.id, m.id));
+    const enVigilancia = membranasModulo.filter(mb=>mb.estado==='standby').length;
+    const enAlarma = membranasModulo.filter(mb=>mb.estado==='detenido').length;
+    return `<div class="card">
+      <div class="card-hdr">
+        <div class="card-title">${m.nombre} — ${membranasModulo.length} membranas</div>
+        ${enAlarma>0?`<span class="badge red">${enAlarma} reemplazar</span>`:enVigilancia>0?`<span class="badge amber">${enVigilancia} vigilancia</span>`:`<span class="badge green">Todas OK</span>`}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+        ${membranasModulo.map(mb=>{
+          const color = mb.estado==='detenido'?'var(--red)':mb.estado==='standby'?'var(--amber)':'var(--green)';
+          const posMatch = mb.cod?.match(/-M(\d+)$/);
+          const pos = posMatch?posMatch[1]:'—';
+          return `<div style="background:var(--bg3);border:1px solid ${color}44;border-radius:6px;padding:8px 4px;text-align:center;cursor:pointer"
+                       title="${mb.nombre}" onclick="seleccionarActivo('${mb.id}');showPage('activos',document.querySelectorAll('.nav-item')[3])">
+            <div style="font-size:9px;font-family:var(--font-m);color:var(--txt2);margin-bottom:5px">${pos}</div>
+            <div style="width:10px;height:10px;border-radius:50%;background:${color};margin:0 auto"></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Tabla detalle — solo las que no están operativas
+  const noOk = allMembranasOsm.filter(mb=>mb.estado!=='operativo'&&mb.estado);
+  const tbody = document.getElementById('osm-memb-detail-tbody');
+  if (!noOk.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:16px">✅ Todas las membranas en estado operativo</td></tr>';
+  } else {
+    tbody.innerHTML = noOk.map(mb=>{
+      const modulo = allModulosOsm.find(m=>esDescendienteDe(mb.id,m.id));
+      const housing = allActivos.find(a=>a.id===mb.padreId);
+      const estLbl = mb.estado==='detenido'?'Reemplazar':'Vigilancia';
+      const estCls = mb.estado==='detenido'?'vencida':'prog';
+      return `<tr>
+        <td>${modulo?.nombre||'—'}</td>
+        <td>${housing?.nombre||'—'}</td>
+        <td class="mono">${mb.cod||mb.id}</td>
+        <td style="font-size:12px">${mb.nombre}</td>
+        <td><span class="status ${estCls}">${estLbl}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="abrirModalOTDesdeActivo('${mb.id}')">+ Programar CIP/reemplazo</button></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ─── TAB FILTROS Y DOSIFICACIÓN ───────────────────────────────────────────────────
+function renderFiltrosOsm() {
+  const fmmTbody = document.getElementById('osm-fmm-tbody');
+  if (!allFiltrosMM.length) {
+    fmmTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--txt2);padding:16px">Sin filtros multimedia registrados</td></tr>';
+  } else {
+    fmmTbody.innerHTML = allFiltrosMM.map(f=>{
+      const modulo = allModulosOsm.find(m=>esDescendienteDe(f.id,m.id));
+      const estCls = f.estado==='detenido'?'vencida':'cerrada';
+      return `<tr>
+        <td style="font-weight:500">${f.nombre}</td>
+        <td>${modulo?.nombre||'—'}</td>
+        <td style="font-size:12px;color:var(--txt2)">${f.ubicacion||'—'}</td>
+        <td><span class="status ${estCls}">${f.estado==='detenido'?'Detenido':'Operativo'}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="abrirModalOTDesdeActivo('${f.id}')">+ OT</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const fcaTbody = document.getElementById('osm-fca-tbody');
+  if (!allFiltrosCA.length) {
+    fcaTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--txt2);padding:16px">Sin filtros cartucho registrados</td></tr>';
+  } else {
+    fcaTbody.innerHTML = allFiltrosCA.map(f=>{
+      const modulo = allModulosOsm.find(m=>esDescendienteDe(f.id,m.id));
+      const micraje = (f.nombre||'').includes('1µm')?'1 µm':(f.nombre||'').includes('5µm')?'5 µm':'—';
+      const estCls = f.estado==='detenido'?'vencida':'cerrada';
+      return `<tr>
+        <td style="font-weight:500">${f.nombre}</td>
+        <td><span class="badge cyan" style="font-size:10px">${micraje}</span></td>
+        <td>${modulo?.nombre||'—'}</td>
+        <td><span class="status ${estCls}">${f.estado==='detenido'?'Detenido':'Operativo'}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="abrirModalOTDesdeActivo('${f.id}')">+ OT</button></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ─── MODAL: Lectura de Ósmosis (con rendimiento auto-calculado) ─────────────────
+window.abrirModalLecturaOsm = function() {
+  const sel = document.getElementById('lo-modulo');
+  sel.innerHTML = allModulosOsm.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+  ['lo-caudal-ent','lo-caudal-prod','lo-rendimiento','lo-presion-ent','lo-presion-mem','lo-conductividad','lo-ph','lo-orp','lo-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-lectura-osm').classList.add('open');
+};
+
+window.calcularRendimientoOsm = function() {
+  const ent  = parseFloat(document.getElementById('lo-caudal-ent').value);
+  const prod = parseFloat(document.getElementById('lo-caudal-prod').value);
+  const el = document.getElementById('lo-rendimiento');
+  el.value = (ent>0 && !isNaN(prod)) ? (prod/ent*100).toFixed(1)+' %' : '—';
+};
+
+window.guardarLecturaOsm = async function() {
+  const modId = document.getElementById('lo-modulo').value;
+  const mod = allModulosOsm.find(m=>m.id===modId);
+  if (!mod) { showToast('⚠️','Selecciona un módulo',''); return; }
+  const ent = document.getElementById('lo-caudal-ent').value;
+  const prod = document.getElementById('lo-caudal-prod').value;
+  if (!ent && !prod) { showToast('⚠️','Ingresa al menos los caudales',''); return; }
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'osmosis', modulo:mod.nombre, moduloId:mod.id,
+      turno: document.getElementById('lo-turno').value,
+      caudalEntrada: parseFloat(ent)||null,
+      caudalProducto: parseFloat(prod)||null,
+      presionEntrada: parseFloat(document.getElementById('lo-presion-ent').value)||null,
+      presionMembranas: parseFloat(document.getElementById('lo-presion-mem').value)||null,
+      conductividad: parseFloat(document.getElementById('lo-conductividad').value)||null,
+      ph: parseFloat(document.getElementById('lo-ph').value)||null,
+      orp: parseFloat(document.getElementById('lo-orp').value)||null,
+      obs: document.getElementById('lo-obs').value.trim()||null,
+      tecnicoUid: currentUser.uid,
+      tecnicoNombre: `${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn: serverTimestamp(),
+    });
+    cerrarModal('modal-lectura-osm');
+    showToast('✅','Lectura registrada', mod.nombre);
+    await cargarOsmosis();
+    if (document.getElementById('osm-view-tend').style.display!=='none') renderTendenciasOsm();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// Hook showPage para cargar Ósmosis al entrar
+const _showPageOsm = window.showPage;
+window.showPage = function(name, el) {
+  _showPageOsm(name, el);
+  if (name==='osmosis') cargarOsmosis();
 };
 
 // ─── TÉCNICOS ─────────────────────────────────────────────────────────────────
