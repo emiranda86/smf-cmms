@@ -710,31 +710,79 @@ canvas.spark{width:100%;height:44px;}
           <button class="btn btn-primary btn-sm" id="btn-nuevo-rep" onclick="abrirModalRepuesto()">+ Nuevo repuesto</button>
         </div>
       </div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="kpi-card cyan"><span class="kpi-icon">📦</span><div class="kpi-label">Total SKUs</div><div class="kpi-value cyan" id="alm-total">—</div></div>
-        <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Agotados</div><div class="kpi-value red" id="alm-agotados">—</div></div>
-        <div class="kpi-card amber"><span class="kpi-icon">📉</span><div class="kpi-label">Stock bajo</div><div class="kpi-value amber" id="alm-bajo">—</div></div>
-        <div class="kpi-card green"><span class="kpi-icon">💰</span><div class="kpi-label">Valor inventario</div><div class="kpi-value green" id="alm-valor" style="font-size:20px">—</div></div>
+
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="alm-tab-inventario" onclick="almTab('inventario')">Inventario</button>
+        <button class="pmp-tab" id="alm-tab-kardex" onclick="almTab('kardex')">Kardex</button>
+        <button class="pmp-tab" id="alm-tab-critico" onclick="almTab('critico')">Stock crítico</button>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-        <input class="search-box" type="text" id="alm-search" placeholder="Buscar repuesto, código…" oninput="filtrarRepuestos()" style="flex:1;min-width:200px">
-        <select class="filter-sel" id="alm-f-estado" onchange="filtrarRepuestos()">
-          <option value="">Todos</option><option value="ok">OK</option>
-          <option value="bajo">Stock bajo</option><option value="agotado">Agotado</option>
-        </select>
-        <select class="filter-sel" id="alm-f-cat" onchange="filtrarRepuestos()">
-          <option value="">Todas las categorías</option>
-        </select>
+
+      <!-- TAB: INVENTARIO -->
+      <div id="alm-view-inventario">
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="kpi-card cyan"><span class="kpi-icon">📦</span><div class="kpi-label">Total SKUs</div><div class="kpi-value cyan" id="alm-total">—</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Agotados</div><div class="kpi-value red" id="alm-agotados">—</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">📉</span><div class="kpi-label">Stock bajo</div><div class="kpi-value amber" id="alm-bajo">—</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">💰</span><div class="kpi-label">Valor inventario</div><div class="kpi-value green" id="alm-valor" style="font-size:20px">—</div></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <input class="search-box" type="text" id="alm-search" placeholder="Buscar repuesto, código…" oninput="filtrarRepuestos()" style="flex:1;min-width:200px">
+          <select class="filter-sel" id="alm-f-estado" onchange="filtrarRepuestos()">
+            <option value="">Todos</option><option value="ok">OK</option>
+            <option value="bajo">Stock bajo</option><option value="agotado">Agotado</option>
+          </select>
+          <select class="filter-sel" id="alm-f-cat" onchange="filtrarRepuestos()">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr>
+                <th>Código</th><th>Descripción</th><th>Categoría</th><th>Marca</th>
+                <th>Ubicación</th><th>Stock</th><th>Mín/Máx</th><th>Costo unit.</th><th>Estado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="alm-tbody"><tr><td colspan="10" class="loading-row"><span class="spinner"></span>Cargando inventario…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead><tr>
-              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Marca</th>
-              <th>Ubicación</th><th>Stock</th><th>Mín/Máx</th><th>Costo unit.</th><th>Estado</th><th>Acciones</th>
-            </tr></thead>
-            <tbody id="alm-tbody"><tr><td colspan="10" class="loading-row"><span class="spinner"></span>Cargando inventario…</td></tr></tbody>
-          </table>
+
+      <!-- TAB: KARDEX -->
+      <div id="alm-view-kardex" style="display:none">
+        <div style="margin-bottom:14px;position:relative;max-width:420px">
+          <input class="form-input" type="text" id="kdx-buscar" placeholder="Buscar repuesto por código o descripción…" autocomplete="off" oninput="buscarRepuestoKardex(this.value)">
+          <div id="kdx-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);z-index:50;max-height:240px;overflow-y:auto;margin-top:3px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+        </div>
+        <div id="kdx-contenido">
+          <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Selecciona un repuesto</div><div class="empty-sub">Busca por código o descripción para ver su historial completo de movimientos.</div></div>
+        </div>
+      </div>
+
+      <!-- TAB: STOCK CRÍTICO -->
+      <div id="alm-view-critico" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid rgba(255,68,68,0.2);display:flex;justify-content:space-between;align-items:center">
+              <span class="card-title" style="color:var(--red)">🔴 Agotados</span>
+              <span class="badge red" id="crit-agotados-count">—</span>
+            </div>
+            <div id="crit-agotados-list" style="padding:10px;display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid rgba(255,179,0,0.2);display:flex;justify-content:space-between;align-items:center">
+              <span class="card-title" style="color:var(--amber)">🟡 Stock bajo</span>
+              <span class="badge amber" id="crit-bajos-count">—</span>
+            </div>
+            <div id="crit-bajos-list" style="padding:10px;display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><span class="card-title">Proyección de compra — basada en consumo últimos 90 días</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Repuesto</th><th>Stock actual</th><th>Consumo 90d</th><th>Consumo/mes</th><th>Cant. recomendada</th><th>Acción</th></tr></thead>
+            <tbody id="crit-proy-tbody"><tr><td colspan="6" class="loading-row">Calculando proyección…</td></tr></tbody>
+          </table></div>
         </div>
       </div>
     </div>
@@ -2918,6 +2966,146 @@ window.guardarMovimiento = async function() {
   } catch(e){ showToast('❌','Error',e.message); }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ALMACÉN — Tabs: Kardex + Stock crítico (ver ESPECIFICACION-ALMACEN.md Fase A)
+// ═══════════════════════════════════════════════════════════════════════════════
+let allMovimientosAlm = []; // cache de movimientos_almacen, cargado bajo demanda
+
+window.almTab = function(tab) {
+  ['inventario','kardex','critico'].forEach(t=>{
+    document.getElementById('alm-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('alm-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='critico') renderStockCritico();
+};
+
+async function cargarMovimientosAlm() {
+  if (allMovimientosAlm.length) return allMovimientosAlm; // cache simple, evita refetch en cada tab switch
+  const snap = await getDocs(query(collection(db,'movimientos_almacen'), orderBy('creadoEn','desc'), limit(500)));
+  allMovimientosAlm = snap.docs.map(d=>({id:d.id,...d.data()}));
+  return allMovimientosAlm;
+}
+
+// ─── TAB KARDEX ──────────────────────────────────────────────────────────────────
+window.buscarRepuestoKardex = function(q) {
+  const el = document.getElementById('kdx-resultados');
+  if (!q) { el.style.display='none'; return; }
+  const matches = (allRepuestos||[]).filter(r=>(r.desc||'').toLowerCase().includes(q.toLowerCase())||(r.cod||'').toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if (!matches.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = matches.map(r=>`
+    <div onclick="renderKardex('${r.id}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px"
+         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'">
+      <span style="font-weight:500">${r.desc}</span>
+      <span style="font-family:var(--font-m);font-size:9px;color:var(--txt2);margin-left:8px">${r.cod}</span>
+    </div>`).join('');
+  setTimeout(()=>{ const close=(e)=>{ if(!el.contains(e.target)){el.style.display='none';document.removeEventListener('click',close);} }; document.addEventListener('click',close); },10);
+};
+
+window.renderKardex = async function(repId) {
+  document.getElementById('kdx-resultados').style.display='none';
+  document.getElementById('kdx-buscar').value='';
+  const rep = (allRepuestos||[]).find(r=>r.id===repId); if(!rep) return;
+  const cont = document.getElementById('kdx-contenido');
+  cont.innerHTML = '<div class="loading-row"><span class="spinner"></span>Cargando historial…</div>';
+
+  await cargarMovimientosAlm();
+  const movs = allMovimientosAlm.filter(m=>m.repId===repId).sort((a,b)=>{
+    const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0), fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0);
+    return fb-fa;
+  });
+
+  const hace90 = new Date(); hace90.setDate(hace90.getDate()-90);
+  const consumo90 = movs.filter(m=>m.tipo==='salida' && m.creadoEn?.toDate && m.creadoEn.toDate()>=hace90).reduce((s,m)=>s+(m.qty||0),0);
+  const consumoMes = consumo90/3;
+  const cobertura = consumoMes>0 ? Math.round((rep.stock||0)/(consumoMes/30)) : null;
+  const valorStock = (rep.stock||0)*(rep.cunit||0);
+
+  cont.innerHTML = `
+    <div class="card-hdr" style="margin-bottom:14px">
+      <div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700">${rep.desc}</div>
+        <div style="font-family:var(--font-m);font-size:11px;color:var(--txt2);margin-top:2px">${rep.cod} · ${rep.cat||'—'}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="almTab('inventario');document.getElementById('alm-search').value='${rep.cod}';filtrarRepuestos()">Ver en inventario</button>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:14px">
+      <div class="kpi-card cyan"><span class="kpi-icon">📦</span><div class="kpi-label">Stock actual</div><div class="kpi-value cyan">${rep.stock??0}</div><div class="kpi-sub">${rep.uni||'unid.'}</div></div>
+      <div class="kpi-card amber"><span class="kpi-icon">📉</span><div class="kpi-label">Consumo/mes</div><div class="kpi-value amber">${consumoMes.toFixed(1)}</div><div class="kpi-sub">prom. últimos 90 días</div></div>
+      <div class="kpi-card ${cobertura!=null&&cobertura<30?'red':'green'}"><span class="kpi-icon">⏱️</span><div class="kpi-label">Días cobertura</div><div class="kpi-value ${cobertura!=null&&cobertura<30?'red':'green'}">${cobertura??'—'}</div><div class="kpi-sub">al ritmo actual</div></div>
+      <div class="kpi-card green"><span class="kpi-icon">💰</span><div class="kpi-label">Valor en stock</div><div class="kpi-value green" style="font-size:18px">S/ ${valorStock.toLocaleString('es-PE',{maximumFractionDigits:0})}</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span class="card-title">Historial de movimientos</span>
+        <span class="badge cyan">${movs.length} registros</span>
+      </div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Stock antes</th><th>Stock después</th><th>Origen</th><th>Responsable</th></tr></thead>
+        <tbody>
+          ${movs.length ? movs.map(m=>{
+            const fecha = m.creadoEn?.toDate ? m.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+            const tipoCls = m.tipo==='entrada'?'cerrada':'vencida';
+            const origen = m.otId ? `<span class="badge cyan" style="cursor:pointer;font-size:10px" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">${m.otCodigo||m.otId}</span>` : '<span style="font-size:11px;color:var(--txt2)">Manual</span>';
+            return `<tr>
+              <td class="mono" style="font-size:11px">${fecha}</td>
+              <td><span class="status ${tipoCls}" style="font-size:10px">${m.tipo}</span></td>
+              <td class="mono" style="color:${m.tipo==='entrada'?'var(--green)':'var(--red)'}">${m.tipo==='entrada'?'+':'-'}${m.qty}</td>
+              <td class="mono" style="color:var(--txt2)">${m.stockAntes??'—'}</td>
+              <td class="mono">${m.stockDespues??'—'}</td>
+              <td>${origen}</td>
+              <td style="font-size:12px;color:var(--txt2)">${m.resp||'—'}</td>
+            </tr>`;
+          }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--txt2);padding:20px">Sin movimientos registrados para este repuesto</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>`;
+};
+
+// ─── TAB STOCK CRÍTICO ───────────────────────────────────────────────────────────
+window.renderStockCritico = async function() {
+  const agotados = (allRepuestos||[]).filter(r=>r.estado==='agotado');
+  const bajos    = (allRepuestos||[]).filter(r=>r.estado==='bajo');
+
+  document.getElementById('crit-agotados-count').textContent = agotados.length;
+  document.getElementById('crit-bajos-count').textContent    = bajos.length;
+
+  const tarjetaRep = (r) => `<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;cursor:pointer" onclick="almTab('kardex');renderKardex('${r.id}')">
+    <div style="font-size:12px;font-weight:500">${r.desc}</div>
+    <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:2px">${r.cod} · Stock: ${r.stock??0} ${r.uni||''} (mín. ${r.min??0})</div>
+  </div>`;
+  document.getElementById('crit-agotados-list').innerHTML = agotados.length ? agotados.map(tarjetaRep).join('') : '<div style="color:var(--txt2);font-size:12px;padding:10px">Sin repuestos agotados</div>';
+  document.getElementById('crit-bajos-list').innerHTML    = bajos.length ? bajos.map(tarjetaRep).join('') : '<div style="color:var(--txt2);font-size:12px;padding:10px">Sin repuestos en stock bajo</div>';
+
+  // ── Proyección de compra — consumo de los últimos 90 días ──
+  await cargarMovimientosAlm();
+  const hace90 = new Date(); hace90.setDate(hace90.getDate()-90);
+  const criticos = [...agotados, ...bajos];
+  const tbody = document.getElementById('crit-proy-tbody');
+
+  if (!criticos.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:20px">✅ Sin repuestos en estado crítico</td></tr>';
+    return;
+  }
+
+  const filas = criticos.map(r=>{
+    const consumo90 = allMovimientosAlm.filter(m=>m.repId===r.id && m.tipo==='salida' && m.creadoEn?.toDate && m.creadoEn.toDate()>=hace90).reduce((s,m)=>s+(m.qty||0),0);
+    const consumoMes = consumo90/3;
+    const recomendada = Math.max(Math.ceil(consumoMes*2 - (r.stock||0)), 0);
+    return {r, consumo90, consumoMes, recomendada};
+  }).sort((a,b)=>b.consumoMes-a.consumoMes);
+
+  tbody.innerHTML = filas.map(({r,consumo90,consumoMes,recomendada})=>`
+    <tr>
+      <td style="font-size:12px;font-weight:500">${r.desc}</td>
+      <td class="mono" style="color:${r.estado==='agotado'?'var(--red)':'var(--amber)'}">${r.stock??0} ${r.uni||''}</td>
+      <td class="mono">${consumo90.toFixed(0)}</td>
+      <td class="mono">${consumoMes.toFixed(1)}</td>
+      <td class="mono" style="color:var(--cyan);font-weight:600">${consumoMes>0?recomendada+' '+(r.uni||'unid.'):'—'}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="abrirModalMovimiento('entrada','${r.id}')">+ Registrar compra</button></td>
+    </tr>`).join('');
+};
+
 // ─── LECTURAS ─────────────────────────────────────────────────────────────────
 window.cargarLecturas = async function() {
   try {
@@ -3679,6 +3867,21 @@ function activosDeOsmosis() {
   allDosificadoresOsm.forEach(d=>idsOsm.add(d.id));
   if (raiz) idsOsm.add(raiz.id);
   return idsOsm;
+}
+
+// ─── Generalización: todos los activos descendientes de cualquier nodo raíz ────
+// Reutilizable por Calderos, Refrigeración, Producción (ver ESPECIFICACION-ALMACEN.md, RF-09)
+function activosDeArea(nombreParcial) {
+  const raiz = allActivos.find(a=>(a.nombre||'').toLowerCase().includes(nombreParcial.toLowerCase()));
+  const ids = new Set();
+  if (!raiz) return ids;
+  ids.add(raiz.id);
+  let cola = [raiz.id];
+  while (cola.length) {
+    const actual = cola.shift();
+    allActivos.filter(a=>a.padreId===actual).forEach(h=>{ ids.add(h.id); cola.push(h.id); });
+  }
+  return ids;
 }
 
 function renderConsumoOsm() {
