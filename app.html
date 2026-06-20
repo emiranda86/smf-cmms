@@ -345,8 +345,10 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
       </div>
 
       <!-- Tabs -->
-      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content">
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
         <button class="pmp-tab active" id="pmp-tab-actividades" onclick="pmpTab('actividades')">Actividades programadas</button>
+        <button class="pmp-tab" id="pmp-tab-gantt" onclick="pmpTab('gantt')">Gantt mensual</button>
+        <button class="pmp-tab" id="pmp-tab-anual" onclick="pmpTab('anual')">Resumen anual</button>
         <button class="pmp-tab" id="pmp-tab-plantillas" onclick="pmpTab('plantillas')">Plantillas</button>
       </div>
 
@@ -377,6 +379,59 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
                 <th>Última ejecución</th><th>Próxima fecha</th><th>Estado</th><th>Acciones</th>
               </tr></thead>
               <tbody id="pmp-tbody"><tr><td colspan="8" class="loading-row"><span class="spinner"></span>Cargando plan…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: GANTT MENSUAL -->
+      <div id="pmp-view-gantt" style="display:none">
+        <div class="card">
+          <div class="card-hdr">
+            <div style="display:flex;align-items:center;gap:14px">
+              <button class="btn btn-secondary btn-sm" onclick="gantMesAnterior()">← Mes anterior</button>
+              <div class="card-title" id="gantt-mes-label" style="min-width:160px;text-align:center">—</div>
+              <button class="btn btn-secondary btn-sm" onclick="gantMesSiguiente()">Mes siguiente →</button>
+            </div>
+            <div style="display:flex;gap:14px;align-items:center;font-size:11px;font-family:var(--font-m);color:var(--txt2)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Ejecutada</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--cyan);display:inline-block"></span>Programada</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--amber);display:inline-block"></span>Pendiente</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block"></span>Vencida</span>
+            </div>
+          </div>
+          <div style="position:relative;overflow-x:auto">
+            <canvas id="gantt-canvas" style="display:block"></canvas>
+            <div id="gantt-tooltip" style="display:none;position:absolute;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-size:11px;pointer-events:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:240px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px">Actividades del mes seleccionado</div>
+          <div id="gantt-lista-mes" style="font-size:12px;color:var(--txt2)">Selecciona una barra del Gantt para ver el detalle.</div>
+        </div>
+      </div>
+
+      <!-- TAB: RESUMEN ANUAL -->
+      <div id="pmp-view-anual" style="display:none">
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Cumplimiento de cumplimiento — Año actual</div>
+            <span class="badge cyan" id="anual-año-label">—</span>
+          </div>
+          <div id="anual-barras" style="display:flex;align-items:flex-end;gap:8px;height:200px;padding:10px 4px 4px"></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Ejecutadas en el año</div><div class="kpi-value green" id="anual-k-ejecutadas">—</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">📊</span><div class="kpi-label">% Cumplimiento anual</div><div class="kpi-value cyan" id="anual-k-pct">—</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">📅</span><div class="kpi-label">Total programadas</div><div class="kpi-value amber" id="anual-k-total">—</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Mes con más vencidas</div><div class="kpi-value red" id="anual-k-peor-mes" style="font-size:18px">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px">Detalle por mes</div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Mes</th><th>Programadas</th><th>Ejecutadas</th><th>Vencidas</th><th>% Cumplimiento</th></tr></thead>
+              <tbody id="anual-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -1993,10 +2048,12 @@ const FREC_LABEL = { semanal:'Semanal', mensual:'Mensual', trimestral:'Trimestra
 
 // ─── Tabs ──────────────────────────────────────────────────────────────────────
 window.pmpTab = function(tab) {
-  document.getElementById('pmp-view-actividades').style.display = tab==='actividades'?'block':'none';
-  document.getElementById('pmp-view-plantillas').style.display  = tab==='plantillas'?'block':'none';
-  document.getElementById('pmp-tab-actividades').classList.toggle('active', tab==='actividades');
-  document.getElementById('pmp-tab-plantillas').classList.toggle('active', tab==='plantillas');
+  ['actividades','gantt','anual','plantillas'].forEach(t=>{
+    document.getElementById('pmp-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('pmp-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='gantt') setTimeout(renderGanttMensual, 30);
+  if (tab==='anual') setTimeout(renderResumenAnual, 30);
 };
 
 // ─── Carga inicial ─────────────────────────────────────────────────────────────
@@ -2324,9 +2381,234 @@ window.marcarEjecutadaPMP = async function(actId) {
     if (idx>=0) allPmpActividades[idx] = {...allPmpActividades[idx], ...datos};
     renderActividadesPMP(allPmpActividades);
     actualizarKpisPMP();
+    if (document.getElementById('pmp-view-gantt').style.display!=='none') renderGanttMensual();
     showToast('✅','Actividad marcada como ejecutada',`Próxima: ${datos.proximaFecha}`);
   } catch(e){ showToast('❌','Error',e.message); }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GANTT MENSUAL — Canvas interactivo con línea HOY
+// ═══════════════════════════════════════════════════════════════════════════════
+let ganttMesActual = new Date().getMonth();
+let ganttAñoActual = new Date().getFullYear();
+let _ganttBarras = []; // hitboxes para tooltip/click
+
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+window.gantMesAnterior = function() {
+  ganttMesActual--;
+  if (ganttMesActual<0) { ganttMesActual=11; ganttAñoActual--; }
+  renderGanttMensual();
+};
+window.gantMesSiguiente = function() {
+  ganttMesActual++;
+  if (ganttMesActual>11) { ganttMesActual=0; ganttAñoActual++; }
+  renderGanttMensual();
+};
+
+function diasEnMes(mes, año) { return new Date(año, mes+1, 0).getDate(); }
+
+// Determina el estado visual de una actividad dentro del mes mostrado
+function estadoVisualGantt(act, fechaDia) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const prox = act.proximaFecha ? new Date(act.proximaFecha) : null;
+  const ult  = act.ultimaEjecucion ? new Date(act.ultimaEjecucion) : null;
+  if (ult && sameDate(ult, fechaDia)) return 'ejecutada';
+  if (prox && sameDate(prox, fechaDia)) {
+    if (prox < hoy) return 'vencida';
+    const diff = Math.round((prox-hoy)/86400000);
+    return diff<=7 ? 'pendiente' : 'programada';
+  }
+  return null;
+}
+function sameDate(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+function renderGanttMensual() {
+  const canvas = document.getElementById('gantt-canvas');
+  if (!canvas) return;
+  document.getElementById('gantt-mes-label').textContent = `${MESES_ES[ganttMesActual]} ${ganttAñoActual}`;
+
+  const nDias = diasEnMes(ganttMesActual, ganttAñoActual);
+  // Filas: una por cada actividad PMP cuya proximaFecha cae en este mes O cuya ultimaEjecucion cae en este mes
+  const filas = allPmpActividades.filter(a => {
+    const enMes = (f) => f && new Date(f).getMonth()===ganttMesActual && new Date(f).getFullYear()===ganttAñoActual;
+    return enMes(a.proximaFecha) || enMes(a.ultimaEjecucion);
+  });
+
+  const rowH = 26, headerH = 40, labelW = 220, dayW = 26;
+  const width  = labelW + nDias*dayW + 20;
+  const height = headerH + Math.max(filas.length,1)*rowH + 20;
+  const dpr = window.devicePixelRatio||1;
+  canvas.width  = width*dpr;
+  canvas.height = height*dpr;
+  canvas.style.width  = width+'px';
+  canvas.style.height = height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,width,height);
+
+  // Fondo filas alternadas
+  for (let r=0; r<Math.max(filas.length,1); r++){
+    ctx.fillStyle = r%2===0 ? 'rgba(255,255,255,0.015)' : 'transparent';
+    ctx.fillRect(labelW, headerH+r*rowH, nDias*dayW, rowH);
+  }
+
+  // Header días
+  ctx.font = '10px DM Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let d=1; d<=nDias; d++){
+    const x = labelW + (d-1)*dayW + dayW/2;
+    const fecha = new Date(ganttAñoActual, ganttMesActual, d);
+    const esFinde = fecha.getDay()===0 || fecha.getDay()===6;
+    ctx.fillStyle = esFinde ? 'rgba(255,255,255,0.03)' : 'transparent';
+    ctx.fillRect(labelW+(d-1)*dayW, headerH, dayW, height-headerH);
+    ctx.fillStyle = '#5a6272';
+    ctx.fillText(String(d), x, 26);
+  }
+  // Línea separadora header
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath(); ctx.moveTo(0,headerH); ctx.lineTo(width,headerH); ctx.stroke();
+
+  // Etiquetas de actividad (columna izquierda)
+  ctx.textAlign = 'left';
+  ctx.font = '11px Geist, sans-serif';
+  _ganttBarras = [];
+  filas.forEach((act, r) => {
+    const y = headerH + r*rowH;
+    ctx.fillStyle = '#9ba3b2';
+    const texto = `${act.activoNombre} — ${act.nombre}`;
+    ctx.fillText(texto.length>32 ? texto.slice(0,30)+'…' : texto, 8, y+rowH/2+4);
+
+    // Barra(s) del día correspondiente
+    [
+      {fecha:act.proximaFecha, tipo:'proximaFecha'},
+      {fecha:act.ultimaEjecucion, tipo:'ultimaEjecucion'},
+    ].forEach(({fecha,tipo}) => {
+      if (!fecha) return;
+      const fObj = new Date(fecha);
+      if (fObj.getMonth()!==ganttMesActual || fObj.getFullYear()!==ganttAñoActual) return;
+      const dia = fObj.getDate();
+      const x = labelW + (dia-1)*dayW + 3;
+      const estado = tipo==='ultimaEjecucion' ? 'ejecutada' : estadoVisualGantt(act, fObj);
+      const colores = {ejecutada:'#00e676', programada:'#00d4ff', pendiente:'#ffb300', vencida:'#ff4444'};
+      const color = colores[estado] || '#5a6272';
+      ctx.fillStyle = color;
+      const bw = dayW-6, bh = rowH-8;
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x, y+4, bw, bh, 3) : ctx.rect(x,y+4,bw,bh);
+      ctx.fill();
+      _ganttBarras.push({x, y:y+4, w:bw, h:bh, act, estado, fecha});
+    });
+  });
+
+  // Línea "HOY"
+  const hoy = new Date();
+  if (hoy.getMonth()===ganttMesActual && hoy.getFullYear()===ganttAñoActual) {
+    const xHoy = labelW + (hoy.getDate()-1)*dayW + dayW/2;
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(xHoy, headerH); ctx.lineTo(xHoy, height); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = '9px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('HOY', xHoy, headerH-4);
+  }
+
+  if (!filas.length) {
+    ctx.fillStyle = '#5a6272';
+    ctx.font = '12px Geist, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sin actividades programadas para este mes', width/2, headerH+40);
+  }
+
+  // Interacción: click muestra detalle
+  canvas.onclick = function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+    const hit = _ganttBarras.find(b => mx>=b.x && mx<=b.x+b.w && my>=b.y && my<=b.y+b.h);
+    const cont = document.getElementById('gantt-lista-mes');
+    if (hit) {
+      const estLbl = {ejecutada:'Ejecutada',programada:'Programada',pendiente:'Pendiente (próxima)',vencida:'Vencida'}[hit.estado]||hit.estado;
+      cont.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px;color:var(--txt0)">${hit.act.nombre}</div>
+            <div style="font-size:12px;color:var(--cyan);margin-top:2px">${hit.act.activoNombre}</div>
+            <div style="font-size:11px;color:var(--txt2);margin-top:6px">Fecha: ${hit.fecha} · Estado: ${estLbl} · Especialidad: ${hit.act.especialidad||'—'}</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="generarOTDesdePMP('${hit.act.id}')">+ Generar OT</button>
+        </div>`;
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESUMEN ANUAL — cumplimiento mes a mes
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderResumenAnual() {
+  const añoActual = new Date().getFullYear();
+  document.getElementById('anual-año-label').textContent = añoActual;
+
+  const datosMes = MESES_ES.map((nombreMes, m) => {
+    const programadas = allPmpActividades.filter(a => {
+      const f = a.proximaFecha ? new Date(a.proximaFecha) : null;
+      return f && f.getMonth()===m && f.getFullYear()===añoActual;
+    });
+    const ejecutadas = allPmpActividades.filter(a => {
+      const f = a.ultimaEjecucion ? new Date(a.ultimaEjecucion) : null;
+      return f && f.getMonth()===m && f.getFullYear()===añoActual;
+    });
+    const hoy = new Date();
+    const vencidas = programadas.filter(a => {
+      const f = new Date(a.proximaFecha);
+      return f < hoy && !(a.ultimaEjecucion && new Date(a.ultimaEjecucion) >= f);
+    });
+    const totalProg = programadas.length;
+    const pct = totalProg>0 ? Math.round((ejecutadas.length/totalProg)*100) : (ejecutadas.length>0?100:0);
+    return { mes:nombreMes, programadas:totalProg, ejecutadas:ejecutadas.length, vencidas:vencidas.length, pct };
+  });
+
+  // Barras
+  const maxVal = Math.max(...datosMes.map(d=>Math.max(d.programadas,d.ejecutadas,1)));
+  const barrasEl = document.getElementById('anual-barras');
+  barrasEl.innerHTML = datosMes.map(d => {
+    const hEj  = Math.max((d.ejecutadas/maxVal)*160, d.ejecutadas>0?6:0);
+    const hProg= Math.max((d.programadas/maxVal)*160, d.programadas>0?6:0);
+    const esMesActual = MESES_ES[new Date().getMonth()]===d.mes;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="display:flex;gap:3px;align-items:flex-end;height:160px">
+        <div style="width:14px;height:${hProg}px;background:rgba(0,212,255,0.35);border-radius:3px 3px 0 0" title="Programadas: ${d.programadas}"></div>
+        <div style="width:14px;height:${hEj}px;background:var(--green);border-radius:3px 3px 0 0" title="Ejecutadas: ${d.ejecutadas}"></div>
+      </div>
+      <div style="font-size:9px;font-family:var(--font-m);color:${esMesActual?'var(--cyan)':'var(--txt2)'}">${d.mes.slice(0,3)}</div>
+    </div>`;
+  }).join('');
+
+  // KPIs
+  const totalEj  = datosMes.reduce((s,d)=>s+d.ejecutadas,0);
+  const totalProg= datosMes.reduce((s,d)=>s+d.programadas,0);
+  const pctAnual = totalProg>0 ? Math.round((totalEj/totalProg)*100) : 0;
+  const peorMes  = datosMes.reduce((peor,d)=> d.vencidas>(peor?.vencidas||0) ? d : peor, null);
+
+  document.getElementById('anual-k-ejecutadas').textContent = totalEj;
+  document.getElementById('anual-k-pct').textContent        = pctAnual+'%';
+  document.getElementById('anual-k-total').textContent      = totalProg;
+  document.getElementById('anual-k-peor-mes').textContent   = peorMes && peorMes.vencidas>0 ? `${peorMes.mes} (${peorMes.vencidas})` : 'Ninguno';
+
+  // Tabla
+  document.getElementById('anual-tbody').innerHTML = datosMes.map(d => {
+    const pctCol = d.pct>=90?'var(--green)':d.pct>=70?'var(--amber)':'var(--red)';
+    return `<tr>
+      <td style="font-weight:500">${d.mes}</td>
+      <td class="mono">${d.programadas}</td>
+      <td class="mono" style="color:var(--green)">${d.ejecutadas}</td>
+      <td class="mono" style="color:${d.vencidas>0?'var(--red)':'var(--txt2)'}">${d.vencidas}</td>
+      <td><span style="font-family:var(--font-m);font-weight:600;color:${pctCol}">${d.pct}%</span></td>
+    </tr>`;
+  }).join('');
+}
 
 // Hook showPage para cargar PMP al entrar
 const _showPagePMP = window.showPage;
