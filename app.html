@@ -155,6 +155,12 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
 
 /* ── KANBAN ── */
 .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.pmp-tab{background:transparent;border:none;color:var(--txt2);font-family:var(--font-b);font-size:12px;padding:7px 16px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.pmp-tab:hover{color:var(--txt0);}
+.pmp-tab.active{background:var(--bg4);color:var(--cyan);}
+.plantilla-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;transition:all .15s;}
+.plantilla-card:hover{border-color:var(--border2);}
+.plantilla-icon{font-size:26px;margin-bottom:8px;}
 .kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
 .kanban-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .kanban-lbl{font-size:12px;font-weight:600;}
@@ -220,6 +226,10 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
     <div class="nav-item" id="nav-sol" onclick="showPage('solicitudes',this)">
       <span class="nav-icon">📋</span><span class="nav-label">Solicitudes</span>
       <span class="nav-badge" id="badge-sol">—</span>
+    </div>
+    <div class="nav-item" id="nav-pmp" onclick="showPage('pmp',this)">
+      <span class="nav-icon">📅</span><span class="nav-label">Plan Maestro (PMP)</span>
+      <span class="nav-badge" id="badge-pmp">—</span>
     </div>
     <div class="nav-item" onclick="showPage('activos',this)">
       <span class="nav-icon">🏭</span><span class="nav-label">Activos</span>
@@ -313,6 +323,70 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
       </div>
       <div class="kanban" id="kanban-board">
         <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando solicitudes…</div>
+      </div>
+    </div>
+
+    <!-- ══ PMP — PLAN MAESTRO DE MANTENIMIENTO ══ -->
+    <div class="page" id="page-pmp">
+      <div class="page-header">
+        <div><div class="page-h1">Plan Maestro de Mantenimiento</div><div class="page-sub">Plantillas reutilizables + asignación masiva a activos reales</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" id="btn-nueva-plantilla" onclick="abrirModalPlantilla()">+ Nueva plantilla</button>
+          <button class="btn btn-primary btn-sm" id="btn-asignar-pmp" onclick="abrirModalAsignar()">+ Asignar a activos</button>
+        </div>
+      </div>
+
+      <!-- KPIs PMP -->
+      <div class="kpi-grid">
+        <div class="kpi-card cyan"><span class="kpi-icon">📋</span><div class="kpi-label">Plantillas activas</div><div class="kpi-value cyan" id="pmp-k-plantillas">—</div></div>
+        <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Actividades al día</div><div class="kpi-value green" id="pmp-k-aldia">—</div></div>
+        <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">Próximas 7 días</div><div class="kpi-value amber" id="pmp-k-proximas">—</div></div>
+        <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Vencidas</div><div class="kpi-value red" id="pmp-k-vencidas">—</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content">
+        <button class="pmp-tab active" id="pmp-tab-actividades" onclick="pmpTab('actividades')">Actividades programadas</button>
+        <button class="pmp-tab" id="pmp-tab-plantillas" onclick="pmpTab('plantillas')">Plantillas</button>
+      </div>
+
+      <!-- TAB: ACTIVIDADES PROGRAMADAS -->
+      <div id="pmp-view-actividades">
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <input class="search-box" type="text" id="pmp-search" placeholder="Buscar actividad, activo…" oninput="filtrarPMP()" style="flex:1;min-width:200px">
+          <select class="filter-sel" id="pmp-f-estado" onchange="filtrarPMP()">
+            <option value="">Todos los estados</option>
+            <option value="al_dia">Al día</option>
+            <option value="proxima">Próxima (7 días)</option>
+            <option value="vencida">Vencida</option>
+          </select>
+          <select class="filter-sel" id="pmp-f-frec" onchange="filtrarPMP()">
+            <option value="">Todas las frecuencias</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensual">Mensual</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="semestral">Semestral</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr>
+                <th>Actividad</th><th>Activo</th><th>Frecuencia</th><th>Especialidad</th>
+                <th>Última ejecución</th><th>Próxima fecha</th><th>Estado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="pmp-tbody"><tr><td colspan="8" class="loading-row"><span class="spinner"></span>Cargando plan…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: PLANTILLAS -->
+      <div id="pmp-view-plantillas" style="display:none">
+        <div id="pmp-plantillas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando plantillas…</div>
+        </div>
       </div>
     </div>
 
@@ -812,6 +886,114 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
   </div>
 </div>
 
+<!-- ══ MODAL: NUEVA PLANTILLA PMP ══ -->
+<div class="modal-overlay" id="modal-plantilla">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva plantilla de mantenimiento</div>
+      <button class="modal-close" onclick="cerrarModal('modal-plantilla')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Nombre de la actividad</label>
+          <input class="form-input" type="text" id="pl-nombre" placeholder="Ej: Cambio de filtro de aceite">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-textarea" id="pl-desc" placeholder="Detalle de la actividad a realizar…" style="min-height:60px"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de equipo (aplica a)</label>
+          <select class="form-select" id="pl-tipo-equipo">
+            <option value="compresor">Compresor</option>
+            <option value="bomba">Bomba</option>
+            <option value="motor">Motor eléctrico</option>
+            <option value="caldero">Caldero</option>
+            <option value="condensador">Condensador</option>
+            <option value="membrana">Membrana / Filtro</option>
+            <option value="faja">Faja transportadora</option>
+            <option value="congelador">Congelador de placas</option>
+            <option value="general">General / Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frecuencia</label>
+          <select class="form-select" id="pl-frecuencia">
+            <option value="semanal">Semanal</option>
+            <option value="mensual" selected>Mensual</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="semestral">Semestral</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Especialidad requerida</label>
+          <select class="form-select" id="pl-especialidad">
+            <option>Frigorista</option><option>Electricista</option>
+            <option>Mecánico de mantenimiento</option><option>Mecánico soldador</option>
+            <option>Calderista</option><option>Operador de ósmosis</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horas estimadas</label>
+          <input class="form-input" type="number" id="pl-horas" placeholder="Ej: 2" min="0.5" step="0.5">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Materiales / Repuestos sugeridos</label>
+          <input class="form-input" type="text" id="pl-materiales" placeholder="Ej: Filtro aceite, aceite sintético 2L">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-plantilla')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPlantilla()">Crear plantilla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ASIGNAR PLANTILLA A ACTIVOS ══ -->
+<div class="modal-overlay" id="modal-asignar">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div class="modal-title">Asignar plantilla a activos</div>
+      <button class="modal-close" onclick="cerrarModal('modal-asignar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group full" style="margin-bottom:14px">
+        <label class="form-label">Plantilla a asignar</label>
+        <select class="form-select" id="as-plantilla" onchange="onPlantillaChange()"></select>
+      </div>
+
+      <div class="form-group full" style="margin-bottom:14px">
+        <label class="form-label">Fecha de inicio del plan</label>
+        <input class="form-input" type="date" id="as-fecha-inicio">
+      </div>
+
+      <div class="form-group full" style="margin-bottom:10px">
+        <label class="form-label">Buscar y seleccionar activos (tipo sugerido según plantilla)</label>
+        <input class="form-input" type="text" id="as-buscar-activo" placeholder="Buscar por nombre o código…" oninput="filtrarActivosAsignar(this.value)">
+      </div>
+
+      <div id="as-lista-activos" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);padding:6px;background:var(--bg3)">
+        <div class="loading-row" style="padding:20px"><span class="spinner"></span>Cargando activos…</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--txt2);font-family:var(--font-m)">
+        <span id="as-contador">0 activos seleccionados</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosActivos(true)">Seleccionar todos</button>
+          <button class="btn btn-ghost btn-sm" onclick="seleccionarTodosActivos(false)">Limpiar selección</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-asignar')">Cancelar</button>
+      <button class="btn btn-primary" id="as-btn-guardar" onclick="guardarAsignacionMasiva()">Asignar a activos seleccionados</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast">
   <span class="toast-icon" id="toast-icon">✅</span>
@@ -832,7 +1014,7 @@ const firebaseConfig = {
 import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut }
                             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, setDoc,
+import { getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
          query, where, orderBy, limit, serverTimestamp, increment }
                             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -872,6 +1054,7 @@ onAuthStateChanged(auth, async (user) => {
   cargarSolicitudes();
   cargarRepuestos();
   cargarLecturas();
+  cargarPMP();
 });
 
 function setupUI() {
@@ -1786,6 +1969,371 @@ function showToast(icon, msg, sub) {
   setTimeout(()=>t.classList.remove('show'),4000);
 }
 window.showToast = showToast;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO PMP — PLAN MAESTRO DE MANTENIMIENTO
+// Plantillas reutilizables + asignación masiva a activos reales + Firestore
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allPlantillas = [];
+let allPmpActividades = [];
+const PMP_TIPO_KEYWORDS = {
+  compresor:   ['compresor'],
+  bomba:       ['bomba'],
+  motor:       ['motor'],
+  caldero:     ['caldero','caldera'],
+  condensador: ['condensador'],
+  membrana:    ['membrana','filtro'],
+  faja:        ['faja','transportador'],
+  congelador:  ['congelador','placas'],
+  general:     [],
+};
+const FREC_DIAS = { semanal:7, mensual:30, trimestral:90, semestral:180, anual:365 };
+const FREC_LABEL = { semanal:'Semanal', mensual:'Mensual', trimestral:'Trimestral', semestral:'Semestral', anual:'Anual' };
+
+// ─── Tabs ──────────────────────────────────────────────────────────────────────
+window.pmpTab = function(tab) {
+  document.getElementById('pmp-view-actividades').style.display = tab==='actividades'?'block':'none';
+  document.getElementById('pmp-view-plantillas').style.display  = tab==='plantillas'?'block':'none';
+  document.getElementById('pmp-tab-actividades').classList.toggle('active', tab==='actividades');
+  document.getElementById('pmp-tab-plantillas').classList.toggle('active', tab==='plantillas');
+};
+
+// ─── Carga inicial ─────────────────────────────────────────────────────────────
+async function cargarPMP() {
+  try {
+    const [plSnap, actSnap] = await Promise.all([
+      getDocs(collection(db,'pmp_plantillas')),
+      getDocs(collection(db,'pmp_actividades')),
+    ]);
+    allPlantillas      = plSnap.docs.map(d=>({id:d.id,...d.data()}));
+    allPmpActividades  = actSnap.docs.map(d=>({id:d.id,...d.data()}));
+    actualizarKpisPMP();
+    renderPlantillas();
+    renderActividadesPMP(allPmpActividades);
+  } catch(e){ console.error('Error cargando PMP:', e); }
+}
+
+function calcularEstadoPMP(proximaFecha) {
+  if (!proximaFecha) return 'al_dia';
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const prox = new Date(proximaFecha); prox.setHours(0,0,0,0);
+  const diffDias = Math.round((prox - hoy) / 86400000);
+  if (diffDias < 0) return 'vencida';
+  if (diffDias <= 7) return 'proxima';
+  return 'al_dia';
+}
+
+function actualizarKpisPMP() {
+  const estados = allPmpActividades.map(a => calcularEstadoPMP(a.proximaFecha));
+  document.getElementById('pmp-k-plantillas').textContent = allPlantillas.length;
+  document.getElementById('pmp-k-aldia').textContent    = estados.filter(e=>e==='al_dia').length;
+  document.getElementById('pmp-k-proximas').textContent = estados.filter(e=>e==='proxima').length;
+  document.getElementById('pmp-k-vencidas').textContent = estados.filter(e=>e==='vencida').length;
+  const vencidas = estados.filter(e=>e==='vencida').length;
+  document.getElementById('badge-pmp').textContent = vencidas>0 ? vencidas : '—';
+}
+
+// ─── PLANTILLAS — render ────────────────────────────────────────────────────────
+const TIPO_EQUIPO_ICON = {
+  compresor:'❄️', bomba:'💧', motor:'⚙️', caldero:'🔥', condensador:'🌡️',
+  membrana:'🧪', faja:'➡️', congelador:'🧊', general:'🔧'
+};
+
+function renderPlantillas() {
+  const grid = document.getElementById('pmp-plantillas-grid');
+  if (!allPlantillas.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📋</div>
+      <div class="empty-title">Sin plantillas</div>
+      <div class="empty-sub">Crea tu primera plantilla de mantenimiento — por ejemplo "Cambio de filtro de aceite" para todos los compresores.</div></div>`;
+    return;
+  }
+  grid.innerHTML = allPlantillas.map(p => {
+    const asignados = allPmpActividades.filter(a=>a.plantillaId===p.id).length;
+    return `<div class="plantilla-card">
+      <div class="plantilla-icon">${TIPO_EQUIPO_ICON[p.tipoEquipo]||'🔧'}</div>
+      <div style="font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:4px">${p.nombre}</div>
+      <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:10px">${p.desc||'Sin descripción'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge cyan">${FREC_LABEL[p.frecuencia]||p.frecuencia}</span>
+        <span class="badge gray">${p.especialidad||'—'}</span>
+        <span class="badge green">${asignados} activos</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="abrirModalAsignar('${p.id}')">+ Asignar</button>
+        <button class="action-btn" onclick="eliminarPlantilla('${p.id}','${p.nombre.replace(/'/g,"\\'")}')" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PLANTILLAS — crear ─────────────────────────────────────────────────────────
+window.abrirModalPlantilla = function() {
+  ['pl-nombre','pl-desc','pl-horas','pl-materiales'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pl-tipo-equipo').value = 'compresor';
+  document.getElementById('pl-frecuencia').value  = 'mensual';
+  document.getElementById('modal-plantilla').classList.add('open');
+};
+
+window.guardarPlantilla = async function() {
+  const nombre = document.getElementById('pl-nombre').value.trim();
+  if (!nombre) { showToast('⚠️','El nombre de la actividad es obligatorio',''); return; }
+  try {
+    const nueva = {
+      nombre,
+      desc:         document.getElementById('pl-desc').value.trim(),
+      tipoEquipo:   document.getElementById('pl-tipo-equipo').value,
+      frecuencia:   document.getElementById('pl-frecuencia').value,
+      especialidad: document.getElementById('pl-especialidad').value,
+      horas:        parseFloat(document.getElementById('pl-horas').value)||1,
+      materiales:   document.getElementById('pl-materiales').value.trim(),
+      creadoPor:    currentUser.uid,
+      creadoEn:     serverTimestamp(),
+    };
+    const ref = await addDoc(collection(db,'pmp_plantillas'), nueva);
+    allPlantillas.push({id:ref.id,...nueva});
+    cerrarModal('modal-plantilla');
+    showToast('✅','Plantilla creada',nombre);
+    renderPlantillas();
+    actualizarKpisPMP();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+window.eliminarPlantilla = async function(id, nombre) {
+  if (!confirm(`¿Eliminar la plantilla "${nombre}"?\n\nLas actividades ya asignadas a activos NO se eliminan, solo la plantilla.`)) return;
+  try {
+    await deleteDoc(doc(db,'pmp_plantillas',id));
+    allPlantillas = allPlantillas.filter(p=>p.id!==id);
+    renderPlantillas();
+    actualizarKpisPMP();
+    showToast('🗑',`Plantilla "${nombre}" eliminada`,'');
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// ─── ASIGNACIÓN MASIVA ──────────────────────────────────────────────────────────
+let _activosSeleccionadosAsignar = new Set();
+
+window.abrirModalAsignar = function(plantillaIdPreseleccionada) {
+  const sel = document.getElementById('as-plantilla');
+  sel.innerHTML = allPlantillas.map(p=>
+    `<option value="${p.id}" ${p.id===plantillaIdPreseleccionada?'selected':''}>${TIPO_EQUIPO_ICON[p.tipoEquipo]||''} ${p.nombre} (${FREC_LABEL[p.frecuencia]})</option>`
+  ).join('');
+  if (!allPlantillas.length) {
+    showToast('⚠️','Primero crea una plantilla','Ve a la pestaña Plantillas');
+    return;
+  }
+  document.getElementById('as-fecha-inicio').value = new Date().toISOString().split('T')[0];
+  _activosSeleccionadosAsignar = new Set();
+  document.getElementById('modal-asignar').classList.add('open');
+  onPlantillaChange();
+};
+
+window.onPlantillaChange = function() {
+  const plId = document.getElementById('as-plantilla').value;
+  const plantilla = allPlantillas.find(p=>p.id===plId);
+  if (!plantilla) return;
+  renderListaActivosAsignar(sugerirActivosPorTipo(plantilla.tipoEquipo));
+};
+
+function sugerirActivosPorTipo(tipoEquipo) {
+  const keywords = PMP_TIPO_KEYWORDS[tipoEquipo]||[];
+  if (!keywords.length) return allActivos.filter(a=>['EQUIPO','COMPONENTE'].includes(a.tipo));
+  return allActivos.filter(a => {
+    const nom = (a.nombre||'').toLowerCase();
+    return keywords.some(k=>nom.includes(k));
+  });
+}
+
+function renderListaActivosAsignar(activos) {
+  const cont = document.getElementById('as-lista-activos');
+  if (!activos.length) {
+    cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--txt2);font-size:12px">No se encontraron activos que coincidan con este tipo. Usa el buscador para encontrarlos manualmente.</div>';
+    actualizarContadorAsignar();
+    return;
+  }
+  cont.innerHTML = activos.map(a => `
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .1s"
+           onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='transparent'">
+      <input type="checkbox" value="${a.id}" ${_activosSeleccionadosAsignar.has(a.id)?'checked':''}
+             onchange="toggleActivoAsignar('${a.id}',this.checked)" style="accent-color:var(--cyan)">
+      <span style="font-size:12px">${TIPO_ICONS[a.tipo]||'🔩'}</span>
+      <span style="font-size:12px;flex:1">${a.nombre}</span>
+      <span style="font-family:var(--font-m);font-size:10px;color:var(--txt2)">${a.cod||a.id}</span>
+    </label>`).join('');
+  actualizarContadorAsignar();
+}
+
+window.toggleActivoAsignar = function(id, checked) {
+  if (checked) _activosSeleccionadosAsignar.add(id); else _activosSeleccionadosAsignar.delete(id);
+  actualizarContadorAsignar();
+};
+
+window.seleccionarTodosActivos = function(seleccionar) {
+  document.querySelectorAll('#as-lista-activos input[type="checkbox"]').forEach(cb=>{
+    cb.checked = seleccionar;
+    if (seleccionar) _activosSeleccionadosAsignar.add(cb.value); else _activosSeleccionadosAsignar.delete(cb.value);
+  });
+  actualizarContadorAsignar();
+};
+
+function actualizarContadorAsignar() {
+  document.getElementById('as-contador').textContent = `${_activosSeleccionadosAsignar.size} activos seleccionados`;
+}
+
+window.filtrarActivosAsignar = function(q) {
+  const plId = document.getElementById('as-plantilla').value;
+  const plantilla = allPlantillas.find(p=>p.id===plId);
+  let base = plantilla ? sugerirActivosPorTipo(plantilla.tipoEquipo) : allActivos;
+  if (q) base = allActivos.filter(a=>(a.nombre||'').toLowerCase().includes(q.toLowerCase())||(a.cod||'').toLowerCase().includes(q.toLowerCase()));
+  renderListaActivosAsignar(base);
+};
+
+window.guardarAsignacionMasiva = async function() {
+  const plId = document.getElementById('as-plantilla').value;
+  const plantilla = allPlantillas.find(p=>p.id===plId);
+  if (!plantilla) { showToast('⚠️','Selecciona una plantilla',''); return; }
+  if (!_activosSeleccionadosAsignar.size) { showToast('⚠️','Selecciona al menos un activo',''); return; }
+
+  const btn = document.getElementById('as-btn-guardar');
+  btn.disabled = true; btn.textContent = 'Asignando…';
+
+  const fechaInicio = document.getElementById('as-fecha-inicio').value || new Date().toISOString().split('T')[0];
+  const proxima = new Date(fechaInicio);
+
+  try {
+    let creados = 0;
+    for (const activoId of _activosSeleccionadosAsignar) {
+      const activo = allActivos.find(a=>a.id===activoId);
+      const yaExiste = allPmpActividades.some(a=>a.plantillaId===plId && a.activoId===activoId);
+      if (yaExiste) continue;
+
+      const nuevaAct = {
+        plantillaId:  plId,
+        nombre:       plantilla.nombre,
+        desc:         plantilla.desc||'',
+        frecuencia:   plantilla.frecuencia,
+        especialidad: plantilla.especialidad,
+        horas:        plantilla.horas||1,
+        materiales:   plantilla.materiales||'',
+        activoId,
+        activoNombre: activo?.nombre||activoId,
+        activoCod:    activo?.cod||activoId,
+        ultimaEjecucion: null,
+        proximaFecha: proxima.toISOString().split('T')[0],
+        creadoPor:    currentUser.uid,
+        creadoEn:     serverTimestamp(),
+      };
+      const ref = await addDoc(collection(db,'pmp_actividades'), nuevaAct);
+      allPmpActividades.push({id:ref.id,...nuevaAct});
+      creados++;
+    }
+    cerrarModal('modal-asignar');
+    showToast('✅',`${creados} actividades programadas`,plantilla.nombre);
+    renderPlantillas();
+    renderActividadesPMP(allPmpActividades);
+    actualizarKpisPMP();
+  } catch(e){ showToast('❌','Error al asignar',e.message); }
+
+  btn.disabled = false; btn.textContent = 'Asignar a activos seleccionados';
+};
+
+// ─── ACTIVIDADES PROGRAMADAS — render ───────────────────────────────────────────
+function renderActividadesPMP(lista) {
+  const tbody = document.getElementById('pmp-tbody');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">📅</div>
+      <div class="empty-title">Sin actividades programadas</div>
+      <div class="empty-sub">Crea una plantilla y asígnala a tus activos para generar el plan de mantenimiento.</div></div></td></tr>`;
+    return;
+  }
+  const orden = {vencida:0, proxima:1, al_dia:2};
+  const ordenada = [...lista].sort((a,b)=>{
+    const ea = calcularEstadoPMP(a.proximaFecha), eb = calcularEstadoPMP(b.proximaFecha);
+    if (orden[ea]!==orden[eb]) return orden[ea]-orden[eb];
+    return new Date(a.proximaFecha||0) - new Date(b.proximaFecha||0);
+  });
+  tbody.innerHTML = ordenada.map(a => {
+    const estado = calcularEstadoPMP(a.proximaFecha);
+    const estCls = estado==='vencida'?'vencida':estado==='proxima'?'prog':'cerrada';
+    const estLbl = estado==='vencida'?'Vencida':estado==='proxima'?'Próxima':'Al día';
+    return `<tr>
+      <td style="font-size:12px;font-weight:500;max-width:200px">${a.nombre}</td>
+      <td style="font-size:12px;color:var(--cyan)">${a.activoNombre}</td>
+      <td><span class="badge gray" style="font-size:10px">${FREC_LABEL[a.frecuencia]||a.frecuencia}</span></td>
+      <td style="font-size:11px;color:var(--txt2)">${a.especialidad||'—'}</td>
+      <td class="mono">${a.ultimaEjecucion||'—'}</td>
+      <td class="mono" style="color:${estado==='vencida'?'var(--red)':estado==='proxima'?'var(--amber)':'var(--txt2)'}">${a.proximaFecha||'—'}</td>
+      <td><span class="status ${estCls}">${estLbl}</span></td>
+      <td><div class="action-btns">
+        <button class="action-btn" title="Generar OT" onclick="generarOTDesdePMP('${a.id}')">🔧</button>
+        <button class="action-btn" title="Marcar ejecutada" onclick="marcarEjecutadaPMP('${a.id}')">✅</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+window.filtrarPMP = function() {
+  const q   = document.getElementById('pmp-search').value.toLowerCase();
+  const est = document.getElementById('pmp-f-estado').value;
+  const frec= document.getElementById('pmp-f-frec').value;
+  renderActividadesPMP(allPmpActividades.filter(a=>
+    (!q    || a.nombre.toLowerCase().includes(q)||a.activoNombre.toLowerCase().includes(q)) &&
+    (!est  || calcularEstadoPMP(a.proximaFecha)===est) &&
+    (!frec || a.frecuencia===frec)
+  ));
+};
+
+// ─── Generar OT desde actividad PMP ─────────────────────────────────────────────
+window.generarOTDesdePMP = async function(actId) {
+  const act = allPmpActividades.find(a=>a.id===actId); if(!act) return;
+  try {
+    const codigo = 'OT-'+Date.now().toString().slice(-6);
+    await addDoc(collection(db,'ordenes_trabajo'),{
+      codigo, tipo:'Preventivo', prioridad:'Media',
+      activoId: act.activoId, activoNombre: act.activoNombre, activoCod: act.activoCod||'—',
+      area: '—', descripcion: `[PMP] ${act.nombre} — ${act.desc||''}`,
+      tecnicoUid:null, tecnicoNombre:'Sin asignar',
+      especialidad: act.especialidad||'Mecánico de mantenimiento',
+      fechaProgramada: act.proximaFecha, horasEstimadas: act.horas||1,
+      causaRaiz:null, observaciones:`Generada automáticamente desde PMP. Materiales sugeridos: ${act.materiales||'N/A'}`,
+      estado:'abierta', creadoPor:currentUser.uid,
+      creadoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn: serverTimestamp(),
+    });
+    showToast('✅',`OT ${codigo} generada desde PMP`,act.activoNombre);
+    await cargarOT();
+    loadDashboard();
+  } catch(e){ showToast('❌','Error al generar OT',e.message); }
+};
+
+// ─── Marcar actividad como ejecutada (recalcula próxima fecha) ─────────────────
+window.marcarEjecutadaPMP = async function(actId) {
+  const act = allPmpActividades.find(a=>a.id===actId); if(!act) return;
+  if (!confirm(`¿Marcar "${act.nombre}" como ejecutada hoy?\n\nSe recalculará la próxima fecha según la frecuencia (${FREC_LABEL[act.frecuencia]}).`)) return;
+  try {
+    const hoy = new Date();
+    const dias = FREC_DIAS[act.frecuencia]||30;
+    const proxima = new Date(hoy); proxima.setDate(proxima.getDate()+dias);
+    const datos = {
+      ultimaEjecucion: hoy.toISOString().split('T')[0],
+      proximaFecha:    proxima.toISOString().split('T')[0],
+      actualizadoEn:   serverTimestamp(),
+    };
+    await updateDoc(doc(db,'pmp_actividades',actId), datos);
+    const idx = allPmpActividades.findIndex(a=>a.id===actId);
+    if (idx>=0) allPmpActividades[idx] = {...allPmpActividades[idx], ...datos};
+    renderActividadesPMP(allPmpActividades);
+    actualizarKpisPMP();
+    showToast('✅','Actividad marcada como ejecutada',`Próxima: ${datos.proximaFecha}`);
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// Hook showPage para cargar PMP al entrar
+const _showPagePMP = window.showPage;
+window.showPage = function(name, el) {
+  _showPagePMP(name, el);
+  if (name==='pmp') cargarPMP();
+};
 </script>
 </body>
 </html>
