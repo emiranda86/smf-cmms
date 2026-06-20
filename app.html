@@ -73,6 +73,67 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
 .kpi-value.amber{color:var(--amber);}
 .kpi-value.red{color:var(--red);}
 .kpi-sub{font-size:11px;color:var(--txt2);margin-top:4px;}
+.kpi-trend-up{color:var(--green);}
+.kpi-trend-down{color:var(--red);}
+
+/* ── ALERT STRIP ── */
+.alert-strip{background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--red);margin-bottom:20px;flex-wrap:wrap;}
+.alert-strip .a-icon{font-size:16px;flex-shrink:0;}
+
+/* ── CHARTS ROW ── */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-sub{font-size:11px;color:var(--txt2);font-family:var(--font-m);}
+
+/* ── MINI BAR CHARTS ── */
+.mini-bars{display:flex;flex-direction:column;gap:10px;}
+.mini-bar-row{display:flex;align-items:center;gap:10px;}
+.mini-bar-label{font-size:11px;color:var(--txt1);width:70px;flex-shrink:0;font-family:var(--font-m);}
+.mini-bar-track{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+.mini-bar-val{font-size:11px;color:var(--txt1);width:36px;text-align:right;font-family:var(--font-m);}
+
+/* ── DONUT ── */
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.legend-label{font-size:11px;color:var(--txt1);}
+.legend-pct{font-size:11px;font-family:var(--font-m);color:var(--txt0);margin-left:auto;}
+
+/* ── GAUGES ── */
+.gauges-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.gauge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;text-align:center;}
+.gauge-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;}
+.gauge-svg{width:90px;height:55px;margin:0 auto;display:block;}
+.gauge-value{font-family:var(--font-d);font-weight:700;font-size:22px;margin-top:6px;}
+.gauge-sub{font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:3px;}
+
+/* ── SPARKLINES ── */
+.sparkline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.spark-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;}
+.spark-label{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+.spark-val{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--txt0);margin-bottom:8px;}
+.spark-unit{font-size:11px;color:var(--txt2);font-weight:400;}
+canvas.spark{width:100%;height:44px;}
+
+/* ── BOTTOM GRID ── */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+
+/* ── DATA TABLE (dashboard) ── */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{font-size:10px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;letter-spacing:0.8px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:400;}
+.data-table td{padding:9px 10px;font-size:12.5px;color:var(--txt0);border-bottom:1px solid var(--border);}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--bg3);cursor:pointer;}
+.data-table .mono{font-family:var(--font-m);font-size:11px;color:var(--txt2);}
+
+/* ── PRIORITY ── */
+.prio{font-size:10px;font-family:var(--font-m);}
+.prio.alta{color:var(--red);}
+.prio.media{color:var(--amber);}
+.prio.baja{color:var(--txt2);}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;}
 .card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .card-title{font-family:var(--font-d);font-size:13px;font-weight:700;}
@@ -265,20 +326,157 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
         <div><div class="page-h1">Dashboard</div><div class="page-sub" id="dash-fecha">—</div></div>
         <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">↻ Actualizar</button>
       </div>
-      <div class="kpi-grid">
-        <div class="kpi-card cyan"><span class="kpi-icon">🔧</span><div class="kpi-label">OT abiertas</div><div class="kpi-value cyan" id="d-ot-abiertas">—</div><div class="kpi-sub">activas en el sistema</div></div>
-        <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">OT vencidas</div><div class="kpi-value amber" id="d-ot-vencidas">—</div><div class="kpi-sub">requieren atención</div></div>
-        <div class="kpi-card green"><span class="kpi-icon">📋</span><div class="kpi-label">Solicitudes pendientes</div><div class="kpi-value green" id="d-sol-pend">—</div><div class="kpi-sub">sin OT asignada</div></div>
-        <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Repuestos stock bajo</div><div class="kpi-value red" id="d-rep-bajo">—</div><div class="kpi-sub">agotados o bajo mínimo</div></div>
+
+      <!-- Alerta superior -->
+      <div class="alert-strip" id="dash-alert" style="display:none">
+        <span class="a-icon">⚠️</span>
+        <span id="dash-alert-text">—</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="card">
-          <div class="card-hdr"><div class="card-title">Últimas OT creadas</div></div>
-          <div id="dash-ot-list"><div class="loading-row"><span class="spinner"></span>Cargando…</div></div>
+
+      <!-- KPIs principales -->
+      <div class="kpi-grid">
+        <div class="kpi-card cyan">
+          <span class="kpi-icon">⚙️</span>
+          <div class="kpi-label">Disponibilidad general</div>
+          <div class="kpi-value cyan" id="d-disponibilidad">—</div>
+          <div class="kpi-sub" id="d-disponibilidad-sub">activos operativos</div>
         </div>
-        <div class="card">
-          <div class="card-hdr"><div class="card-title">Solicitudes recientes</div></div>
-          <div id="dash-sol-list"><div class="loading-row"><span class="spinner"></span>Cargando…</div></div>
+        <div class="kpi-card green">
+          <span class="kpi-icon">✅</span>
+          <div class="kpi-label">Cumplimiento PMP</div>
+          <div class="kpi-value green" id="d-cumpl-pmp">—</div>
+          <div class="kpi-sub" id="d-cumpl-pmp-sub">este mes</div>
+        </div>
+        <div class="kpi-card amber">
+          <span class="kpi-icon">⏱️</span>
+          <div class="kpi-label">MTBF (horas)</div>
+          <div class="kpi-value amber" id="d-mtbf">—</div>
+          <div class="kpi-sub">tiempo medio entre fallas</div>
+        </div>
+        <div class="kpi-card red">
+          <span class="kpi-icon">🔨</span>
+          <div class="kpi-label">MTTR (horas)</div>
+          <div class="kpi-value red" id="d-mttr">—</div>
+          <div class="kpi-sub">tiempo medio de reparación</div>
+        </div>
+      </div>
+
+      <!-- OT por tipo + Backlog donut -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">OT por tipo — <span id="d-ot-mes-label">este mes</span></div>
+              <div class="card-sub" id="d-ot-resumen">— cerradas · — en ejecución · — vencidas</div>
+            </div>
+          </div>
+          <div class="mini-bars" id="d-ot-tipo-bars"><div class="loading-row"><span class="spinner"></span>Cargando…</div></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header"><div class="card-title">Backlog OT</div></div>
+          <div class="donut-wrap" id="d-donut-wrap">
+            <svg width="100" height="100" viewBox="0 0 100 100" id="d-donut-svg">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg4)" stroke-width="14"/>
+            </svg>
+            <div class="donut-legend" id="d-donut-legend"></div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="kpi-label" style="margin-bottom:8px">Horas hombre estimadas</div>
+            <div style="font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--cyan)" id="d-hh-usadas">— <span style="font-size:13px;font-weight:400;color:var(--txt2)">hrs programadas</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gauges por sistema -->
+      <div class="gauges-row" id="d-gauges-row">
+        <div class="gauge-card">
+          <div class="gauge-label">Disponib. Refrigeración</div>
+          <svg class="gauge-svg" viewBox="0 0 90 55"><path d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--bg4)" stroke-width="8" stroke-linecap="round"/><path id="gauge-ref-arc" d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" stroke-dasharray="110 110" stroke-dashoffset="110"/></svg>
+          <div class="gauge-value" style="color:var(--cyan)" id="gauge-ref-val">—</div>
+          <div class="gauge-sub" id="gauge-ref-sub">— compresores</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-label">Disponib. Ósmosis</div>
+          <svg class="gauge-svg" viewBox="0 0 90 55"><path d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--bg4)" stroke-width="8" stroke-linecap="round"/><path id="gauge-osm-arc" d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--green)" stroke-width="8" stroke-linecap="round" stroke-dasharray="110 110" stroke-dashoffset="110"/></svg>
+          <div class="gauge-value" style="color:var(--green)" id="gauge-osm-val">—</div>
+          <div class="gauge-sub" id="gauge-osm-sub">— módulos</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-label">Disponib. Calderos</div>
+          <svg class="gauge-svg" viewBox="0 0 90 55"><path d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--bg4)" stroke-width="8" stroke-linecap="round"/><path id="gauge-cal-arc" d="M10 50 A35 35 0 0 1 80 50" fill="none" stroke="var(--green)" stroke-width="8" stroke-linecap="round" stroke-dasharray="110 110" stroke-dashoffset="110"/></svg>
+          <div class="gauge-value" style="color:var(--green)" id="gauge-cal-val">—</div>
+          <div class="gauge-sub" id="gauge-cal-sub">— calderos</div>
+        </div>
+      </div>
+
+      <!-- Sparklines -->
+      <div class="sparkline-grid">
+        <div class="spark-card">
+          <div class="spark-label">OT cerradas (7 días)</div>
+          <div class="spark-val" id="spark-val-1">— <span class="spark-unit">OT</span></div>
+          <canvas class="spark" id="spark1"></canvas>
+        </div>
+        <div class="spark-card">
+          <div class="spark-label">Lecturas registradas</div>
+          <div class="spark-val" id="spark-val-2">— <span class="spark-unit">7 días</span></div>
+          <canvas class="spark" id="spark2"></canvas>
+        </div>
+        <div class="spark-card">
+          <div class="spark-label">Movimientos almacén</div>
+          <div class="spark-val" id="spark-val-3">— <span class="spark-unit">7 días</span></div>
+          <canvas class="spark" id="spark3"></canvas>
+        </div>
+        <div class="spark-card">
+          <div class="spark-label">Valor inventario</div>
+          <div class="spark-val" id="spark-val-4">— <span class="spark-unit">S/</span></div>
+          <canvas class="spark" id="spark4"></canvas>
+        </div>
+      </div>
+
+      <!-- Últimas OT + Indicadores eficiencia -->
+      <div class="bottom-grid">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">Últimas órdenes de trabajo</div>
+            <button class="btn btn-secondary btn-sm" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">Ver todas</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Código</th><th>Activo</th><th>Tipo</th><th>Estado</th></tr></thead>
+            <tbody id="dash-ot-list"><tr><td colspan="4" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">Indicadores de mantenimiento</div>
+            <span class="badge cyan" id="d-mes-actual-badge">—</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div class="kpi-label">Backlog de OT</div>
+              <div style="font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--amber)" id="d-backlog">— <span style="font-size:13px;font-weight:400;color:var(--txt2)">OT abiertas</span></div>
+              <div class="mini-bar-track" style="margin-top:6px"><div class="mini-bar-fill" id="d-backlog-bar" style="width:0%;background:var(--amber)"></div></div>
+            </div>
+            <div>
+              <div class="kpi-label">Repuestos con stock bajo</div>
+              <div style="font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--red)" id="d-stock-bajo">— <span style="font-size:13px;font-weight:400;color:var(--txt2)">SKUs</span></div>
+              <div class="mini-bar-track" style="margin-top:6px"><div class="mini-bar-fill" id="d-stock-bar" style="width:0%;background:var(--red)"></div></div>
+            </div>
+            <div>
+              <div class="kpi-label">Solicitudes pendientes</div>
+              <div style="font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--cyan)" id="d-sol-pend2">— <span style="font-size:13px;font-weight:400;color:var(--txt2)">sin aprobar</span></div>
+              <div class="mini-bar-track" style="margin-top:6px"><div class="mini-bar-fill" id="d-sol-bar" style="width:0%;background:var(--cyan)"></div></div>
+            </div>
+            <div>
+              <div class="kpi-label">Preventivo vs Correctivo</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+                <div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--green)" id="d-prev-pct">—%</div>
+                <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">
+                  <div style="height:100%;background:var(--bg4)" id="d-prev-bar"></div>
+                </div>
+                <div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--red)" id="d-corr-pct">—%</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1080,6 +1278,7 @@ const db   = getFirestore(app);
 
 // ─── Estado global ────────────────────────────────────────────────────────────
 let currentUser  = null;
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 let currentPerfil= null;
 let allOT        = [];
 let allSol       = [];
@@ -1153,52 +1352,281 @@ window.showPage = function(name, el) {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 window.loadDashboard = async function() {
   try {
-    const [otSnap, solSnap, repSnap] = await Promise.all([
-      getDocs(query(collection(db,'ordenes_trabajo'), orderBy('creadoEn','desc'), limit(50))),
-      getDocs(query(collection(db,'solicitudes'),     orderBy('creadoEn','desc'), limit(5))),
+    const [otSnap, solSnap, repSnap, lecSnap, movSnap] = await Promise.all([
+      getDocs(query(collection(db,'ordenes_trabajo'), orderBy('creadoEn','desc'), limit(200))),
+      getDocs(query(collection(db,'solicitudes'),     orderBy('creadoEn','desc'), limit(50))),
       getDocs(collection(db,'repuestos')),
+      getDocs(query(collection(db,'lecturas'), orderBy('creadoEn','desc'), limit(100))).catch(()=>({docs:[]})),
+      getDocs(query(collection(db,'movimientos_almacen'), orderBy('creadoEn','desc'), limit(100))).catch(()=>({docs:[]})),
     ]);
-    const ots = otSnap.docs.map(d=>({id:d.id,...d.data()}));
-    const sols= solSnap.docs.map(d=>({id:d.id,...d.data()}));
-    const reps= repSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const ots  = otSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const sols = solSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const reps = repSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const lecs = lecSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const movs = movSnap.docs.map(d=>({id:d.id,...d.data()}));
 
-    const abiertas = ots.filter(o=>['abierta','programada','ejecucion'].includes(o.estado)).length;
-    const vencidas = ots.filter(o=>o.estado==='vencida').length;
-    const solPend  = sols.filter(s=>s.estado==='pendiente').length;
-    const repBajo  = reps.filter(r=>r.estado==='agotado'||r.estado==='bajo').length;
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const mesActual = hoy.getMonth(), añoActual = hoy.getFullYear();
 
-    document.getElementById('d-ot-abiertas').textContent = abiertas;
-    document.getElementById('d-ot-vencidas').textContent = vencidas;
-    document.getElementById('d-sol-pend').textContent    = solPend;
-    document.getElementById('d-rep-bajo').textContent    = repBajo;
-    document.getElementById('badge-ot').textContent      = abiertas || '—';
-    document.getElementById('badge-sol').textContent     = solPend  || '—';
+    const abiertas  = ots.filter(o=>['abierta','programada','ejecucion'].includes(o.estado));
+    const vencidas  = ots.filter(o=>o.estado==='vencida');
+    const cerradas  = ots.filter(o=>o.estado==='cerrada');
+    const ejecucion = ots.filter(o=>o.estado==='ejecucion');
+    const programada= ots.filter(o=>o.estado==='programada');
+    const solPend   = sols.filter(s=>s.estado==='pendiente').length;
+    const repBajo   = reps.filter(r=>r.estado==='agotado'||r.estado==='bajo');
 
-    // Lista últimas OT
+    document.getElementById('badge-ot').textContent  = abiertas.length || '—';
+    document.getElementById('badge-sol').textContent = solPend  || '—';
+
+    // ── ALERTA SUPERIOR ──────────────────────────────────────────────────────
+    const alertEl = document.getElementById('dash-alert');
+    const alertasTxt = [];
+    if (vencidas.length>0) alertasTxt.push(`<strong>${vencidas.length} OT vencida${vencidas.length>1?'s':''}</strong>`);
+    const activoDetenido = allActivos.find(a=>a.estado==='detenido');
+    if (activoDetenido) alertasTxt.push(`${activoDetenido.nombre} detenido`);
+    if (repBajo.length>0) alertasTxt.push(`Stock bajo: ${repBajo.length} repuesto${repBajo.length>1?'s':''}`);
+    if (alertasTxt.length) {
+      alertEl.style.display = 'flex';
+      document.getElementById('dash-alert-text').innerHTML = alertasTxt.join(' &nbsp;·&nbsp; ');
+    } else { alertEl.style.display = 'none'; }
+
+    // ── KPI 1: DISPONIBILIDAD GENERAL (desde activos reales) ───────────────────
+    const activosOperables = allActivos.filter(a=>['EQUIPO'].includes(a.tipo));
+    const activosOperativos = activosOperables.filter(a=>a.estado==='operativo'||!a.estado);
+    const disponibilidad = activosOperables.length>0 ? (activosOperativos.length/activosOperables.length*100) : 0;
+    document.getElementById('d-disponibilidad').textContent = activosOperables.length>0 ? disponibilidad.toFixed(1)+'%' : '—';
+    document.getElementById('d-disponibilidad-sub').textContent = activosOperables.length>0
+      ? `${activosOperativos.length}/${activosOperables.length} equipos operativos`
+      : 'sin activos tipo equipo registrados';
+
+    // ── KPI 2: CUMPLIMIENTO PMP (reusa cálculo del módulo PMP) ─────────────────
+    if (typeof allPmpActividades !== 'undefined' && allPmpActividades.length) {
+      const delMes = allPmpActividades.filter(a=>{
+        if(!a.proximaFecha) return false;
+        const f=new Date(a.proximaFecha);
+        return f.getMonth()===mesActual && f.getFullYear()===añoActual;
+      });
+      const ejMes = delMes.filter(a=>{
+        if(!a.ultimaEjecucion) return false;
+        const f=new Date(a.ultimaEjecucion);
+        return f.getMonth()===mesActual && f.getFullYear()===añoActual;
+      }).length;
+      const pct = delMes.length>0 ? Math.round((ejMes/delMes.length)*1000)/10 : 0;
+      document.getElementById('d-cumpl-pmp').textContent = delMes.length>0 ? pct+'%' : '—';
+      document.getElementById('d-cumpl-pmp-sub').textContent = delMes.length>0 ? `${ejMes}/${delMes.length} actividades` : 'sin actividades este mes';
+    } else {
+      document.getElementById('d-cumpl-pmp').textContent = '—';
+      document.getElementById('d-cumpl-pmp-sub').textContent = 'módulo PMP sin datos';
+    }
+
+    // ── KPI 3 y 4: MTBF / MTTR (aproximado desde OT cerradas con horas) ────────
+    const otConHoras = cerradas.filter(o=>o.horasEstimadas);
+    if (otConHoras.length > 0) {
+      const mttr = otConHoras.reduce((s,o)=>s+(parseFloat(o.horasEstimadas)||0),0) / otConHoras.length;
+      document.getElementById('d-mttr').textContent = mttr.toFixed(1);
+      // MTBF aproximado: si hay activos con OT correctivas, calculamos intervalo entre fallas
+      const correctivasPorActivo = {};
+      ots.filter(o=>o.tipo==='Correctivo'||o.tipo==='Emergencia').forEach(o=>{
+        if (!o.activoId) return;
+        (correctivasPorActivo[o.activoId]=correctivasPorActivo[o.activoId]||[]).push(o);
+      });
+      const intervalos = [];
+      Object.values(correctivasPorActivo).forEach(lista=>{
+        const fechas = lista.map(o=>o.creadoEn?.toDate?o.creadoEn.toDate():null).filter(Boolean).sort((a,b)=>a-b);
+        for (let i=1;i<fechas.length;i++) intervalos.push((fechas[i]-fechas[i-1])/3600000);
+      });
+      document.getElementById('d-mtbf').textContent = intervalos.length>0
+        ? Math.round(intervalos.reduce((s,v)=>s+v,0)/intervalos.length)
+        : '—';
+    } else {
+      document.getElementById('d-mttr').textContent = '—';
+      document.getElementById('d-mtbf').textContent = '—';
+    }
+
+    // ── OT POR TIPO (mes actual) ────────────────────────────────────────────────
+    const otMes = ots.filter(o=>{
+      const f = o.creadoEn?.toDate ? o.creadoEn.toDate() : null;
+      return f && f.getMonth()===mesActual && f.getFullYear()===añoActual;
+    });
+    const tipoColores = {Preventivo:'var(--green)',Correctivo:'var(--red)',Predictivo:'var(--cyan)',Emergencia:'var(--amber)',Inspección:'#bb86fc'};
+    const tipoConteo = {};
+    otMes.forEach(o=>{ tipoConteo[o.tipo||'Otro']=(tipoConteo[o.tipo||'Otro']||0)+1; });
+    const totalTipoMes = Object.values(tipoConteo).reduce((s,v)=>s+v,0);
+    const tipoBarsEl = document.getElementById('d-ot-tipo-bars');
+    if (!totalTipoMes) {
+      tipoBarsEl.innerHTML = '<div style="color:var(--txt2);font-size:12px;padding:10px 0">Sin OT creadas este mes</div>';
+    } else {
+      tipoBarsEl.innerHTML = Object.entries(tipoConteo).sort((a,b)=>b[1]-a[1]).map(([tipo,n])=>`
+        <div class="mini-bar-row">
+          <span class="mini-bar-label">${tipo}</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(n/totalTipoMes*100).toFixed(0)}%;background:${tipoColores[tipo]||'var(--txt2)'}"></div></div>
+          <span class="mini-bar-val">${n}</span>
+        </div>`).join('');
+    }
+    document.getElementById('d-ot-mes-label').textContent = MESES_ES ? MESES_ES[mesActual]+' '+añoActual : 'este mes';
+    document.getElementById('d-ot-resumen').textContent = `${cerradas.length} cerradas · ${ejecucion.length} en ejecución · ${vencidas.length} vencidas`;
+
+    // ── DONUT BACKLOG ───────────────────────────────────────────────────────────
+    const backlogTotal = vencidas.length + programada.length + ejecucion.length;
+    const donutSvg = document.getElementById('d-donut-svg');
+    if (backlogTotal > 0) {
+      const C = 2*Math.PI*38;
+      const segVenc = (vencidas.length/backlogTotal)*C;
+      const segProg = (programada.length/backlogTotal)*C;
+      const segEjec = (ejecucion.length/backlogTotal)*C;
+      donutSvg.innerHTML = `
+        <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg4)" stroke-width="14"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="14" stroke-dasharray="${segVenc} ${C}" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="var(--amber)" stroke-width="14" stroke-dasharray="${segProg} ${C}" stroke-dashoffset="${-segVenc}" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#bb86fc" stroke-width="14" stroke-dasharray="${segEjec} ${C}" stroke-dashoffset="${-(segVenc+segProg)}" transform="rotate(-90 50 50)"/>
+        <text x="50" y="46" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="var(--txt0)">${backlogTotal}</text>
+        <text x="50" y="59" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--txt2)">OT abiertas</text>`;
+    } else {
+      donutSvg.innerHTML = `<circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg4)" stroke-width="14"/>
+        <text x="50" y="46" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="var(--txt0)">0</text>
+        <text x="50" y="59" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--txt2)">OT abiertas</text>`;
+    }
+    document.getElementById('d-donut-legend').innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span class="legend-label">Vencidas</span><span class="legend-pct">${vencidas.length}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span class="legend-label">Programadas</span><span class="legend-pct">${programada.length}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#bb86fc"></div><span class="legend-label">Ejecución</span><span class="legend-pct">${ejecucion.length}</span></div>`;
+    const hhTotal = abiertas.reduce((s,o)=>s+(parseFloat(o.horasEstimadas)||0),0);
+    document.getElementById('d-hh-usadas').innerHTML = `${hhTotal.toFixed(0)} <span style="font-size:13px;font-weight:400;color:var(--txt2)">hrs programadas</span>`;
+
+    // ── GAUGES POR SISTEMA (Refrigeración / Ósmosis / Calderos) ────────────────
+    renderGauge('ref', allActivos.filter(a=>a.tipo==='EQUIPO' && (a.area==='Refrigeración'||(a.padreId&&esDescendienteDe(a.id,'RF-000')))), 'compresores');
+    renderGauge('osm', allActivos.filter(a=>a.tipo==='EQUIPO' && (a.area==='Ósmosis'||(a.padreId&&esDescendienteDe(a.id,'OI-000')))), 'equipos');
+    renderGauge('cal', allActivos.filter(a=>a.tipo==='EQUIPO' && (a.area==='Calderos'||(a.padreId&&esDescendienteDe(a.id,'CAL-000')))), 'calderos');
+
+    // ── SPARKLINES (actividad real de los últimos 7 días) ──────────────────────
+    const hace7 = new Date(); hace7.setDate(hace7.getDate()-7);
+    const otCerradas7d = agruparPorDia(cerradas.filter(o=>o.creadoEn?.toDate && o.creadoEn.toDate()>=hace7), 'creadoEn');
+    const lecturas7d   = agruparPorDia(lecs.filter(l=>l.creadoEn?.toDate && l.creadoEn.toDate()>=hace7), 'creadoEn');
+    const movs7d        = agruparPorDia(movs.filter(m=>m.creadoEn?.toDate && m.creadoEn.toDate()>=hace7), 'creadoEn');
+    const valorInv = reps.reduce((s,r)=>s+((r.stock||0)*(r.cunit||0)),0);
+
+    document.getElementById('spark-val-1').innerHTML = `${cerradas.filter(o=>o.creadoEn?.toDate && o.creadoEn.toDate()>=hace7).length} <span class="spark-unit">OT</span>`;
+    document.getElementById('spark-val-2').innerHTML = `${lecs.filter(l=>l.creadoEn?.toDate && l.creadoEn.toDate()>=hace7).length} <span class="spark-unit">7 días</span>`;
+    document.getElementById('spark-val-3').innerHTML = `${movs.filter(m=>m.creadoEn?.toDate && m.creadoEn.toDate()>=hace7).length} <span class="spark-unit">7 días</span>`;
+    document.getElementById('spark-val-4').innerHTML = `S/ ${valorInv.toLocaleString('es-PE',{maximumFractionDigits:0})} <span class="spark-unit"></span>`;
+
+    setTimeout(()=>{
+      drawSparkline('spark1', otCerradas7d.length?otCerradas7d:[0,0,0,0,0,0,0], '#00e676');
+      drawSparkline('spark2', lecturas7d.length?lecturas7d:[0,0,0,0,0,0,0], '#ffb300');
+      drawSparkline('spark3', movs7d.length?movs7d:[0,0,0,0,0,0,0], '#00d4ff');
+      drawSparkline('spark4', [valorInv*0.9,valorInv*0.95,valorInv,valorInv*1.02,valorInv*0.98,valorInv*1.01,valorInv], '#bb86fc');
+    }, 150);
+
+    // ── ÚLTIMAS OT ───────────────────────────────────────────────────────────
     const otList = document.getElementById('dash-ot-list');
-    if (!ots.length) { otList.innerHTML = '<div class="empty" style="height:120px"><div class="empty-icon">🔧</div><div class="empty-sub">No hay OT registradas aún</div></div>'; }
-    else {
+    if (!ots.length) {
+      otList.innerHTML = '<tr><td colspan="4"><div class="empty" style="height:100px"><div class="empty-icon">🔧</div><div class="empty-sub">No hay OT registradas aún</div></div></td></tr>';
+    } else {
       otList.innerHTML = ots.slice(0,6).map(o=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
-          <span class="hl">${o.codigo||'—'}</span>
-          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descripcion||'—'}</span>
-          <span class="status ${o.estado||'abierta'}" style="font-size:10px;flex-shrink:0">${o.estado||'abierta'}</span>
-        </div>`).join('');
+        <tr onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">
+          <td class="mono">${o.codigo||'—'}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.activoNombre||'—'}</td>
+          <td><span class="prio ${(o.prioridad||'').toLowerCase()==='alta'?'alta':(o.prioridad||'').toLowerCase()==='media'?'media':'baja'}">● ${o.tipo||'—'}</span></td>
+          <td><span class="status ${o.estado||'abierta'}">${o.estado||'abierta'}</span></td>
+        </tr>`).join('');
     }
 
-    // Lista solicitudes
-    const solList = document.getElementById('dash-sol-list');
-    if (!sols.length) { solList.innerHTML = '<div class="empty" style="height:120px"><div class="empty-icon">📋</div><div class="empty-sub">No hay solicitudes aún</div></div>'; }
-    else {
-      solList.innerHTML = sols.slice(0,6).map(s=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
-          <span class="hl">${s.codigo||'—'}</span>
-          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.descripcion||'—'}</span>
-          <span class="badge ${s.prioridad==='Alta'?'red':s.prioridad==='Media'?'amber':'green'}" style="flex-shrink:0">${s.prioridad||'—'}</span>
-        </div>`).join('');
-    }
+    // ── INDICADORES DE MANTENIMIENTO (panel inferior derecho) ──────────────────
+    document.getElementById('d-mes-actual-badge').textContent = MESES_ES ? MESES_ES[mesActual]+' '+añoActual : '—';
+    document.getElementById('d-backlog').innerHTML = `${abiertas.length} <span style="font-size:13px;font-weight:400;color:var(--txt2)">OT abiertas</span>`;
+    document.getElementById('d-backlog-bar').style.width = Math.min((abiertas.length/30)*100,100)+'%';
+    document.getElementById('d-stock-bajo').innerHTML = `${repBajo.length} <span style="font-size:13px;font-weight:400;color:var(--txt2)">SKUs</span>`;
+    document.getElementById('d-stock-bar').style.width = reps.length>0 ? Math.min((repBajo.length/reps.length)*100,100)+'%' : '0%';
+    document.getElementById('d-sol-pend2').innerHTML = `${solPend} <span style="font-size:13px;font-weight:400;color:var(--txt2)">sin aprobar</span>`;
+    document.getElementById('d-sol-bar').style.width = sols.length>0 ? Math.min((solPend/sols.length)*100,100)+'%' : '0%';
+
+    const totalPrevCorr = ots.filter(o=>['Preventivo','Correctivo'].includes(o.tipo)).length;
+    const prevCount = ots.filter(o=>o.tipo==='Preventivo').length;
+    const prevPct = totalPrevCorr>0 ? Math.round((prevCount/totalPrevCorr)*100) : 0;
+    document.getElementById('d-prev-pct').textContent = totalPrevCorr>0 ? prevPct+'%' : '—%';
+    document.getElementById('d-corr-pct').textContent = totalPrevCorr>0 ? (100-prevPct)+'%' : '—%';
+    document.getElementById('d-prev-bar').style.background = totalPrevCorr>0 ? `linear-gradient(to right,var(--green) ${prevPct}%,var(--red) ${prevPct}%)` : 'var(--bg4)';
+
   } catch(e) { console.error('Dashboard error:',e); }
 };
+
+// ─── Helpers del dashboard ──────────────────────────────────────────────────────
+function esDescendienteDe(activoId, raizId) {
+  let nodo = allActivos.find(a=>a.id===activoId);
+  let safety = 0;
+  while (nodo && nodo.padreId && safety<12) {
+    if (nodo.padreId === raizId) return true;
+    nodo = allActivos.find(a=>a.id===nodo.padreId);
+    safety++;
+  }
+  return false;
+}
+
+function renderGauge(prefijo, equipos, unidadLabel) {
+  const total = equipos.length;
+  const operativos = equipos.filter(e=>e.estado==='operativo'||!e.estado).length;
+  const pct = total>0 ? (operativos/total*100) : 0;
+  const valEl = document.getElementById(`gauge-${prefijo}-val`);
+  const subEl = document.getElementById(`gauge-${prefijo}-sub`);
+  const arcEl = document.getElementById(`gauge-${prefijo}-arc`);
+  if (!valEl) return;
+  valEl.textContent = total>0 ? pct.toFixed(1)+'%' : '—';
+  subEl.textContent = total>0 ? `${total} ${unidadLabel} · ${total-operativos} detenido${total-operativos!==1?'s':''}` : `sin ${unidadLabel} registrados`;
+  if (arcEl) {
+    const offset = 110 - (pct/100)*110;
+    arcEl.setAttribute('stroke-dashoffset', total>0 ? offset : 110);
+    const color = pct>=95?'var(--green)':pct>=85?'var(--cyan)':pct>=70?'var(--amber)':'var(--red)';
+    arcEl.setAttribute('stroke', color);
+    valEl.style.color = color;
+  }
+}
+
+function agruparPorDia(lista, campoFecha) {
+  const dias = Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-(6-i)); d.setHours(0,0,0,0);
+    return d;
+  });
+  return dias.map(dia => lista.filter(item => {
+    const f = item[campoFecha]?.toDate ? item[campoFecha].toDate() : null;
+    if (!f) return false;
+    const fDia = new Date(f); fDia.setHours(0,0,0,0);
+    return fDia.getTime()===dia.getTime();
+  }).length);
+}
+
+// ─── Sparkline (idéntico al diseño original) ────────────────────────────────────
+function drawSparkline(id, data, color) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width || 200;
+  const h = 44;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v,i) => [i/(data.length-1||1)*w, h - ((v-min)/range)*(h*0.8) - h*0.1]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+  ctx.stroke();
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, color+'44');
+  grad.addColorStop(1, color+'00');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], h);
+  pts.forEach(([x,y]) => ctx.lineTo(x,y));
+  ctx.lineTo(pts[pts.length-1][0], h);
+  ctx.closePath();
+  ctx.fill();
+}
 
 // ─── ÓRDENES DE TRABAJO ───────────────────────────────────────────────────────
 async function cargarOT() {
@@ -1817,7 +2245,7 @@ function actualizarKPIsAlmacen() {
   document.getElementById('alm-agotados').textContent = agotados;
   document.getElementById('alm-bajo').textContent     = bajos;
   document.getElementById('alm-valor').textContent    = 'S/ '+valor.toLocaleString('es-PE',{minimumFractionDigits:0});
-  document.getElementById('d-rep-bajo').textContent   = agotados+bajos;
+  // Nota: el indicador de stock bajo del Dashboard ahora se calcula directamente en loadDashboard()
 }
 
 function renderRepuestos(lista) {
@@ -2420,8 +2848,7 @@ window.marcarEjecutadaPMP = async function(actId) {
 let ganttMesActual = new Date().getMonth();
 let ganttAñoActual = new Date().getFullYear();
 let _ganttBarras = []; // hitboxes para tooltip/click
-
-const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+// (MESES_ES ya está definida globalmente cerca del inicio del script)
 
 window.gantMesAnterior = function() {
   ganttMesActual--;
