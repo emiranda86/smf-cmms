@@ -134,6 +134,24 @@ canvas.spark{width:100%;height:44px;}
 .prio.alta{color:var(--red);}
 .prio.media{color:var(--amber);}
 .prio.baja{color:var(--txt2);}
+
+/* ── EQUIP CARDS (Refrigeración) ── */
+.equip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.equip-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.equip-card:hover{border-color:var(--border2);}
+.equip-card.operativo::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);}
+.equip-card.detenido::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+.equip-card.alarma::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--amber);}
+.equip-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.equip-name{font-size:13px;font-weight:600;color:var(--txt0);line-height:1.3;}
+.equip-code{font-family:var(--font-m);font-size:10px;color:var(--txt2);margin-top:2px;}
+.equip-readings{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.reading-item{background:var(--bg3);border-radius:5px;padding:6px 8px;}
+.reading-label{font-size:9px;font-family:var(--font-m);color:var(--txt2);text-transform:uppercase;margin-bottom:2px;}
+.reading-val{font-family:var(--font-m);font-size:13px;color:var(--txt0);}
+.reading-val.ok{color:var(--green);}
+.reading-val.warn{color:var(--amber);}
+.reading-val.alarm{color:var(--red);}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;}
 .card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .card-title{font-family:var(--font-d);font-size:13px;font-weight:700;}
@@ -306,6 +324,10 @@ canvas.spark{width:100%;height:44px;}
     </div>
 
     <div class="nav-section" id="nav-section-ops">Operaciones</div>
+    <div class="nav-item" id="nav-refrigeracion" onclick="showPage('refrigeracion',this)">
+      <span class="nav-icon">❄️</span><span class="nav-label">Refrigeración</span>
+      <span class="nav-badge" id="badge-ref">—</span>
+    </div>
     <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
       <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
     </div>
@@ -709,6 +731,193 @@ canvas.spark{width:100%;height:44px;}
             </tr></thead>
             <tbody id="alm-tbody"><tr><td colspan="10" class="loading-row"><span class="spinner"></span>Cargando inventario…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REFRIGERACIÓN ══ -->
+    <div class="page" id="page-refrigeracion">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">Refrigeración Industrial</div>
+          <div class="page-sub" id="ref-resumen">— compresores · — operativos · — detenidos</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-left:auto">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalLecturaRef()">+ Registrar lectura</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="ref-tab-estado" onclick="refTab('estado')">Estado en tiempo real</button>
+        <button class="pmp-tab" id="ref-tab-tend" onclick="refTab('tend')">Tendencias históricas</button>
+        <button class="pmp-tab" id="ref-tab-alertas" onclick="refTab('alertas')">Alertas y límites</button>
+        <button class="pmp-tab" id="ref-tab-horometro" onclick="refTab('horometro')">Horómetros</button>
+      </div>
+
+      <!-- TAB: ESTADO -->
+      <div id="ref-view-estado">
+        <div class="equip-grid" id="compresores-grid">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando compresores…</div>
+        </div>
+        <!-- Promedio flota -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Promedio flota — últimas 24h</div>
+            <span class="badge cyan" id="ref-flota-badge">—</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Pres. succión prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="ref-prom-ps">— <span style="font-size:13px;color:var(--txt2)">bar</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="ref-prom-ps-bar" style="width:0%;background:var(--cyan)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Límite: <span id="ref-lim-ps-txt">1.5 – 3.5</span> bar</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Pres. descarga prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--amber)" id="ref-prom-pd">— <span style="font-size:13px;color:var(--txt2)">bar</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="ref-prom-pd-bar" style="width:0%;background:var(--amber)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Límite: <span id="ref-lim-pd-txt">10 – 18</span> bar</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Temp. aceite prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--green)" id="ref-prom-ta">— <span style="font-size:13px;color:var(--txt2)">°C</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="ref-prom-ta-bar" style="width:0%;background:var(--green)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Límite: <span id="ref-lim-ta-txt">40 – 90</span>°C</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Amperaje prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="ref-prom-amp">— <span style="font-size:13px;color:var(--txt2)">A</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="ref-prom-amp-bar" style="width:0%;background:var(--cyan)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Nominal: <span id="ref-lim-amp-txt">45 – 60</span> A</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TENDENCIAS -->
+      <div id="ref-view-tend" style="display:none">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Compresor:</span>
+          <select class="filter-sel" id="tend-comp-sel" onchange="renderTendenciasRef()" style="min-width:200px"></select>
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="tend-period-sel" onchange="renderTendenciasRef()">
+            <option value="7">Últimos 7 días</option>
+            <option value="15">Últimos 15 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Presión de succión</span>
+              <span id="tend-ps-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— bar</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="chart-ps"></canvas></div>
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:6px">
+              <span>Min: <span id="tend-ps-min">—</span> bar</span>
+              <span>Lím: 1.5 – 3.5 bar</span>
+              <span>Max: <span id="tend-ps-max">—</span> bar</span>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Presión de descarga</span>
+              <span id="tend-pd-cur" style="font-family:var(--font-m);font-size:13px;color:var(--amber)">— bar</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="chart-pd"></canvas></div>
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:6px">
+              <span>Min: <span id="tend-pd-min">—</span> bar</span>
+              <span>Lím: 10 – 18 bar</span>
+              <span>Max: <span id="tend-pd-max">—</span> bar</span>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Temperatura de aceite</span>
+              <span id="tend-ta-cur" style="font-family:var(--font-m);font-size:13px;color:var(--green)">— °C</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="chart-ta"></canvas></div>
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:6px">
+              <span>Min: <span id="tend-ta-min">—</span>°C</span>
+              <span>Alerta 80 · Crítico 90°C</span>
+              <span>Max: <span id="tend-ta-max">—</span>°C</span>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Amperaje</span>
+              <span id="tend-amp-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— A</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="chart-amp"></canvas></div>
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:6px">
+              <span>Min: <span id="tend-amp-min">—</span> A</span>
+              <span>Nominal: 45 – 60 A</span>
+              <span>Max: <span id="tend-amp-max">—</span> A</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Registro de lecturas</span>
+            <span class="badge cyan" id="tend-lect-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>Fecha / Hora</th><th>P. Succión (bar)</th><th>P. Descarga (bar)</th>
+              <th>T. Aceite (°C)</th><th>Amperaje (A)</th><th>Horómetro (h)</th>
+              <th>Observación</th><th>Técnico</th>
+            </tr></thead>
+            <tbody id="tend-lect-tbody"><tr><td colspan="8" class="loading-row">Selecciona un compresor</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: ALERTAS -->
+      <div id="ref-view-alertas" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span class="card-title">Alertas activas</span>
+              <span class="badge red" id="ref-alertas-badge">—</span>
+            </div>
+            <div style="padding:12px;display:flex;flex-direction:column;gap:8px" id="alertas-list">
+              <div class="loading-row"><span class="spinner"></span>Calculando alertas…</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Límites de alarma — flota Refrigeración</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="limites-config"></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="guardarLimitesRef()">Guardar límites</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><span class="card-title">Historial de eventos fuera de límite — últimos 30 días</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Compresor</th><th>Parámetro</th><th>Valor</th><th>Límite</th><th>Severidad</th></tr></thead>
+            <tbody id="alertas-hist-tbody"><tr><td colspan="6" class="loading-row">Sin eventos registrados</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: HORÓMETROS -->
+      <div id="ref-view-horometro" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Horómetros — flota de compresores</span>
+            <span class="badge amber" id="ref-horometro-badge">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>Compresor</th><th>Código</th><th>Marca</th>
+              <th>Horómetro actual</th><th>Próx. PM (PMP)</th>
+              <th>Días restantes</th><th>Estado</th>
+            </tr></thead>
+            <tbody id="horometro-tbody"><tr><td colspan="7" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
+          </table></div>
         </div>
       </div>
     </div>
@@ -1248,7 +1457,43 @@ canvas.spark{width:100%;height:44px;}
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- ══ MODAL: LECTURA COMPLETA DE COMPRESOR ══ -->
+<div class="modal-overlay" id="modal-lectura-ref">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Registrar lectura — Compresor</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura-ref')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Compresor</label>
+          <select class="form-select" id="lr-compresor"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Turno</label>
+          <select class="form-select" id="lr-turno">
+            <option>Mañana</option><option>Tarde</option><option>Noche</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Horómetro (h)</label>
+          <input class="form-input" type="number" id="lr-horometro" step="0.1" placeholder="Ej: 4820"></div>
+        <div class="form-group"><label class="form-label">Presión succión (bar)</label>
+          <input class="form-input" type="number" id="lr-ps" step="0.1" placeholder="Ej: 2.4"></div>
+        <div class="form-group"><label class="form-label">Presión descarga (bar)</label>
+          <input class="form-input" type="number" id="lr-pd" step="0.1" placeholder="Ej: 14.8"></div>
+        <div class="form-group"><label class="form-label">Temperatura aceite (°C)</label>
+          <input class="form-input" type="number" id="lr-ta" step="0.1" placeholder="Ej: 62"></div>
+        <div class="form-group"><label class="form-label">Amperaje (A)</label>
+          <input class="form-input" type="number" id="lr-amp" step="0.1" placeholder="Ej: 48"></div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="lr-obs" placeholder="Condiciones especiales, ruidos, vibración…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura-ref')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLecturaRef()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast">
   <span class="toast-icon" id="toast-icon">✅</span>
   <div><div id="toast-msg"></div><div class="toast-sub" id="toast-sub"></div></div>
@@ -2426,6 +2671,405 @@ window.guardarLectura = async function() {
     showToast('✅','Lectura registrada',`${equ} · ${val} ${document.getElementById('lec-unidad').value}`);
     cargarLecturas();
   } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO REFRIGERACIÓN — Estado tiempo real + Tendencias + Alertas + Horómetros
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allCompresores = [];      // activos reales tipo EQUIPO bajo RF-SIS-COMP / nombre contiene "compresor"
+let allLecturasRef = [];      // lecturas tipo=refrigeracion
+let refLimites = {
+  psMin:1.5, psMax:3.5, pdMin:10, pdMax:18, taAviso:80, taCritico:90, ampMax:60,
+};
+const refTendCharts = {};
+
+window.refTab = function(tab) {
+  ['estado','tend','alertas','horometro'].forEach(t=>{
+    document.getElementById('ref-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('ref-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='tend')      renderTendenciasRef();
+  if (tab==='alertas')   renderAlertasRef();
+  if (tab==='horometro') renderHorometrosRef();
+};
+
+async function cargarRefrigeracion() {
+  try {
+    // Compresores = activos tipo EQUIPO cuyo nombre contiene "compresor" (ya cargado en allActivos)
+    allCompresores = allActivos.filter(a => a.tipo==='EQUIPO' && (a.nombre||'').toLowerCase().includes('compresor'));
+
+    // Lecturas de refrigeración (últimos 500 registros, suficiente para tendencias de 90 días)
+    const snap = await getDocs(query(collection(db,'lecturas'), where('tipo','==','refrigeracion'), orderBy('creadoEn','desc'), limit(500)));
+    allLecturasRef = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    document.getElementById('ref-resumen').textContent =
+      `${allCompresores.length} compresores · ${allCompresores.filter(c=>c.estado==='operativo'||!c.estado).length} operativos · ${allCompresores.filter(c=>c.estado==='detenido').length} detenidos`;
+    const detenidos = allCompresores.filter(c=>c.estado==='detenido').length;
+    document.getElementById('badge-ref').textContent = detenidos>0 ? detenidos : '—';
+
+    renderCompresoresGrid();
+    renderPromedioFlota();
+    poblarSelectCompresores();
+  } catch(e){ console.error('Error cargando Refrigeración:', e); }
+}
+
+// ─── Última lectura por compresor (busca en allLecturasRef por nombre de equipo) ─
+function ultimaLecturaDe(compresor) {
+  const lecs = allLecturasRef.filter(l => l.equipo === compresor.nombre || l.equipo === compresor.cod);
+  if (!lecs.length) return null;
+  // Ya vienen ordenadas desc por creadoEn
+  return lecs[0];
+}
+
+// ─── TAB ESTADO: grilla de tarjetas ─────────────────────────────────────────────
+function renderCompresoresGrid() {
+  const grid = document.getElementById('compresores-grid');
+  if (!allCompresores.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">❄️</div>
+      <div class="empty-title">Sin compresores registrados</div>
+      <div class="empty-sub">No se encontraron activos tipo Equipo con "compresor" en el nombre. Verifica el árbol de Activos.</div></div>`;
+    return;
+  }
+  grid.innerHTML = allCompresores.map(c => {
+    const lec = ultimaLecturaDe(c);
+    const estadoVisual = c.estado==='detenido' ? 'detenido' : (lec && lec.alarma) ? 'alarma' : 'operativo';
+    const estadoLbl = estadoVisual==='operativo'?'OK':estadoVisual==='alarma'?'Alarma':'Detenido';
+    const estadoCls = estadoVisual==='operativo'?'cerrada':estadoVisual==='alarma'?'vencida':'abierta';
+    const ps = lec?.ps, pd = lec?.pd, ta = lec?.ta, amp = lec?.amp;
+    const taCls = ta>refLimites.taCritico?'alarm':ta>refLimites.taAviso?'warn':(ta!=null?'ok':'');
+    const psCls = (ps!=null && (ps<refLimites.psMin||ps>refLimites.psMax))?'warn':(ps!=null?'ok':'');
+    const pdCls = (pd!=null && (pd<refLimites.pdMin||pd>refLimites.pdMax))?'warn':(pd!=null?'ok':'');
+    const ampCls= (amp!=null && amp>refLimites.ampMax)?'warn':(amp!=null?'ok':'');
+    return `<div class="equip-card ${estadoVisual}" onclick="seleccionarActivo('${c.id}');showPage('activos',document.querySelectorAll('.nav-item')[3])">
+      <div class="equip-card-header">
+        <div><div class="equip-name">${c.nombre}</div><div class="equip-code">${c.cod||c.id}</div></div>
+        <span class="status ${estadoCls}" style="font-size:10px">${estadoLbl}</span>
+      </div>
+      <div class="equip-readings">
+        <div class="reading-item"><div class="reading-label">P.Suc</div><div class="reading-val ${psCls}">${ps!=null?ps+' bar':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">P.Des</div><div class="reading-val ${pdCls}">${pd!=null?pd+' bar':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">T.Ace</div><div class="reading-val ${taCls}">${ta!=null?ta+'°C':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">Amp.</div><div class="reading-val ${ampCls}">${amp!=null?amp+'A':'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPromedioFlota() {
+  const conLecturas = allCompresores.map(c=>ultimaLecturaDe(c)).filter(Boolean);
+  const avg = (campo) => {
+    const vals = conLecturas.map(l=>parseFloat(l[campo])).filter(v=>!isNaN(v));
+    return vals.length ? (vals.reduce((s,v)=>s+v,0)/vals.length) : null;
+  };
+  const ps = avg('ps'), pd = avg('pd'), ta = avg('ta'), amp = avg('amp');
+
+  document.getElementById('ref-flota-badge').textContent = `${allCompresores.length} compresores`;
+  document.getElementById('ref-prom-ps').innerHTML  = ps!=null ? `${ps.toFixed(1)} <span style="font-size:13px;color:var(--txt2)">bar</span>` : '— <span style="font-size:13px;color:var(--txt2)">bar</span>';
+  document.getElementById('ref-prom-pd').innerHTML  = pd!=null ? `${pd.toFixed(1)} <span style="font-size:13px;color:var(--txt2)">bar</span>` : '— <span style="font-size:13px;color:var(--txt2)">bar</span>';
+  document.getElementById('ref-prom-ta').innerHTML  = ta!=null ? `${ta.toFixed(0)} <span style="font-size:13px;color:var(--txt2)">°C</span>` : '— <span style="font-size:13px;color:var(--txt2)">°C</span>';
+  document.getElementById('ref-prom-amp').innerHTML = amp!=null ? `${amp.toFixed(0)} <span style="font-size:13px;color:var(--txt2)">A</span>` : '— <span style="font-size:13px;color:var(--txt2)">A</span>';
+
+  document.getElementById('ref-prom-ps-bar').style.width  = ps!=null ? Math.min((ps/refLimites.psMax)*100,100)+'%' : '0%';
+  document.getElementById('ref-prom-pd-bar').style.width  = pd!=null ? Math.min((pd/refLimites.pdMax)*100,100)+'%' : '0%';
+  document.getElementById('ref-prom-ta-bar').style.width  = ta!=null ? Math.min((ta/refLimites.taCritico)*100,100)+'%' : '0%';
+  document.getElementById('ref-prom-amp-bar').style.width = amp!=null ? Math.min((amp/refLimites.ampMax)*100,100)+'%' : '0%';
+
+  document.getElementById('ref-lim-ps-txt').textContent  = `${refLimites.psMin} – ${refLimites.psMax}`;
+  document.getElementById('ref-lim-pd-txt').textContent  = `${refLimites.pdMin} – ${refLimites.pdMax}`;
+  document.getElementById('ref-lim-ta-txt').textContent  = `40 – ${refLimites.taCritico}`;
+  document.getElementById('ref-lim-amp-txt').textContent = `45 – ${refLimites.ampMax}`;
+}
+
+// ─── TAB TENDENCIAS ──────────────────────────────────────────────────────────────
+function poblarSelectCompresores() {
+  const sel = document.getElementById('tend-comp-sel');
+  if (!sel) return;
+  sel.innerHTML = allCompresores.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+}
+
+function ensureChartJsLocal(cb) {
+  if (window.Chart) { cb(); return; }
+  if (document.getElementById('chartjs-script-app')) {
+    document.getElementById('chartjs-script-app').addEventListener('load', cb);
+    return;
+  }
+  const s = document.createElement('script');
+  s.id = 'chartjs-script-app';
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+function buildChartRef(canvasId, labels, dataset, color, limitLines) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (refTendCharts[canvasId]) refTendCharts[canvasId].destroy();
+
+  const plugin = {
+    id: 'limits-'+canvasId,
+    afterDraw(chart) {
+      const {ctx, scales:{x,y}} = chart;
+      (limitLines||[]).forEach(lim=>{
+        if (lim.value===undefined) return;
+        const yPx = y.getPixelForValue(lim.value);
+        if (yPx<y.top||yPx>y.bottom) return;
+        ctx.save();
+        ctx.setLineDash([4,3]);
+        ctx.strokeStyle = lim.color||'rgba(255,68,68,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x.left,yPx); ctx.lineTo(x.right,yPx); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = lim.color||'rgba(255,68,68,0.7)';
+        ctx.font = '9px DM Mono, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(lim.label, x.right-2, yPx-3);
+        ctx.restore();
+      });
+    }
+  };
+
+  refTendCharts[canvasId] = new Chart(canvas, {
+    type:'line',
+    data:{labels, datasets:[{label:'',data:dataset,borderColor:color,backgroundColor:color+'18',borderWidth:1.5,pointRadius:labels.length<=10?3:0,pointHoverRadius:4,fill:true,tension:0.35}]},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:{duration:300},
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'#111318',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#9ba3b2',bodyColor:'#f0f2f5',titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:11}}},
+      scales:{
+        x:{ticks:{color:'#5a6272',font:{family:'DM Mono',size:9},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)',lineWidth:0.5},border:{color:'rgba(255,255,255,0.07)'}},
+        y:{ticks:{color:'#5a6272',font:{family:'DM Mono',size:9}},grid:{color:'rgba(255,255,255,0.04)',lineWidth:0.5},border:{color:'rgba(255,255,255,0.07)'}}
+      }
+    },
+    plugins:[plugin]
+  });
+}
+
+window.renderTendenciasRef = function() {
+  const compId = document.getElementById('tend-comp-sel')?.value;
+  const dias   = parseInt(document.getElementById('tend-period-sel')?.value||'30');
+  const comp   = allCompresores.find(c=>c.id===compId);
+  if (!comp) {
+    document.getElementById('tend-lect-tbody').innerHTML = '<tr><td colspan="8" class="loading-row">Selecciona un compresor</td></tr>';
+    return;
+  }
+
+  const desde = new Date(); desde.setDate(desde.getDate()-dias);
+  const lecturas = allLecturasRef
+    .filter(l => (l.equipo===comp.nombre||l.equipo===comp.cod) && l.creadoEn?.toDate && l.creadoEn.toDate()>=desde)
+    .sort((a,b)=> a.creadoEn.toDate()-b.creadoEn.toDate());
+
+  if (!lecturas.length) {
+    ['chart-ps','chart-pd','chart-ta','chart-amp'].forEach(id=>{ if(refTendCharts[id]){refTendCharts[id].destroy();delete refTendCharts[id];} });
+    ['tend-ps-cur','tend-pd-cur','tend-ta-cur','tend-amp-cur'].forEach(id=>document.getElementById(id).textContent='— ');
+    ['tend-ps-min','tend-ps-max','tend-pd-min','tend-pd-max','tend-ta-min','tend-ta-max','tend-amp-min','tend-amp-max'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('tend-lect-count').textContent = '0 registros';
+    document.getElementById('tend-lect-tbody').innerHTML = `<tr><td colspan="8"><div class="empty" style="height:100px"><div class="empty-icon">📭</div><div class="empty-sub">Sin lecturas de ${comp.nombre} en este período</div></div></td></tr>`;
+    return;
+  }
+
+  ensureChartJsLocal(() => {
+    const labels = lecturas.map(l=>l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+    const psArr  = lecturas.map(l=>parseFloat(l.ps)||0);
+    const pdArr  = lecturas.map(l=>parseFloat(l.pd)||0);
+    const taArr  = lecturas.map(l=>parseFloat(l.ta)||0);
+    const ampArr = lecturas.map(l=>parseFloat(l.amp)||0);
+
+    const setReadout = (pref, arr, unidad) => {
+      document.getElementById(`tend-${pref}-cur`).textContent = arr[arr.length-1].toFixed(1)+' '+unidad;
+      document.getElementById(`tend-${pref}-min`).textContent = Math.min(...arr).toFixed(1);
+      document.getElementById(`tend-${pref}-max`).textContent = Math.max(...arr).toFixed(1);
+    };
+    setReadout('ps', psArr, 'bar'); setReadout('pd', pdArr, 'bar');
+    setReadout('ta', taArr, '°C');  setReadout('amp', ampArr, 'A');
+
+    buildChartRef('chart-ps', labels, psArr, '#00d4ff', [{value:refLimites.psMin,label:'Mín',color:'rgba(255,68,68,0.6)'},{value:refLimites.psMax,label:'Máx',color:'rgba(255,68,68,0.6)'}]);
+    buildChartRef('chart-pd', labels, pdArr, '#ffb300', [{value:refLimites.pdMin,label:'Mín',color:'rgba(255,68,68,0.6)'},{value:refLimites.pdMax,label:'Máx',color:'rgba(255,68,68,0.6)'}]);
+    buildChartRef('chart-ta', labels, taArr, '#00e676', [{value:refLimites.taAviso,label:'Aviso',color:'rgba(255,179,0,0.6)'},{value:refLimites.taCritico,label:'Crítico',color:'rgba(255,68,68,0.7)'}]);
+    buildChartRef('chart-amp',labels, ampArr,'#00d4ff', [{value:refLimites.ampMax,label:'Máx',color:'rgba(0,212,255,0.4)'}]);
+  });
+
+  document.getElementById('tend-lect-count').textContent = lecturas.length+' registros';
+  document.getElementById('tend-lect-tbody').innerHTML = [...lecturas].reverse().map(l=>{
+    const fecha = l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const taCls = l.ta>refLimites.taCritico?'alarm':l.ta>refLimites.taAviso?'warn':'ok';
+    const psCls = (l.ps<refLimites.psMin||l.ps>refLimites.psMax)?'warn':'ok';
+    return `<tr>
+      <td class="mono">${fecha}</td>
+      <td class="mono"><span class="reading-val ${psCls}" style="font-size:12px">${l.ps??'—'}</span></td>
+      <td class="mono">${l.pd??'—'}</td>
+      <td class="mono"><span class="reading-val ${taCls}" style="font-size:12px">${l.ta??'—'}</span></td>
+      <td class="mono">${l.amp??'—'}</td>
+      <td class="mono">${l.horometro??'—'}</td>
+      <td style="font-size:12px;color:var(--txt2)">${l.obs||'—'}</td>
+      <td style="font-size:12px">${l.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('');
+};
+
+// ─── TAB ALERTAS — calculadas en tiempo real desde lecturas reales ──────────────
+window.renderAlertasRef = function() {
+  const alertas = [];
+  allCompresores.forEach(c => {
+    const lec = ultimaLecturaDe(c);
+    if (!lec) return;
+    const checks = [
+      {param:'P. succión', val:lec.ps, fuera: lec.ps<refLimites.psMin||lec.ps>refLimites.psMax, lim:`${refLimites.psMin}–${refLimites.psMax} bar`, sev: (lec.ps<refLimites.psMin*0.7||lec.ps>refLimites.psMax*1.3)?'critica':'aviso'},
+      {param:'P. descarga', val:lec.pd, fuera: lec.pd<refLimites.pdMin||lec.pd>refLimites.pdMax, lim:`${refLimites.pdMin}–${refLimites.pdMax} bar`, sev: (lec.pd>refLimites.pdMax*1.2)?'critica':'aviso'},
+      {param:'Temp. aceite', val:lec.ta, fuera: lec.ta>refLimites.taAviso, lim:`< ${refLimites.taCritico} °C`, sev: lec.ta>refLimites.taCritico?'critica':'aviso'},
+      {param:'Amperaje', val:lec.amp, fuera: lec.amp>refLimites.ampMax, lim:`< ${refLimites.ampMax} A`, sev: lec.amp>refLimites.ampMax*1.15?'critica':'aviso'},
+    ];
+    checks.filter(ch=>ch.fuera && ch.val!=null).forEach(ch=>{
+      const fecha = lec.creadoEn?.toDate ? lec.creadoEn.toDate() : new Date();
+      const horasDur = Math.round((new Date()-fecha)/3600000);
+      alertas.push({comp:c.nombre, param:ch.param, val:ch.val, lim:ch.lim, sev:ch.sev, dur: horasDur+'h', fecha});
+    });
+  });
+  alertas.sort((a,b)=> (b.sev==='critica')-(a.sev==='critica'));
+
+  const criticas = alertas.filter(a=>a.sev==='critica').length;
+  const avisos   = alertas.filter(a=>a.sev==='aviso').length;
+  document.getElementById('ref-alertas-badge').textContent = `${criticas} críticas · ${avisos} aviso`;
+
+  const listEl = document.getElementById('alertas-list');
+  listEl.innerHTML = alertas.length ? alertas.map(a=>`
+    <div style="background:var(--bg3);border:1px solid ${a.sev==='critica'?'rgba(255,68,68,0.25)':'rgba(255,179,0,0.2)'};border-radius:var(--r);padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+        <div><span style="font-weight:600;font-size:13px">${a.comp}</span><span style="font-size:11px;color:var(--txt2);margin-left:8px">${a.param}</span></div>
+        <span class="badge ${a.sev==='critica'?'red':'amber'}" style="font-size:10px">${a.sev}</span>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;font-family:var(--font-m)">
+        <span style="color:${a.sev==='critica'?'var(--red)':'var(--amber)'}">Valor: ${a.val}</span>
+        <span style="color:var(--txt2)">Límite: ${a.lim}</span>
+        <span style="color:var(--txt2)">Hace: ${a.dur}</span>
+      </div>
+    </div>`).join('') : '<div style="text-align:center;padding:24px;color:var(--txt2);font-size:12px">✅ Sin alertas activas — todos los parámetros dentro de rango</div>';
+
+  // Panel configuración de límites
+  const limEl = document.getElementById('limites-config');
+  const params = [
+    {key:'psMin',label:'P. succión mín.',unit:'bar',color:'var(--cyan)'},
+    {key:'psMax',label:'P. succión máx.',unit:'bar',color:'var(--cyan)'},
+    {key:'pdMin',label:'P. descarga mín.',unit:'bar',color:'var(--amber)'},
+    {key:'pdMax',label:'P. descarga máx.',unit:'bar',color:'var(--amber)'},
+    {key:'taAviso',label:'T. aceite aviso',unit:'°C',color:'var(--amber)'},
+    {key:'taCritico',label:'T. aceite crítico',unit:'°C',color:'var(--red)'},
+    {key:'ampMax',label:'Amperaje máx.',unit:'A',color:'var(--cyan)'},
+  ];
+  limEl.innerHTML = params.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;color:var(--txt2);width:160px;flex-shrink:0">${p.label}</span>
+      <input class="form-input" type="number" id="lim-${p.key}" value="${refLimites[p.key]}" style="width:80px;padding:5px 8px;font-family:var(--font-m);font-size:12px;color:${p.color}">
+      <span style="font-size:11px;font-family:var(--font-m);color:var(--txt2)">${p.unit}</span>
+    </div>`).join('');
+
+  // Historial: lecturas que estuvieron fuera de límite (de las últimas 30d)
+  const hace30 = new Date(); hace30.setDate(hace30.getDate()-30);
+  const histEl = document.getElementById('alertas-hist-tbody');
+  const eventosHist = [];
+  allLecturasRef.filter(l=>l.creadoEn?.toDate && l.creadoEn.toDate()>=hace30).forEach(l=>{
+    if (l.ta>refLimites.taAviso) eventosHist.push({fecha:l.creadoEn.toDate(), comp:l.equipo, param:'Temp. aceite', val:l.ta, lim:refLimites.taCritico, sev:l.ta>refLimites.taCritico?'critica':'aviso'});
+    if (l.ps<refLimites.psMin||l.ps>refLimites.psMax) eventosHist.push({fecha:l.creadoEn.toDate(), comp:l.equipo, param:'P. succión', val:l.ps, lim:`${refLimites.psMin}-${refLimites.psMax}`, sev:'aviso'});
+  });
+  eventosHist.sort((a,b)=>b.fecha-a.fecha);
+  histEl.innerHTML = eventosHist.length ? eventosHist.slice(0,30).map(e=>`<tr>
+    <td class="mono" style="font-size:11px">${e.fecha.toLocaleDateString('es-PE')}</td>
+    <td style="font-size:12px">${e.comp}</td>
+    <td style="font-size:12px">${e.param}</td>
+    <td class="mono" style="color:${e.sev==='critica'?'var(--red)':'var(--amber)'}">${e.val}</td>
+    <td class="mono" style="color:var(--txt2)">${e.lim}</td>
+    <td><span class="badge ${e.sev==='critica'?'red':'amber'}" style="font-size:10px">${e.sev}</span></td>
+  </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:20px">Sin eventos fuera de límite en los últimos 30 días</td></tr>';
+};
+
+window.guardarLimitesRef = function() {
+  ['psMin','psMax','pdMin','pdMax','taAviso','taCritico','ampMax'].forEach(k=>{
+    const el = document.getElementById('lim-'+k);
+    if (el) refLimites[k] = parseFloat(el.value)||refLimites[k];
+  });
+  showToast('✅','Límites actualizados','Las alertas se recalculan con los nuevos valores');
+  renderAlertasRef();
+  renderPromedioFlota();
+  renderCompresoresGrid();
+};
+
+// ─── TAB HORÓMETROS — cruzado con PMP real ──────────────────────────────────────
+window.renderHorometrosRef = function() {
+  const tbody = document.getElementById('horometro-tbody');
+  if (!allCompresores.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">⏱️</div><div class="empty-sub">Sin compresores registrados</div></div></td></tr>';
+    return;
+  }
+  let proximosPM = 0;
+  tbody.innerHTML = allCompresores.map(c => {
+    const lec = ultimaLecturaDe(c);
+    const horometro = lec?.horometro ?? null;
+    // Buscar actividad PMP de este compresor con la próxima fecha más cercana
+    const actsPMP = (typeof allPmpActividades!=='undefined' ? allPmpActividades : []).filter(a=>a.activoId===c.id);
+    const proximaAct = actsPMP.sort((a,b)=> new Date(a.proximaFecha||'2099-01-01') - new Date(b.proximaFecha||'2099-01-01'))[0];
+    let diasRest = null, estado = 'sin-plan';
+    if (proximaAct?.proximaFecha) {
+      diasRest = Math.round((new Date(proximaAct.proximaFecha) - new Date())/86400000);
+      estado = diasRest<0 ? 'vencida' : diasRest<=7 ? 'proxima' : 'al_dia';
+      if (estado!=='al_dia') proximosPM++;
+    }
+    const estCls = estado==='vencida'?'vencida':estado==='proxima'?'prog':estado==='al_dia'?'cerrada':'abierta';
+    const estLbl = estado==='vencida'?'PM vencido':estado==='proxima'?'Próx. PM':estado==='al_dia'?'OK':'Sin plan PMP';
+    return `<tr>
+      <td style="font-weight:600">${c.nombre}</td>
+      <td class="mono" style="font-size:11px;color:var(--txt2)">${c.cod||c.id}</td>
+      <td style="font-size:12px;color:var(--txt2)">${c.marca||'—'}</td>
+      <td><span style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">${horometro!=null?horometro.toLocaleString()+' h':'—'}</span></td>
+      <td class="mono" style="font-size:12px">${proximaAct?.proximaFecha||'—'}</td>
+      <td class="mono" style="font-size:12px;color:${diasRest!=null&&diasRest<0?'var(--red)':diasRest!=null&&diasRest<=7?'var(--amber)':'var(--txt2)'}">${diasRest!=null?diasRest+' días':'—'}</td>
+      <td><span class="status ${estCls}">${estLbl}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ref-horometro-badge').textContent = `${proximosPM} próximos a mantenimiento`;
+};
+
+// ─── MODAL: Lectura completa de compresor ───────────────────────────────────────
+window.abrirModalLecturaRef = function() {
+  const sel = document.getElementById('lr-compresor');
+  sel.innerHTML = allCompresores.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  ['lr-horometro','lr-ps','lr-pd','lr-ta','lr-amp','lr-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-lectura-ref').classList.add('open');
+};
+
+window.guardarLecturaRef = async function() {
+  const compId = document.getElementById('lr-compresor').value;
+  const comp = allCompresores.find(c=>c.id===compId);
+  if (!comp) { showToast('⚠️','Selecciona un compresor',''); return; }
+  const ps = document.getElementById('lr-ps').value;
+  const pd = document.getElementById('lr-pd').value;
+  const ta = document.getElementById('lr-ta').value;
+  const amp= document.getElementById('lr-amp').value;
+  if (!ps && !pd && !ta && !amp) { showToast('⚠️','Ingresa al menos un parámetro',''); return; }
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'refrigeracion', equipo:comp.nombre, equipoId:comp.id,
+      turno: document.getElementById('lr-turno').value,
+      horometro: parseFloat(document.getElementById('lr-horometro').value)||null,
+      ps: parseFloat(ps)||null, pd: parseFloat(pd)||null,
+      ta: parseFloat(ta)||null, amp: parseFloat(amp)||null,
+      alarma: (parseFloat(ta)>refLimites.taCritico) || (parseFloat(amp)>refLimites.ampMax),
+      obs: document.getElementById('lr-obs').value.trim()||null,
+      tecnicoUid: currentUser.uid,
+      tecnicoNombre: `${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn: serverTimestamp(),
+    });
+    cerrarModal('modal-lectura-ref');
+    showToast('✅','Lectura registrada', comp.nombre);
+    await cargarRefrigeracion();
+    if (document.getElementById('ref-view-tend').style.display!=='none') renderTendenciasRef();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// Hook showPage para cargar Refrigeración al entrar
+const _showPageRef = window.showPage;
+window.showPage = function(name, el) {
+  _showPageRef(name, el);
+  if (name==='refrigeracion') cargarRefrigeracion();
 };
 
 // ─── TÉCNICOS ─────────────────────────────────────────────────────────────────
