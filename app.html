@@ -344,10 +344,10 @@ body{font-family:var(--font-b);background:var(--bg0);color:var(--txt0);min-heigh
 
       <!-- KPIs PMP -->
       <div class="kpi-grid">
-        <div class="kpi-card cyan"><span class="kpi-icon">📋</span><div class="kpi-label">Plantillas activas</div><div class="kpi-value cyan" id="pmp-k-plantillas">—</div></div>
-        <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Actividades al día</div><div class="kpi-value green" id="pmp-k-aldia">—</div></div>
-        <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">Próximas 7 días</div><div class="kpi-value amber" id="pmp-k-proximas">—</div></div>
-        <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Vencidas</div><div class="kpi-value red" id="pmp-k-vencidas">—</div></div>
+        <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Cumplimiento PMP</div><div class="kpi-value green" id="pmp-k-cumpl">—</div><div class="kpi-sub">Meta: ≥ 90%</div></div>
+        <div class="kpi-card cyan"><span class="kpi-icon">📋</span><div class="kpi-label">Actividades programadas</div><div class="kpi-value cyan" id="pmp-k-total">—</div><div class="kpi-sub">este mes</div></div>
+        <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">Pendientes / Vencidas</div><div class="kpi-value amber" id="pmp-k-pend">—</div><div class="kpi-sub">requieren acción</div></div>
+        <div class="kpi-card red"><span class="kpi-icon">🔄</span><div class="kpi-label">OT generadas automát.</div><div class="kpi-value red" id="pmp-k-ot">—</div><div class="kpi-sub">este mes</div></div>
       </div>
 
       <!-- Tabs -->
@@ -1106,7 +1106,7 @@ onAuthStateChanged(auth, async (user) => {
   setupUI();
   await Promise.all([cargarActivos(), cargarTecnicos()]);
   loadDashboard();
-  cargarOT();
+  await cargarOT();
   cargarSolicitudes();
   cargarRepuestos();
   cargarLecturas();
@@ -2083,12 +2083,39 @@ function calcularEstadoPMP(proximaFecha) {
 }
 
 function actualizarKpisPMP() {
-  const estados = allPmpActividades.map(a => calcularEstadoPMP(a.proximaFecha));
-  document.getElementById('pmp-k-plantillas').textContent = allPlantillas.length;
-  document.getElementById('pmp-k-aldia').textContent    = estados.filter(e=>e==='al_dia').length;
-  document.getElementById('pmp-k-proximas').textContent = estados.filter(e=>e==='proxima').length;
-  document.getElementById('pmp-k-vencidas').textContent = estados.filter(e=>e==='vencida').length;
-  const vencidas = estados.filter(e=>e==='vencida').length;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const mesActual = hoy.getMonth(), añoActual = hoy.getFullYear();
+
+  // Actividades cuya proximaFecha cae en el mes actual = "programadas este mes"
+  const delMes = allPmpActividades.filter(a => {
+    if (!a.proximaFecha) return false;
+    const f = new Date(a.proximaFecha);
+    return f.getMonth()===mesActual && f.getFullYear()===añoActual;
+  });
+
+  const estados = delMes.map(a => calcularEstadoPMP(a.proximaFecha));
+  const ejecutadasMes = delMes.filter(a => {
+    if (!a.ultimaEjecucion) return false;
+    const f = new Date(a.ultimaEjecucion);
+    return f.getMonth()===mesActual && f.getFullYear()===añoActual;
+  }).length;
+  const pendientes = estados.filter(e=>e==='proxima').length;
+  const vencidas   = estados.filter(e=>e==='vencida').length;
+  const totalMes   = delMes.length;
+  const cumplimiento = totalMes>0 ? Math.round((ejecutadasMes/totalMes)*1000)/10 : 0;
+
+  // OT generadas automáticamente desde PMP — se identifican por el prefijo [PMP] en la descripción
+  const otGeneradasMes = (allOT||[]).filter(o => {
+    if (!o.descripcion || !o.descripcion.startsWith('[PMP]')) return false;
+    const f = o.creadoEn?.toDate ? o.creadoEn.toDate() : (o.fechaProgramada ? new Date(o.fechaProgramada) : null);
+    return f && f.getMonth()===mesActual && f.getFullYear()===añoActual;
+  }).length;
+
+  document.getElementById('pmp-k-cumpl').textContent = totalMes>0 ? cumplimiento+'%' : '—';
+  document.getElementById('pmp-k-total').textContent = totalMes;
+  document.getElementById('pmp-k-pend').textContent  = `${pendientes} / ${vencidas}`;
+  document.getElementById('pmp-k-ot').textContent    = otGeneradasMes;
+
   document.getElementById('badge-pmp').textContent = vencidas>0 ? vencidas : '—';
 }
 
