@@ -715,6 +715,7 @@ canvas.spark{width:100%;height:44px;}
         <button class="pmp-tab active" id="alm-tab-inventario" onclick="almTab('inventario')">Inventario</button>
         <button class="pmp-tab" id="alm-tab-kardex" onclick="almTab('kardex')">Kardex</button>
         <button class="pmp-tab" id="alm-tab-critico" onclick="almTab('critico')">Stock crítico</button>
+        <button class="pmp-tab" id="alm-tab-consumo" onclick="almTab('consumo')">Consumo por OT</button>
       </div>
 
       <!-- TAB: INVENTARIO -->
@@ -782,6 +783,35 @@ canvas.spark{width:100%;height:44px;}
           <div class="tbl-wrap"><table class="tbl">
             <thead><tr><th>Repuesto</th><th>Stock actual</th><th>Consumo 90d</th><th>Consumo/mes</th><th>Cant. recomendada</th><th>Acción</th></tr></thead>
             <tbody id="crit-proy-tbody"><tr><td colspan="6" class="loading-row">Calculando proyección…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: CONSUMO POR OT -->
+      <div id="alm-view-consumo" style="display:none">
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="cons-periodo-sel" onchange="renderConsumoPorOT()">
+            <option value="30">Últimos 30 días</option>
+            <option value="90" selected>Últimos 90 días</option>
+            <option value="180">Últimos 180 días</option>
+            <option value="365">Último año</option>
+          </select>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">🔧</span><div class="kpi-label">OT con repuesto</div><div class="kpi-value cyan" id="cons-k-ot">—</div><div class="kpi-sub">en el período</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">💰</span><div class="kpi-label">Gasto total</div><div class="kpi-value amber" id="cons-k-gasto" style="font-size:20px">—</div><div class="kpi-sub">en repuestos</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">🏆</span><div class="kpi-label">Repuesto más consumido</div><div class="kpi-value green" id="cons-k-top-rep" style="font-size:15px">—</div><div class="kpi-sub" id="cons-k-top-rep-sub">—</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📍</span><div class="kpi-label">Área con más consumo</div><div class="kpi-value red" id="cons-k-top-area" style="font-size:15px">—</div><div class="kpi-sub" id="cons-k-top-area-sub">—</div></div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Detalle de consumo por OT</span>
+            <span class="badge cyan" id="cons-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>OT</th><th>Activo</th><th>Repuesto</th><th>Cantidad</th><th>Costo</th><th>Técnico</th></tr></thead>
+            <tbody id="cons-tbody"><tr><td colspan="7" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
           </table></div>
         </div>
       </div>
@@ -2871,6 +2901,7 @@ function renderRepuestos(lista) {
       <td><div class="action-btns">
         <button class="action-btn" onclick="abrirModalMovimiento('entrada','${r.id}')" title="Entrada">↓</button>
         <button class="action-btn" onclick="abrirModalMovimiento('salida','${r.id}')"  title="Salida">↑</button>
+        <button class="action-btn" onclick="almTab('kardex');renderKardex('${r.id}')" title="Ver Kardex">📋</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -2972,11 +3003,12 @@ window.guardarMovimiento = async function() {
 let allMovimientosAlm = []; // cache de movimientos_almacen, cargado bajo demanda
 
 window.almTab = function(tab) {
-  ['inventario','kardex','critico'].forEach(t=>{
+  ['inventario','kardex','critico','consumo'].forEach(t=>{
     document.getElementById('alm-view-'+t).style.display = t===tab?'block':'none';
     document.getElementById('alm-tab-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='critico') renderStockCritico();
+  if (tab==='consumo') renderConsumoPorOT();
 };
 
 async function cargarMovimientosAlm() {
@@ -3104,6 +3136,81 @@ window.renderStockCritico = async function() {
       <td class="mono" style="color:var(--cyan);font-weight:600">${consumoMes>0?recomendada+' '+(r.uni||'unid.'):'—'}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="abrirModalMovimiento('entrada','${r.id}')">+ Registrar compra</button></td>
     </tr>`).join('');
+};
+
+// ─── TAB CONSUMO POR OT — global, sin filtro de área (RF-06, RF-07) ────────────
+window.renderConsumoPorOT = function() {
+  const dias = parseInt(document.getElementById('cons-periodo-sel')?.value||'90');
+  const desde = new Date(); desde.setDate(desde.getDate()-dias);
+
+  const otsConsumo = (allOT||[]).filter(o=>{
+    if (o.estado!=='cerrada' || !o.repuestoId) return false;
+    const f = o.creadoEn?.toDate ? o.creadoEn.toDate() : null;
+    return f && f>=desde;
+  }).sort((a,b)=>{
+    const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0), fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0);
+    return fb-fa;
+  });
+
+  document.getElementById('cons-k-ot').textContent = otsConsumo.length;
+  document.getElementById('cons-count').textContent = otsConsumo.length+' registros';
+
+  const gastoTotal = otsConsumo.reduce((s,o)=>{
+    const rep = (allRepuestos||[]).find(r=>r.id===o.repuestoId);
+    return s + ((parseFloat(o.repuestoCantidad)||0) * (rep?.cunit||0));
+  },0);
+  document.getElementById('cons-k-gasto').textContent = 'S/ '+gastoTotal.toLocaleString('es-PE',{maximumFractionDigits:0});
+
+  // Repuesto más consumido (por cantidad acumulada)
+  const porRepuesto = {};
+  otsConsumo.forEach(o=>{
+    const k = o.repuestoId;
+    porRepuesto[k] = porRepuesto[k] || {nombre:o.repuestoNombre, cod:o.repuestoCod, cant:0, n:0};
+    porRepuesto[k].cant += parseFloat(o.repuestoCantidad)||0;
+    porRepuesto[k].n++;
+  });
+  const topRep = Object.values(porRepuesto).sort((a,b)=>b.cant-a.cant)[0];
+  document.getElementById('cons-k-top-rep').textContent = topRep ? topRep.nombre : '—';
+  document.getElementById('cons-k-top-rep-sub').textContent = topRep ? `${topRep.cant.toFixed(0)} unid. en ${topRep.n} OT` : 'sin datos en el período';
+
+  // Área con más consumo (sube por el árbol de cada activo hasta nodo tipo AREA)
+  const porArea = {};
+  otsConsumo.forEach(o=>{
+    let nodo = (allActivos||[]).find(a=>a.id===o.activoId);
+    let safety = 0;
+    while (nodo && nodo.tipo!=='AREA' && nodo.padreId && safety<10) {
+      nodo = (allActivos||[]).find(a=>a.id===nodo.padreId);
+      safety++;
+    }
+    const areaNombre = nodo?.nombre || 'Sin área';
+    const rep = (allRepuestos||[]).find(r=>r.id===o.repuestoId);
+    const costo = (parseFloat(o.repuestoCantidad)||0)*(rep?.cunit||0);
+    porArea[areaNombre] = (porArea[areaNombre]||0) + costo;
+  });
+  const topAreaEntry = Object.entries(porArea).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('cons-k-top-area').textContent = topAreaEntry ? topAreaEntry[0] : '—';
+  document.getElementById('cons-k-top-area-sub').textContent = topAreaEntry ? 'S/ '+topAreaEntry[1].toLocaleString('es-PE',{maximumFractionDigits:0})+' gastados' : 'sin datos en el período';
+
+  // Tabla detalle
+  const tbody = document.getElementById('cons-tbody');
+  if (!otsConsumo.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty" style="height:100px"><div class="empty-icon">📦</div><div class="empty-sub">Sin consumos registrados en este período — se llena automáticamente al cerrar OT con repuesto vinculado</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = otsConsumo.slice(0,60).map(o=>{
+    const fecha = o.creadoEn?.toDate ? o.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    const rep = (allRepuestos||[]).find(r=>r.id===o.repuestoId);
+    const costo = (parseFloat(o.repuestoCantidad)||0)*(rep?.cunit||0);
+    return `<tr>
+      <td class="mono" style="font-size:11px">${fecha}</td>
+      <td><span class="badge cyan" style="font-size:10px;cursor:pointer" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">${o.codigo}</span></td>
+      <td style="font-size:12px;color:var(--txt2)">${o.activoNombre||'—'}</td>
+      <td style="font-size:12px">${o.repuestoNombre||'—'}</td>
+      <td class="mono">${o.repuestoCantidad||'—'} ${o.repuestoUnidad||''}</td>
+      <td class="mono" style="color:var(--amber)">S/ ${costo.toFixed(2)}</td>
+      <td style="font-size:12px;color:var(--txt2)">${o.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('');
 };
 
 // ─── LECTURAS ─────────────────────────────────────────────────────────────────
