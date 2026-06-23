@@ -332,6 +332,10 @@ canvas.spark{width:100%;height:44px;}
       <span class="nav-icon">💧</span><span class="nav-label">Ósmosis Inversa</span>
       <span class="nav-badge" id="badge-osm">—</span>
     </div>
+    <div class="nav-item" id="nav-calderos" onclick="showPage('calderos',this)">
+      <span class="nav-icon">🔥</span><span class="nav-label">Calderos</span>
+      <span class="nav-badge" id="badge-cal">—</span>
+    </div>
     <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
       <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
     </div>
@@ -1203,6 +1207,258 @@ canvas.spark{width:100%;height:44px;}
       </div>
     </div>
 
+    <!-- ══ CALDEROS · PLANTA DE VAPOR ══ -->
+    <div class="page" id="page-calderos">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">Calderos · Planta de Vapor</div>
+          <div class="page-sub" id="cal-resumen">— calderas · — operativas · — detenidas</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalLecturaCald()">+ Lectura operativa</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalAguaCald()">+ Análisis de agua</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalPruebaCald()">+ Registrar prueba</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="cal-tab-estado" onclick="caldTab('estado')">Estado en tiempo real</button>
+        <button class="pmp-tab" id="cal-tab-tend" onclick="caldTab('tend')">Tendencias históricas</button>
+        <button class="pmp-tab" id="cal-tab-efic" onclick="caldTab('efic')">Eficiencia energética</button>
+        <button class="pmp-tab" id="cal-tab-agua" onclick="caldTab('agua')">Tratamiento de agua</button>
+        <button class="pmp-tab" id="cal-tab-seg" onclick="caldTab('seg')">Seguridad y pruebas</button>
+        <button class="pmp-tab" id="cal-tab-consumo" onclick="caldTab('consumo')">Horómetros y consumo</button>
+      </div>
+
+      <!-- TAB: ESTADO -->
+      <div id="cal-view-estado">
+        <div class="equip-grid" id="calderas-grid">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando calderas…</div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Planta de vapor — promedio últimas 24h</div>
+            <span class="badge cyan" id="cal-planta-badge">—</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Presión de vapor prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="cal-prom-pv">— <span style="font-size:13px;color:var(--txt2)">bar</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="cal-prom-pv-bar" style="width:0%;background:var(--cyan)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Máx. diseño: <span id="cal-lim-pv-txt">10</span> bar</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Producción de vapor</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--amber)" id="cal-prom-vapor">— <span style="font-size:13px;color:var(--txt2)">kg/h</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="cal-prom-vapor-bar" style="width:0%;background:var(--amber)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Total de la flota en operación</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">η combustión prom.</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--green)" id="cal-prom-efic">— <span style="font-size:13px;color:var(--txt2)">%</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="cal-prom-efic-bar" style="width:0%;background:var(--green)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Meta: ≥ <span id="cal-lim-efic-txt">88</span>% (gas natural)</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+              <div class="kpi-label">Consumo de gas</div>
+              <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="cal-prom-gas">— <span style="font-size:13px;color:var(--txt2)">m³/h</span></div>
+              <div class="mini-bar-track" style="margin-top:8px"><div class="mini-bar-fill" id="cal-prom-gas-bar" style="width:0%;background:var(--cyan)"></div></div>
+              <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Total de la flota en operación</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TENDENCIAS -->
+      <div id="cal-view-tend" style="display:none">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Caldera:</span>
+          <select class="filter-sel" id="cal-tend-sel" onchange="renderTendenciasCald()" style="min-width:200px"></select>
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="cal-tend-period" onchange="renderTendenciasCald()">
+            <option value="7">Últimos 7 días</option>
+            <option value="15">Últimos 15 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Presión de vapor</span>
+              <span id="cal-tend-pv-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— bar</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="cal-chart-pv"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Temperatura de humos</span>
+              <span id="cal-tend-th-cur" style="font-family:var(--font-m);font-size:13px;color:var(--amber)">— °C</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="cal-chart-th"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Eficiencia de combustión</span>
+              <span id="cal-tend-ef-cur" style="font-family:var(--font-m);font-size:13px;color:var(--green)">— %</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="cal-chart-ef"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="card-title" style="font-size:12px">Consumo de gas</span>
+              <span id="cal-tend-gas-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— m³/h</span>
+            </div>
+            <div style="position:relative;height:140px"><canvas id="cal-chart-gas"></canvas></div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Registro de lecturas operativas</span>
+            <span class="badge cyan" id="cal-tend-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>Fecha / Hora</th><th>P. Vapor (bar)</th><th>Nivel (%)</th><th>T. Humos (°C)</th>
+              <th>O₂ (%)</th><th>η (%)</th><th>Gas (m³/h)</th><th>Vapor (kg/h)</th><th>Técnico</th>
+            </tr></thead>
+            <tbody id="cal-tend-tbody"><tr><td colspan="9" class="loading-row">Selecciona una caldera</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: EFICIENCIA ENERGÉTICA -->
+      <div id="cal-view-efic" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">🔥</span><div class="kpi-label">η combustión prom.</div><div class="kpi-value green" id="cal-ef-k-efic">—</div><div class="kpi-sub">método Siegert (gas natural)</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">💨</span><div class="kpi-label">Ratio vapor / gas</div><div class="kpi-value cyan" id="cal-ef-k-ratio">—</div><div class="kpi-sub">kg vapor por m³ de gas</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">📊</span><div class="kpi-label">Consumo específico</div><div class="kpi-value amber" id="cal-ef-k-espec">—</div><div class="kpi-sub">m³ de gas por tonelada de vapor</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">💰</span><div class="kpi-label">Costo de gas estimado</div><div class="kpi-value red" id="cal-ef-k-costo">—</div><div class="kpi-sub" id="cal-ef-k-costo-sub">proyección mensual</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Tendencia de eficiencia de combustión</div><span class="badge green" id="cal-ef-trend-badge">—</span></div>
+            <div style="position:relative;height:200px"><canvas id="cal-chart-eftrend"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Diagnóstico de combustión</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:var(--bg3);border-radius:var(--r);padding:12px">
+                <div class="kpi-label">Exceso de aire promedio</div>
+                <div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--cyan)" id="cal-ef-exceso">—</div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:2px">Óptimo gas natural: 10 – 20%</div>
+              </div>
+              <div style="background:var(--bg3);border-radius:var(--r);padding:12px">
+                <div class="kpi-label">Pérdidas por chimenea</div>
+                <div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--amber)" id="cal-ef-perdidas">—</div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:2px">Calor que se va por los humos</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                <span style="font-size:11px;color:var(--txt2)">Precio del gas (S/ por m³):</span>
+                <input class="form-input" type="number" id="cal-precio-gas" step="0.01" style="width:90px;padding:5px 8px;font-family:var(--font-m);font-size:12px">
+                <button class="btn btn-primary btn-sm" onclick="guardarPrecioGas()">Aplicar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="cal-ef-diag-card" style="border-left:3px solid var(--amber)">
+          <div style="font-size:13px;color:var(--txt1)" id="cal-ef-diag">El diagnóstico aparecerá cuando existan lecturas con O₂ y temperatura de humos.</div>
+        </div>
+      </div>
+
+      <!-- TAB: TRATAMIENTO DE AGUA -->
+      <div id="cal-view-agua" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">💧</span><div class="kpi-label">pH promedio</div><div class="kpi-value cyan" id="cal-ag-k-ph">—</div><div class="kpi-sub" id="cal-ag-k-ph-sub">agua de caldera</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">⚡</span><div class="kpi-label">Conductividad / TDS</div><div class="kpi-value amber" id="cal-ag-k-cond">—</div><div class="kpi-sub" id="cal-ag-k-cond-sub">control de purga</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">🪨</span><div class="kpi-label">Dureza</div><div class="kpi-value red" id="cal-ag-k-dur">—</div><div class="kpi-sub">riesgo de incrustación</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">📅</span><div class="kpi-label">Último análisis</div><div class="kpi-value green" id="cal-ag-k-ult" style="font-size:18px">—</div><div class="kpi-sub" id="cal-ag-k-ult-sub">registro más reciente</div></div>
+        </div>
+        <div id="cal-ag-purga" style="display:none;background:rgba(255,179,0,0.08);border:1px solid rgba(255,179,0,0.3);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span class="card-title">Último análisis por caldera</span>
+              <span class="badge cyan" id="cal-ag-estado-badge">—</span>
+            </div>
+            <div class="tbl-wrap"><table class="tbl">
+              <thead><tr><th>Caldera</th><th>pH</th><th>Cond. (ppm)</th><th>Dureza</th><th>Sulfito</th><th>Fosfato</th></tr></thead>
+              <tbody id="cal-ag-estado-tbody"><tr><td colspan="6" class="loading-row">Sin análisis registrados</td></tr></tbody>
+            </table></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Cruce con plan y almacén</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="cal-ag-cruce">
+              <div style="color:var(--txt2);font-size:12px">Cargando información de PMP y stock de químicos…</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Historial de análisis de agua</span>
+            <span class="badge cyan" id="cal-ag-hist-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Caldera</th><th>pH</th><th>Cond.</th><th>Dureza</th><th>Alc. M</th><th>Sulfito</th><th>Fosfato</th><th>Técnico</th></tr></thead>
+            <tbody id="cal-ag-hist-tbody"><tr><td colspan="9" class="loading-row">Cargando historial…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: SEGURIDAD Y PRUEBAS -->
+      <div id="cal-view-seg" style="display:none">
+        <div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--txt1)">
+          ℹ️ El <strong>cronograma</strong> de cada prueba lo define el <strong>PMP</strong>. Aquí se registra el <strong>resultado</strong> de la ejecución y se muestra la próxima fecha vencida leída del plan — sin duplicar el calendario.
+        </div>
+        <div class="cal-seg-grid" id="cal-seg-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando estado de pruebas…</div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Historial de pruebas de seguridad</span>
+            <span class="badge cyan" id="cal-seg-hist-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Caldera</th><th>Prueba</th><th>Resultado</th><th>Observación</th><th>Técnico</th></tr></thead>
+            <tbody id="cal-seg-hist-tbody"><tr><td colspan="6" class="loading-row">Sin pruebas registradas</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: HORÓMETROS Y CONSUMO -->
+      <div id="cal-view-consumo" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Horómetros de quemador — cruzado con PMP</span>
+            <span class="badge amber" id="cal-horo-badge">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Caldera</th><th>Código</th><th>Marca</th><th>Horómetro actual</th><th>Próx. PM (PMP)</th><th>Días restantes</th><th>Estado</th></tr></thead>
+            <tbody id="cal-horo-tbody"><tr><td colspan="7" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Cumplimiento del plan</div><div class="kpi-value green" id="cal-cons-k-cumpl">—</div><div class="kpi-sub">actividades con historial</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">⏱️</span><div class="kpi-label">Vida útil promedio</div><div class="kpi-value cyan" id="cal-cons-k-vida">—</div><div class="kpi-sub" id="cal-cons-k-vida-sub">días entre cambios</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">💰</span><div class="kpi-label">Consumo este mes</div><div class="kpi-value amber" id="cal-cons-k-gasto">—</div><div class="kpi-sub">insumos y químicos</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Cobertura mínima de stock</div><div class="kpi-value red" id="cal-cons-k-cobertura">—</div><div class="kpi-sub" id="cal-cons-k-cobertura-sub">insumo más crítico</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Historial de cambios e insumos</div><span class="badge cyan" id="cal-cons-hist-count">—</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Insumo</th><th>Activo</th><th>Cant.</th><th>Técnico</th><th>Origen</th></tr></thead>
+            <tbody id="cal-cons-hist-tbody"><tr><td colspan="6" class="loading-row">Cargando historial…</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Frecuencia real vs. programada</div>
+          <div id="cal-cons-frec-bars"><div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Calderos aún</div></div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- ══ LECTURAS ══ -->
     <div class="page" id="page-lecturas">
       <div class="page-header">
@@ -1835,6 +2091,143 @@ canvas.spark{width:100%;height:44px;}
     </div>
   </div>
 </div>
+<!-- ══ MODAL: Lectura operativa de caldera ══ -->
+<div class="modal-overlay" id="modal-lectura-cald">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Lectura operativa — Caldera</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura-cald')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Caldera</label>
+          <select class="form-select" id="lc-caldera"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Turno</label>
+          <select class="form-select" id="lc-turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Horómetro quemador (h)</label>
+          <input class="form-input" type="number" id="lc-horometro" step="0.1" placeholder="Ej: 12450"></div>
+        <div class="form-group"><label class="form-label">Presión de vapor (bar)</label>
+          <input class="form-input" type="number" id="lc-pv" step="0.1" placeholder="Ej: 8.2"></div>
+        <div class="form-group"><label class="form-label">Temp. de vapor (°C)</label>
+          <input class="form-input" type="number" id="lc-tv" step="0.1" placeholder="Ej: 175"></div>
+        <div class="form-group"><label class="form-label">Nivel de agua (%)</label>
+          <input class="form-input" type="number" id="lc-nivel" step="1" placeholder="Ej: 65"></div>
+        <div class="form-group"><label class="form-label">Temp. agua alim. (°C)</label>
+          <input class="form-input" type="number" id="lc-tagua" step="0.1" placeholder="Ej: 85"></div>
+        <div class="form-group"><label class="form-label">Temp. de humos (°C)</label>
+          <input class="form-input" type="number" id="lc-thumos" step="1" placeholder="Ej: 210" oninput="previsualizarEficiencia()"></div>
+        <div class="form-group"><label class="form-label">O₂ en humos (%)</label>
+          <input class="form-input" type="number" id="lc-o2" step="0.1" placeholder="Ej: 4.5" oninput="previsualizarEficiencia()"></div>
+        <div class="form-group"><label class="form-label">CO₂ en humos (%)</label>
+          <input class="form-input" type="number" id="lc-co2" step="0.1" placeholder="Ej: 10.5"></div>
+        <div class="form-group"><label class="form-label">Presión de gas (bar)</label>
+          <input class="form-input" type="number" id="lc-pgas" step="0.01" placeholder="Ej: 0.30"></div>
+        <div class="form-group"><label class="form-label">Consumo de gas (m³/h)</label>
+          <input class="form-input" type="number" id="lc-gas" step="0.1" placeholder="Ej: 120"></div>
+        <div class="form-group"><label class="form-label">Producción de vapor (kg/h)</label>
+          <input class="form-input" type="number" id="lc-vapor" step="1" placeholder="Ej: 1600"></div>
+        <div class="form-group full" style="background:var(--bg3);border-radius:var(--r);padding:10px 12px">
+          <span style="font-size:11px;color:var(--txt2);font-family:var(--font-m)">Eficiencia de combustión estimada: </span>
+          <span id="lc-efic-preview" style="font-family:var(--font-d);font-weight:700;color:var(--green)">—</span>
+        </div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="lc-obs" placeholder="Condiciones, ruidos del quemador, llama, vibración…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura-cald')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLecturaCald()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Análisis de agua de caldera ══ -->
+<div class="modal-overlay" id="modal-agua-cald">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title">Análisis de agua — Caldera</div>
+      <button class="modal-close" onclick="cerrarModal('modal-agua-cald')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Caldera</label>
+          <select class="form-select" id="ag-caldera"></select>
+        </div>
+        <div class="form-group"><label class="form-label">pH agua de caldera</label>
+          <input class="form-input" type="number" id="ag-ph" step="0.1" placeholder="Ej: 11.0"></div>
+        <div class="form-group"><label class="form-label">Conductividad / TDS (ppm)</label>
+          <input class="form-input" type="number" id="ag-cond" step="1" placeholder="Ej: 2800"></div>
+        <div class="form-group"><label class="form-label">Dureza total (ppm CaCO₃)</label>
+          <input class="form-input" type="number" id="ag-dureza" step="0.1" placeholder="Ej: 0"></div>
+        <div class="form-group"><label class="form-label">Alcalinidad P (ppm)</label>
+          <input class="form-input" type="number" id="ag-alcp" step="1" placeholder="Ej: 250"></div>
+        <div class="form-group"><label class="form-label">Alcalinidad M (ppm)</label>
+          <input class="form-input" type="number" id="ag-alcm" step="1" placeholder="Ej: 400"></div>
+        <div class="form-group"><label class="form-label">Sulfito residual (ppm)</label>
+          <input class="form-input" type="number" id="ag-sulfito" step="1" placeholder="Ej: 35"></div>
+        <div class="form-group"><label class="form-label">Fosfato (ppm)</label>
+          <input class="form-input" type="number" id="ag-fosfato" step="1" placeholder="Ej: 45"></div>
+        <div class="form-group"><label class="form-label">Sílice (ppm)</label>
+          <input class="form-input" type="number" id="ag-silice" step="0.1" placeholder="Ej: 80"></div>
+        <div class="form-group"><label class="form-label">Cloruros (ppm)</label>
+          <input class="form-input" type="number" id="ag-cloruros" step="1" placeholder="Opcional"></div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="ag-obs" placeholder="Aspecto, dosificación realizada, purga…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-agua-cald')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarAguaCald()">Guardar análisis</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Prueba de seguridad ══ -->
+<div class="modal-overlay" id="modal-prueba-cald">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">Registrar prueba de seguridad</div>
+      <button class="modal-close" onclick="cerrarModal('modal-prueba-cald')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Caldera</label>
+          <select class="form-select" id="pr-caldera"></select>
+        </div>
+        <div class="form-group full"><label class="form-label">Tipo de prueba</label>
+          <select class="form-select" id="pr-tipo">
+            <option value="valvula_seguridad">Válvula de seguridad</option>
+            <option value="corte_bajo_nivel">Corte por bajo nivel de agua</option>
+            <option value="purga_fondo">Purga de fondo</option>
+            <option value="purga_superficie">Purga de superficie</option>
+            <option value="inspeccion_visor">Inspección de visor de nivel</option>
+            <option value="prueba_llama">Detector de llama / fotocélula</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Resultado</label>
+          <select class="form-select" id="pr-resultado">
+            <option value="ok">✅ Conforme</option>
+            <option value="observado">⚠️ Con observación</option>
+            <option value="falla">❌ Falla</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Vincular a actividad PMP</label>
+          <select class="form-select" id="pr-pmp"><option value="">— Ninguna —</option></select>
+        </div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="pr-obs" placeholder="Detalle del resultado, acción tomada…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-prueba-cald')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPruebaCald()">Guardar prueba</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="toast" id="toast">
   <span class="toast-icon" id="toast-icon">✅</span>
   <div><div id="toast-msg"></div><div class="toast-sub" id="toast-sub"></div></div>
@@ -1931,7 +2324,8 @@ window.showPage = function(name, el) {
   document.getElementById('topbar-title').textContent = {
     dashboard:'Dashboard · Planta Paita', ot:'Órdenes de Trabajo',
     solicitudes:'Solicitudes de Trabajo', activos:'Gestión de Activos',
-    almacen:'Almacén y Repuestos', lecturas:'Registro de Lecturas'
+    almacen:'Almacén y Repuestos', lecturas:'Registro de Lecturas',
+    calderos:'Calderos · Planta de Vapor', refrigeracion:'Refrigeración Industrial', osmosis:'Ósmosis Inversa', pmp:'Plan Maestro de Mantenimiento'
   }[name] || name;
 };
 
@@ -5017,6 +5411,659 @@ function renderResumenAnual() {
     }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO CALDEROS · PLANTA DE VAPOR
+// Estado · Tendencias · Eficiencia energética · Tratamiento de agua · Seguridad · Consumo
+// Arquitectura: valores medidos y resultados = lecturas (aquí) · cronograma = PMP (cruce) ·
+//               consumo de insumos = OT→Almacén (cruce). Sin duplicidad de datos.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allCalderas    = [];   // activos tipo EQUIPO en área Calderos / bajo CAL-000
+let allLecturasCald= [];   // lecturas tipo='caldero'
+let allAguaCald    = [];   // lecturas tipo='agua_caldero'
+let allPruebasCald = [];   // lecturas tipo='prueba_caldero'
+
+let calderoLimites = {
+  presionVaporMax:10, nivelMin:30, nivelMax:90, tempHumosMax:250,
+  o2Min:3, o2Max:6, eficienciaMin:88,
+  pHMin:10.5, pHMax:11.8, conductividadMax:3500, durezaMax:5,
+  sulfitoMin:20, sulfitoMax:50, fosfatoMin:30, fosfatoMax:60,
+};
+let calderoConfig = { precioGas:1.20, ambiente:25 };  // S/ por m³ · temp ambiente °C
+
+const PRUEBA_LABEL = {
+  valvula_seguridad:'Válvula de seguridad', corte_bajo_nivel:'Corte por bajo nivel',
+  purga_fondo:'Purga de fondo', purga_superficie:'Purga de superficie',
+  inspeccion_visor:'Inspección de visor', prueba_llama:'Detector de llama',
+};
+const PRUEBA_KW = {
+  valvula_seguridad:['válvula','valvula','seguridad','psv'],
+  corte_bajo_nivel:['bajo nivel','corte','low water','nivel'],
+  purga_fondo:['purga de fondo','purga fondo','blowdown','fondo'],
+  purga_superficie:['purga de superficie','purga superficie','superficie','tds'],
+  inspeccion_visor:['visor','nivel','mirilla'],
+  prueba_llama:['llama','fotocélula','fotocelula','detector','flame'],
+};
+
+// ─── Cálculos de combustión (método Siegert — gas natural) ──────────────────────
+function effCombustionGas(o2, tHumos) {
+  if (o2==null || tHumos==null || isNaN(o2) || isNaN(tHumos)) return null;
+  if (o2<0 || o2>=20.9) return null;
+  const ta = calderoConfig.ambiente || 25;
+  const qA = (tHumos - ta) * (0.66/(20.9-o2) + 0.009); // constantes de gas natural
+  const eff = 100 - qA;
+  return (eff>0 && eff<=100) ? eff : null;
+}
+function excesoAireGas(o2) {
+  if (o2==null || isNaN(o2) || o2<0 || o2>=20.9) return null;
+  return (o2/(20.9-o2))*100;
+}
+
+// ─── Navegación de tabs ─────────────────────────────────────────────────────────
+window.caldTab = function(tab) {
+  ['estado','tend','efic','agua','seg','consumo'].forEach(t=>{
+    document.getElementById('cal-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('cal-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='tend')    renderTendenciasCald();
+  if (tab==='efic')    renderEficienciaCald();
+  if (tab==='agua')    renderAguaCald();
+  if (tab==='seg')     renderSeguridadCald();
+  if (tab==='consumo'){ renderHorometrosCald(); renderConsumoCald(); }
+};
+
+// ─── Carga del módulo ───────────────────────────────────────────────────────────
+async function cargarCalderos() {
+  try {
+    allCalderas = allActivos.filter(a => a.tipo==='EQUIPO' &&
+      (a.area==='Calderos' || esDescendienteDe(a.id,'CAL-000') || /calder[ao]/i.test(a.nombre||'')));
+
+    const [lecSnap, agSnap, prSnap] = await Promise.all([
+      getDocs(query(collection(db,'lecturas'), where('tipo','==','caldero'),        orderBy('creadoEn','desc'), limit(500))).catch(()=>({docs:[]})),
+      getDocs(query(collection(db,'lecturas'), where('tipo','==','agua_caldero'),    orderBy('creadoEn','desc'), limit(300))).catch(()=>({docs:[]})),
+      getDocs(query(collection(db,'lecturas'), where('tipo','==','prueba_caldero'),  orderBy('creadoEn','desc'), limit(300))).catch(()=>({docs:[]})),
+    ]);
+    allLecturasCald = lecSnap.docs.map(d=>({id:d.id,...d.data()}));
+    allAguaCald     = agSnap.docs.map(d=>({id:d.id,...d.data()}));
+    allPruebasCald  = prSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const operativas = allCalderas.filter(c=>c.estado==='operativo'||!c.estado).length;
+    const detenidas  = allCalderas.filter(c=>c.estado==='detenido').length;
+    document.getElementById('cal-resumen').textContent =
+      `${allCalderas.length} calderas · ${operativas} operativas · ${detenidas} detenidas`;
+    document.getElementById('badge-cal').textContent = detenidas>0 ? detenidas : '—';
+
+    renderCalderasGrid();
+    renderPromedioPlanta();
+    poblarSelectsCald();
+  } catch(e){ console.error('Error cargando Calderos:', e); }
+}
+
+function ultimaLecturaCald(c) {
+  const lecs = allLecturasCald.filter(l => l.equipoId===c.id || l.equipo===c.nombre || l.equipo===c.cod);
+  return lecs.length ? lecs[0] : null;
+}
+function ultimoAnalisisCald(c) {
+  const an = allAguaCald.filter(l => l.equipoId===c.id || l.caldera===c.nombre);
+  return an.length ? an[0] : null;
+}
+
+// ─── TAB ESTADO ─────────────────────────────────────────────────────────────────
+function renderCalderasGrid() {
+  const grid = document.getElementById('calderas-grid');
+  if (!allCalderas.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔥</div>
+      <div class="empty-title">Sin calderas registradas</div>
+      <div class="empty-sub">No se encontraron activos tipo Equipo en el área Calderos (bajo CAL-000). Verifica el árbol de Activos.</div></div>`;
+    return;
+  }
+  grid.innerHTML = allCalderas.map(c => {
+    const lec = ultimaLecturaCald(c);
+    const efic = lec ? effCombustionGas(lec.o2, lec.thumos) : null;
+    const alarma = lec && (
+      (lec.nivel!=null && (lec.nivel<calderoLimites.nivelMin || lec.nivel>calderoLimites.nivelMax)) ||
+      (lec.thumos!=null && lec.thumos>calderoLimites.tempHumosMax) ||
+      (lec.pv!=null && lec.pv>calderoLimites.presionVaporMax) ||
+      (efic!=null && efic<calderoLimites.eficienciaMin)
+    );
+    const estadoVisual = c.estado==='detenido' ? 'detenido' : alarma ? 'alarma' : 'operativo';
+    const estadoLbl = estadoVisual==='operativo'?'OK':estadoVisual==='alarma'?'Alarma':'Detenido';
+    const estadoCls = estadoVisual==='operativo'?'cerrada':estadoVisual==='alarma'?'vencida':'abierta';
+    const pv=lec?.pv, nivel=lec?.nivel, th=lec?.thumos, o2=lec?.o2;
+    const pvCls = (pv!=null && pv>calderoLimites.presionVaporMax)?'warn':(pv!=null?'ok':'');
+    const nivCls= (nivel!=null && (nivel<calderoLimites.nivelMin||nivel>calderoLimites.nivelMax))?'alarm':(nivel!=null?'ok':'');
+    const thCls = (th!=null && th>calderoLimites.tempHumosMax)?'warn':(th!=null?'ok':'');
+    const o2Cls = (o2!=null && (o2<calderoLimites.o2Min||o2>calderoLimites.o2Max))?'warn':(o2!=null?'ok':'');
+    const eficCls = efic!=null ? (efic>=calderoLimites.eficienciaMin?'ok':'warn') : '';
+    return `<div class="equip-card ${estadoVisual}" onclick="seleccionarActivo('${c.id}');showPage('activos',document.querySelectorAll('.nav-item')[4])">
+      <div class="equip-card-header">
+        <div><div class="equip-name">${c.nombre}</div><div class="equip-code">${c.cod||c.id}</div></div>
+        <span class="status ${estadoCls}" style="font-size:10px">${estadoLbl}</span>
+      </div>
+      <div class="equip-readings">
+        <div class="reading-item"><div class="reading-label">P.Vap</div><div class="reading-val ${pvCls}">${pv!=null?pv+' bar':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">Nivel</div><div class="reading-val ${nivCls}">${nivel!=null?nivel+'%':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">T.Hum</div><div class="reading-val ${thCls}">${th!=null?th+'°C':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">η</div><div class="reading-val ${eficCls}">${efic!=null?efic.toFixed(1)+'%':'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPromedioPlanta() {
+  const lecs = allCalderas.map(c=>ultimaLecturaCald(c)).filter(Boolean);
+  const avg = (campo)=>{ const v=lecs.map(l=>parseFloat(l[campo])).filter(x=>!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; };
+  const sum = (campo)=>{ const v=lecs.map(l=>parseFloat(l[campo])).filter(x=>!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0):null; };
+  const pv=avg('pv'), vapor=sum('vapor'), gas=sum('gas');
+  const efics = lecs.map(l=>effCombustionGas(l.o2,l.thumos)).filter(x=>x!=null);
+  const efic = efics.length ? efics.reduce((s,x)=>s+x,0)/efics.length : null;
+
+  document.getElementById('cal-planta-badge').textContent = `${allCalderas.length} calderas`;
+  const setVal=(id,val,unit,dec=1)=>{document.getElementById(id).innerHTML = val!=null ? `${val.toFixed(dec)} <span style="font-size:13px;color:var(--txt2)">${unit}</span>` : `— <span style="font-size:13px;color:var(--txt2)">${unit}</span>`;};
+  setVal('cal-prom-pv', pv, 'bar', 1);
+  setVal('cal-prom-vapor', vapor, 'kg/h', 0);
+  setVal('cal-prom-efic', efic, '%', 1);
+  setVal('cal-prom-gas', gas, 'm³/h', 0);
+
+  document.getElementById('cal-prom-pv-bar').style.width   = pv!=null ? Math.min((pv/calderoLimites.presionVaporMax)*100,100)+'%' : '0%';
+  document.getElementById('cal-prom-efic-bar').style.width = efic!=null ? Math.min(efic,100)+'%' : '0%';
+  const maxVapor = Math.max(vapor||0, allCalderas.length*2000);
+  document.getElementById('cal-prom-vapor-bar').style.width = vapor!=null ? Math.min((vapor/maxVapor)*100,100)+'%' : '0%';
+  document.getElementById('cal-prom-gas-bar').style.width   = gas!=null ? Math.min((gas/(maxVapor/12))*100,100)+'%' : '0%';
+
+  document.getElementById('cal-lim-pv-txt').textContent   = calderoLimites.presionVaporMax;
+  document.getElementById('cal-lim-efic-txt').textContent = calderoLimites.eficienciaMin;
+}
+
+function poblarSelectsCald() {
+  const opts = allCalderas.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  ['cal-tend-sel','lc-caldera','ag-caldera','pr-caldera'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+  document.getElementById('cal-precio-gas').value = calderoConfig.precioGas;
+}
+
+// ─── TAB TENDENCIAS ─────────────────────────────────────────────────────────────
+window.renderTendenciasCald = function() {
+  const id = document.getElementById('cal-tend-sel')?.value;
+  const dias = parseInt(document.getElementById('cal-tend-period')?.value||'30');
+  const c = allCalderas.find(x=>x.id===id);
+  if (!c) { document.getElementById('cal-tend-tbody').innerHTML='<tr><td colspan="9" class="loading-row">Selecciona una caldera</td></tr>'; return; }
+
+  const desde = new Date(); desde.setDate(desde.getDate()-dias);
+  const lecturas = allLecturasCald
+    .filter(l => (l.equipoId===c.id||l.equipo===c.nombre) && l.creadoEn?.toDate && l.creadoEn.toDate()>=desde)
+    .sort((a,b)=> a.creadoEn.toDate()-b.creadoEn.toDate());
+
+  if (!lecturas.length) {
+    ['cal-chart-pv','cal-chart-th','cal-chart-ef','cal-chart-gas'].forEach(cid=>{ if(refTendCharts[cid]){refTendCharts[cid].destroy();delete refTendCharts[cid];} });
+    document.getElementById('cal-tend-count').textContent='0 registros';
+    document.getElementById('cal-tend-tbody').innerHTML = `<tr><td colspan="9"><div class="empty" style="height:100px"><div class="empty-icon">📭</div><div class="empty-sub">Sin lecturas de ${c.nombre} en este período</div></div></td></tr>`;
+    ['cal-tend-pv-cur','cal-tend-th-cur','cal-tend-ef-cur','cal-tend-gas-cur'].forEach(x=>document.getElementById(x).textContent='— ');
+    return;
+  }
+
+  ensureChartJsLocal(()=>{
+    const labels = lecturas.map(l=>l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+    const pvArr  = lecturas.map(l=>parseFloat(l.pv)||0);
+    const thArr  = lecturas.map(l=>parseFloat(l.thumos)||0);
+    const efArr  = lecturas.map(l=>{ const e=effCombustionGas(l.o2,l.thumos); return e!=null?+e.toFixed(1):0; });
+    const gasArr = lecturas.map(l=>parseFloat(l.gas)||0);
+    const last=(a)=>a[a.length-1];
+    document.getElementById('cal-tend-pv-cur').textContent  = last(pvArr).toFixed(1)+' bar';
+    document.getElementById('cal-tend-th-cur').textContent  = last(thArr).toFixed(0)+' °C';
+    document.getElementById('cal-tend-ef-cur').textContent  = last(efArr).toFixed(1)+' %';
+    document.getElementById('cal-tend-gas-cur').textContent = last(gasArr).toFixed(0)+' m³/h';
+    buildChartRef('cal-chart-pv', labels, pvArr, '#00d4ff', [{value:calderoLimites.presionVaporMax,label:'Máx',color:'rgba(255,68,68,0.6)'}]);
+    buildChartRef('cal-chart-th', labels, thArr, '#ffb300', [{value:calderoLimites.tempHumosMax,label:'Máx',color:'rgba(255,68,68,0.6)'}]);
+    buildChartRef('cal-chart-ef', labels, efArr, '#00e676', [{value:calderoLimites.eficienciaMin,label:'Meta',color:'rgba(0,230,118,0.5)'}]);
+    buildChartRef('cal-chart-gas',labels, gasArr,'#00d4ff', []);
+  });
+
+  document.getElementById('cal-tend-count').textContent = lecturas.length+' registros';
+  document.getElementById('cal-tend-tbody').innerHTML = [...lecturas].reverse().map(l=>{
+    const fecha = l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const efic = effCombustionGas(l.o2,l.thumos);
+    const nivCls=(l.nivel!=null&&(l.nivel<calderoLimites.nivelMin||l.nivel>calderoLimites.nivelMax))?'alarm':'ok';
+    const thCls =(l.thumos!=null&&l.thumos>calderoLimites.tempHumosMax)?'warn':'ok';
+    return `<tr>
+      <td class="mono">${fecha}</td>
+      <td class="mono">${l.pv??'—'}</td>
+      <td class="mono"><span class="reading-val ${nivCls}" style="font-size:12px">${l.nivel??'—'}</span></td>
+      <td class="mono"><span class="reading-val ${thCls}" style="font-size:12px">${l.thumos??'—'}</span></td>
+      <td class="mono">${l.o2??'—'}</td>
+      <td class="mono" style="color:${efic!=null&&efic<calderoLimites.eficienciaMin?'var(--amber)':'var(--green)'}">${efic!=null?efic.toFixed(1):'—'}</td>
+      <td class="mono">${l.gas??'—'}</td>
+      <td class="mono">${l.vapor??'—'}</td>
+      <td style="font-size:11px;color:var(--txt2)">${l.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('');
+};
+
+// ─── TAB EFICIENCIA ENERGÉTICA ──────────────────────────────────────────────────
+window.renderEficienciaCald = function() {
+  const conEfic = allLecturasCald.map(l=>({l,e:effCombustionGas(l.o2,l.thumos)})).filter(x=>x.e!=null);
+  const efic = conEfic.length ? conEfic.reduce((s,x)=>s+x.e,0)/conEfic.length : null;
+  document.getElementById('cal-ef-k-efic').textContent = efic!=null ? efic.toFixed(1)+'%' : '—';
+
+  const conAmbos = allLecturasCald.filter(l=>parseFloat(l.vapor)>0 && parseFloat(l.gas)>0);
+  const ratios = conAmbos.map(l=>parseFloat(l.vapor)/parseFloat(l.gas));
+  const ratio = ratios.length ? ratios.reduce((s,x)=>s+x,0)/ratios.length : null;
+  document.getElementById('cal-ef-k-ratio').textContent = ratio!=null ? ratio.toFixed(1) : '—';
+  const espec = ratio!=null && ratio>0 ? (1000/ratio) : null; // m³ gas / ton vapor
+  document.getElementById('cal-ef-k-espec').textContent = espec!=null ? espec.toFixed(1) : '—';
+
+  // Costo de gas estimado (proyección): promedio m³/h × 720 h/mes × precio
+  const gasProm = (()=>{ const v=allLecturasCald.map(l=>parseFloat(l.gas)).filter(x=>!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const costoMes = gasProm!=null ? gasProm*720*(calderoConfig.precioGas||0) : null;
+  document.getElementById('cal-ef-k-costo').textContent = costoMes!=null ? 'S/ '+costoMes.toLocaleString('es-PE',{maximumFractionDigits:0}) : '—';
+  document.getElementById('cal-ef-k-costo-sub').textContent = gasProm!=null ? `${gasProm.toFixed(0)} m³/h × 720 h × S/ ${(calderoConfig.precioGas||0).toFixed(2)}` : 'proyección mensual';
+
+  const o2Prom = (()=>{ const v=allLecturasCald.map(l=>parseFloat(l.o2)).filter(x=>!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const exceso = excesoAireGas(o2Prom);
+  document.getElementById('cal-ef-exceso').textContent = exceso!=null ? exceso.toFixed(0)+' %' : '—';
+  document.getElementById('cal-ef-perdidas').textContent = efic!=null ? (100-efic).toFixed(1)+' %' : '—';
+
+  // Diagnóstico inteligente
+  let diag = 'El diagnóstico aparecerá cuando existan lecturas con O₂ y temperatura de humos.';
+  let color = 'var(--amber)';
+  if (efic!=null) {
+    if (efic>=calderoLimites.eficienciaMin && (exceso==null||exceso<=20)) {
+      diag = `✅ Combustión eficiente (η ${efic.toFixed(1)}%). El quemador opera dentro de meta para gas natural.`; color='var(--green)';
+    } else if (exceso!=null && exceso>25) {
+      diag = `⚠️ Exceso de aire elevado (${exceso.toFixed(0)}%). Demasiado aire enfría la llama y se lleva calor por la chimenea. Recomendación: ajustar la relación aire/gas del quemador para bajar el O₂ hacia 3–4%.`; color='var(--amber)';
+    } else if (efic<calderoLimites.eficienciaMin) {
+      diag = `⚠️ Eficiencia bajo meta (η ${efic.toFixed(1)}% vs ${calderoLimites.eficienciaMin}%). Si la temperatura de humos sube con el tiempo, suele indicar incrustación en el lado de agua o ensuciamiento del lado de fuego. Revisar tratamiento de agua y limpieza de tubos.`; color='var(--red)';
+    }
+  }
+  const diagCard = document.getElementById('cal-ef-diag-card');
+  diagCard.style.borderLeftColor = color;
+  document.getElementById('cal-ef-diag').textContent = diag;
+
+  // Tendencia de eficiencia (últimas 30 lecturas con η)
+  const serie = [...conEfic].sort((a,b)=>{
+    const fa=a.l.creadoEn?.toDate?a.l.creadoEn.toDate():new Date(0);
+    const fb=b.l.creadoEn?.toDate?b.l.creadoEn.toDate():new Date(0);
+    return fa-fb;
+  }).slice(-30);
+  document.getElementById('cal-ef-trend-badge').textContent = serie.length+' lecturas';
+  if (serie.length) {
+    ensureChartJsLocal(()=>{
+      const labels = serie.map(x=>x.l.creadoEn?.toDate?x.l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}):'');
+      const data = serie.map(x=>+x.e.toFixed(1));
+      buildChartRef('cal-chart-eftrend', labels, data, '#00e676', [{value:calderoLimites.eficienciaMin,label:'Meta',color:'rgba(0,230,118,0.5)'}]);
+    });
+  } else if (refTendCharts['cal-chart-eftrend']) { refTendCharts['cal-chart-eftrend'].destroy(); delete refTendCharts['cal-chart-eftrend']; }
+};
+
+window.guardarPrecioGas = function() {
+  const v = parseFloat(document.getElementById('cal-precio-gas').value);
+  if (!isNaN(v) && v>0) { calderoConfig.precioGas = v; showToast('✅','Precio de gas actualizado',`S/ ${v.toFixed(2)} por m³`); renderEficienciaCald(); }
+};
+window.previsualizarEficiencia = function() {
+  const o2 = parseFloat(document.getElementById('lc-o2').value);
+  const th = parseFloat(document.getElementById('lc-thumos').value);
+  const e = effCombustionGas(o2, th);
+  document.getElementById('lc-efic-preview').textContent = e!=null ? e.toFixed(1)+' %' : '—';
+};
+
+// ─── TAB TRATAMIENTO DE AGUA ────────────────────────────────────────────────────
+window.renderAguaCald = function() {
+  const avg = (campo)=>{ const v=allAguaCald.map(l=>parseFloat(l[campo])).filter(x=>!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; };
+  const ph=avg('ph'), cond=avg('cond'), dur=avg('dureza');
+  document.getElementById('cal-ag-k-ph').textContent   = ph!=null ? ph.toFixed(1) : '—';
+  document.getElementById('cal-ag-k-ph-sub').textContent = ph!=null ? (ph<calderoLimites.pHMin||ph>calderoLimites.pHMax?'⚠️ fuera de rango':'dentro de rango') : 'agua de caldera';
+  document.getElementById('cal-ag-k-cond').textContent = cond!=null ? cond.toFixed(0)+' ppm' : '—';
+  document.getElementById('cal-ag-k-cond-sub').textContent = cond!=null ? (cond>calderoLimites.conductividadMax?'⚠️ requiere purga':'control de purga') : 'control de purga';
+  document.getElementById('cal-ag-k-dur').textContent  = dur!=null ? dur.toFixed(1)+' ppm' : '—';
+  const ult = allAguaCald[0];
+  document.getElementById('cal-ag-k-ult').textContent = ult?.creadoEn?.toDate ? ult.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'short'}) : '—';
+  document.getElementById('cal-ag-k-ult-sub').textContent = ult?.caldera || 'registro más reciente';
+
+  // Recomendación automática de purga
+  const purgaEl = document.getElementById('cal-ag-purga');
+  if (cond!=null && cond>calderoLimites.conductividadMax) {
+    const exceso = ((cond-calderoLimites.conductividadMax)/cond*100);
+    purgaEl.style.display='block';
+    purgaEl.innerHTML = `🪣 <strong>Purga recomendada.</strong> El TDS promedio (${cond.toFixed(0)} ppm) supera el límite de ${calderoLimites.conductividadMax} ppm. Aumentar la purga de superficie ~${exceso.toFixed(0)}% para volver al rango y prevenir arrastre e incrustación.`;
+  } else { purgaEl.style.display='none'; }
+
+  // Tabla: último análisis por caldera, con semáforo
+  const estEl = document.getElementById('cal-ag-estado-tbody');
+  const filas = allCalderas.map(c=>({c, a:ultimoAnalisisCald(c)})).filter(x=>x.a);
+  document.getElementById('cal-ag-estado-badge').textContent = `${filas.length}/${allCalderas.length} con análisis`;
+  estEl.innerHTML = filas.length ? filas.map(({c,a})=>{
+    const phCls=(a.ph!=null&&(a.ph<calderoLimites.pHMin||a.ph>calderoLimites.pHMax))?'warn':'ok';
+    const coCls=(a.cond!=null&&a.cond>calderoLimites.conductividadMax)?'warn':'ok';
+    const duCls=(a.dureza!=null&&a.dureza>calderoLimites.durezaMax)?'alarm':'ok';
+    const suCls=(a.sulfito!=null&&a.sulfito<calderoLimites.sulfitoMin)?'warn':'ok';
+    return `<tr>
+      <td style="font-weight:600">${c.nombre}</td>
+      <td class="mono"><span class="reading-val ${phCls}" style="font-size:12px">${a.ph??'—'}</span></td>
+      <td class="mono"><span class="reading-val ${coCls}" style="font-size:12px">${a.cond??'—'}</span></td>
+      <td class="mono"><span class="reading-val ${duCls}" style="font-size:12px">${a.dureza??'—'}</span></td>
+      <td class="mono"><span class="reading-val ${suCls}" style="font-size:12px">${a.sulfito??'—'}</span></td>
+      <td class="mono">${a.fosfato??'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:20px">Sin análisis registrados — usa "+ Análisis de agua"</td></tr>';
+
+  // Cruce con PMP (recarga química) y Almacén (stock de químicos)
+  renderCruceAguaPMP();
+
+  // Historial
+  const hist = document.getElementById('cal-ag-hist-tbody');
+  document.getElementById('cal-ag-hist-count').textContent = allAguaCald.length+' registros';
+  hist.innerHTML = allAguaCald.length ? allAguaCald.slice(0,50).map(a=>{
+    const f = a.creadoEn?.toDate ? a.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    return `<tr>
+      <td class="mono" style="font-size:11px">${f}</td>
+      <td style="font-size:12px">${a.caldera||'—'}</td>
+      <td class="mono">${a.ph??'—'}</td><td class="mono">${a.cond??'—'}</td>
+      <td class="mono">${a.dureza??'—'}</td><td class="mono">${a.alcm??'—'}</td>
+      <td class="mono">${a.sulfito??'—'}</td><td class="mono">${a.fosfato??'—'}</td>
+      <td style="font-size:11px;color:var(--txt2)">${a.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--txt2);padding:20px">Cargando…</td></tr>';
+};
+
+function renderCruceAguaPMP() {
+  const idsCal = new Set(allCalderas.map(c=>c.id));
+  const acts = (typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>idsCal.has(a.activoId));
+  const quimKw = ['químic','quimic','dosific','recarga','tratamiento','sulfito','fosfato','antiincrust'];
+  const actsQuim = acts.filter(a=> quimKw.some(k=>((a.nombre||'')+(a.desc||'')).toLowerCase().includes(k)) );
+  const prox = actsQuim.filter(a=>a.proximaFecha).sort((a,b)=> new Date(a.proximaFecha)-new Date(b.proximaFecha))[0];
+
+  const reps = [...new Set(actsQuim.filter(a=>a.repuestoId).map(a=>a.repuestoId))]
+    .map(id=>(allRepuestos||[]).find(r=>r.id===id)).filter(Boolean);
+
+  let html = '';
+  if (prox) {
+    const dias = Math.round((new Date(prox.proximaFecha)-new Date())/86400000);
+    const col = dias<0?'var(--red)':dias<=7?'var(--amber)':'var(--green)';
+    html += `<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px">
+      <div style="font-size:11px;color:var(--txt2)">Próxima recarga química programada (PMP)</div>
+      <div style="font-size:13px;font-weight:600;margin-top:2px">${prox.nombre}</div>
+      <div style="font-family:var(--font-m);font-size:12px;color:${col};margin-top:4px">${prox.proximaFecha} · ${dias<0?Math.abs(dias)+' días vencida':dias+' días restantes'}</div>
+    </div>`;
+  } else {
+    html += `<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--txt2)">Sin actividad PMP de dosificación química asignada a calderas. Crea una plantilla "Recarga de químico" en PMP y asígnala.</div>`;
+  }
+  if (reps.length) {
+    html += `<div style="font-size:11px;color:var(--txt2);margin-top:4px">Stock de químicos vinculados</div>`;
+    html += reps.map(r=>{
+      const col = r.estado==='agotado'?'var(--red)':r.estado==='bajo'?'var(--amber)':'var(--green)';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:var(--r);padding:8px 12px">
+        <span style="font-size:12px">${r.desc||r.cod}</span>
+        <span style="font-family:var(--font-m);font-size:12px;color:${col}">${r.stock??0} ${r.unidad||''} · ${r.estado||'ok'}</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('cal-ag-cruce').innerHTML = html;
+}
+
+// ─── TAB SEGURIDAD Y PRUEBAS ────────────────────────────────────────────────────
+window.renderSeguridadCald = function() {
+  const idsCal = new Set(allCalderas.map(c=>c.id));
+  const actsCal = (typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>idsCal.has(a.activoId));
+
+  const cardsEl = document.getElementById('cal-seg-cards');
+  cardsEl.innerHTML = Object.keys(PRUEBA_LABEL).map(tipo=>{
+    // Última ejecución (resultado) — vive aquí como lectura
+    const ejec = allPruebasCald.filter(p=>p.tipoPrueba===tipo).sort((a,b)=>{
+      const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0);
+      const fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0);
+      return fb-fa;
+    })[0];
+    // Próxima programada — leída del PMP (cruce, no se duplica)
+    const kw = PRUEBA_KW[tipo]||[];
+    const actsTipo = actsCal.filter(a=> kw.some(k=>((a.nombre||'')+(a.desc||'')).toLowerCase().includes(k)) );
+    const proxAct = actsTipo.filter(a=>a.proximaFecha).sort((a,b)=> new Date(a.proximaFecha)-new Date(b.proximaFecha))[0];
+    let diasRest=null, estado='sin-plan';
+    if (proxAct?.proximaFecha) {
+      diasRest = Math.round((new Date(proxAct.proximaFecha)-new Date())/86400000);
+      estado = diasRest<0?'vencida':diasRest<=7?'proxima':'al_dia';
+    }
+    const borde = estado==='vencida'?'var(--red)':estado==='proxima'?'var(--amber)':estado==='al_dia'?'var(--green)':'var(--border)';
+    const resCol = !ejec?'var(--txt2)':ejec.resultado==='ok'?'var(--green)':ejec.resultado==='observado'?'var(--amber)':'var(--red)';
+    const resLbl = !ejec?'Sin registro':ejec.resultado==='ok'?'Conforme':ejec.resultado==='observado'?'Observado':'Falla';
+    const ultFecha = ejec?.creadoEn?.toDate?ejec.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'short'}):'—';
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${borde};border-radius:var(--r2);padding:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">${PRUEBA_LABEL[tipo]}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+        <span style="color:var(--txt2)">Última</span><span style="font-family:var(--font-m)">${ultFecha}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+        <span style="color:var(--txt2)">Resultado</span><span style="color:${resCol};font-weight:600">${resLbl}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span style="color:var(--txt2)">Próxima (PMP)</span>
+        <span style="font-family:var(--font-m);color:${estado==='vencida'?'var(--red)':estado==='proxima'?'var(--amber)':'var(--txt2)'}">${proxAct?.proximaFecha||'sin plan'}${diasRest!=null?` (${diasRest}d)`:''}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const hist = document.getElementById('cal-seg-hist-tbody');
+  document.getElementById('cal-seg-hist-count').textContent = allPruebasCald.length+' registros';
+  hist.innerHTML = allPruebasCald.length ? allPruebasCald.slice(0,50).map(p=>{
+    const f = p.creadoEn?.toDate ? p.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    const col = p.resultado==='ok'?'green':p.resultado==='observado'?'amber':'red';
+    const lbl = p.resultado==='ok'?'Conforme':p.resultado==='observado'?'Observado':'Falla';
+    return `<tr>
+      <td class="mono" style="font-size:11px">${f}</td>
+      <td style="font-size:12px">${p.caldera||'—'}</td>
+      <td style="font-size:12px">${PRUEBA_LABEL[p.tipoPrueba]||p.tipoPrueba}</td>
+      <td><span class="badge ${col}" style="font-size:10px">${lbl}</span></td>
+      <td style="font-size:12px;color:var(--txt2)">${p.obs||'—'}</td>
+      <td style="font-size:11px;color:var(--txt2)">${p.tecnicoNombre||'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--txt2);padding:20px">Sin pruebas registradas — usa "+ Registrar prueba"</td></tr>';
+};
+
+// ─── TAB HORÓMETROS ─────────────────────────────────────────────────────────────
+window.renderHorometrosCald = function() {
+  const tbody = document.getElementById('cal-horo-tbody');
+  if (!allCalderas.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">⏱️</div><div class="empty-sub">Sin calderas registradas</div></div></td></tr>'; return; }
+  let proximos=0;
+  tbody.innerHTML = allCalderas.map(c=>{
+    const lec = ultimaLecturaCald(c);
+    const horometro = lec?.horometro ?? null;
+    const acts = (typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>a.activoId===c.id);
+    const prox = acts.sort((a,b)=> new Date(a.proximaFecha||'2099-01-01')-new Date(b.proximaFecha||'2099-01-01'))[0];
+    let diasRest=null, estado='sin-plan';
+    if (prox?.proximaFecha) { diasRest=Math.round((new Date(prox.proximaFecha)-new Date())/86400000); estado=diasRest<0?'vencida':diasRest<=7?'proxima':'al_dia'; if(estado!=='al_dia')proximos++; }
+    const estCls = estado==='vencida'?'vencida':estado==='proxima'?'prog':estado==='al_dia'?'cerrada':'abierta';
+    const estLbl = estado==='vencida'?'PM vencido':estado==='proxima'?'Próx. PM':estado==='al_dia'?'OK':'Sin plan PMP';
+    return `<tr>
+      <td style="font-weight:600">${c.nombre}</td>
+      <td class="mono" style="font-size:11px;color:var(--txt2)">${c.cod||c.id}</td>
+      <td style="font-size:12px;color:var(--txt2)">${c.marca||'—'}</td>
+      <td><span style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">${horometro!=null?horometro.toLocaleString()+' h':'—'}</span></td>
+      <td class="mono" style="font-size:12px">${prox?.proximaFecha||'—'}</td>
+      <td class="mono" style="font-size:12px;color:${diasRest!=null&&diasRest<0?'var(--red)':diasRest!=null&&diasRest<=7?'var(--amber)':'var(--txt2)'}">${diasRest!=null?diasRest+' días':'—'}</td>
+      <td><span class="status ${estCls}">${estLbl}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('cal-horo-badge').textContent = `${proximos} próximos a mantenimiento`;
+};
+
+// ─── TAB CONSUMO (clon del patrón de Refrigeración) ─────────────────────────────
+window.renderConsumoCald = function() {
+  const idsCal = activosDeArea('caldero');
+  if (!idsCal.size) allCalderas.forEach(c=>idsCal.add(c.id));
+
+  const otsConsumo = (allOT||[]).filter(o=>o.estado==='cerrada' && o.repuestoId && idsCal.has(o.activoId))
+    .sort((a,b)=>{ const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0); const fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0); return fb-fa; });
+
+  const actsCal = (typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>idsCal.has(a.activoId));
+  const conHist = actsCal.filter(a=>a.ultimaEjecucion);
+  const pctCumpl = actsCal.length>0 ? Math.round((conHist.length/actsCal.length)*100) : null;
+  document.getElementById('cal-cons-k-cumpl').textContent = pctCumpl!=null ? pctCumpl+'%' : '—';
+
+  const porRep = {};
+  otsConsumo.forEach(o=>{ if(o.repuestoId) (porRep[o.repuestoId]=porRep[o.repuestoId]||[]).push(o.creadoEn?.toDate?o.creadoEn.toDate():null); });
+  let intervalos=[];
+  Object.values(porRep).forEach(fs=>{ const o=fs.filter(Boolean).sort((a,b)=>a-b); for(let i=1;i<o.length;i++) intervalos.push((o[i]-o[i-1])/86400000); });
+  const vidaProm = intervalos.length ? Math.round(intervalos.reduce((s,v)=>s+v,0)/intervalos.length) : null;
+  document.getElementById('cal-cons-k-vida').textContent = vidaProm!=null ? vidaProm+' días' : '—';
+  document.getElementById('cal-cons-k-vida-sub').textContent = intervalos.length ? 'promedio entre cambios' : 'aún sin suficiente historial';
+
+  const hoy=new Date(); const mes=hoy.getMonth(), anio=hoy.getFullYear();
+  const otsMes = otsConsumo.filter(o=>{ const f=o.creadoEn?.toDate?o.creadoEn.toDate():null; return f&&f.getMonth()===mes&&f.getFullYear()===anio; });
+  const gastoMes = otsMes.reduce((s,o)=>{ const r=(allRepuestos||[]).find(x=>x.id===o.repuestoId); return s+((parseFloat(o.repuestoCantidad)||0)*(r?.cunit||0)); },0);
+  document.getElementById('cal-cons-k-gasto').textContent = 'S/ '+gastoMes.toLocaleString('es-PE',{maximumFractionDigits:0});
+
+  const repsCal = [...new Set(actsCal.filter(a=>a.repuestoId).map(a=>a.repuestoId))].map(id=>(allRepuestos||[]).find(r=>r.id===id)).filter(Boolean);
+  let cobMin=null, repCrit=null;
+  repsCal.forEach(r=>{
+    const cm = otsConsumo.filter(o=>o.repuestoId===r.id && o.creadoEn?.toDate && (hoy-o.creadoEn.toDate())<90*86400000).length/3;
+    if (cm>0){ const d=Math.round((r.stock||0)/(cm/30)); if(cobMin===null||d<cobMin){cobMin=d;repCrit=r;} }
+  });
+  document.getElementById('cal-cons-k-cobertura').textContent = cobMin!=null ? cobMin+' días' : '—';
+  document.getElementById('cal-cons-k-cobertura-sub').textContent = repCrit ? repCrit.desc : 'sin datos suficientes de consumo';
+
+  const histT = document.getElementById('cal-cons-hist-tbody');
+  document.getElementById('cal-cons-hist-count').textContent = otsConsumo.length+' registros';
+  histT.innerHTML = otsConsumo.length ? otsConsumo.slice(0,40).map(o=>{
+    const f = o.creadoEn?.toDate ? o.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'short'}) : '—';
+    return `<tr>
+      <td class="mono" style="font-size:11px">${f}</td>
+      <td style="font-size:12px">${o.repuestoNombre||'—'}</td>
+      <td style="font-size:12px;color:var(--txt2)">${o.activoNombre||'—'}</td>
+      <td class="mono">${o.repuestoCantidad||'—'} ${o.repuestoUnidad||''}</td>
+      <td style="font-size:12px;color:var(--txt2)">${o.tecnicoNombre||'—'}</td>
+      <td><span class="badge cyan" style="font-size:10px;cursor:pointer" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">${o.codigo}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6"><div class="empty" style="height:100px"><div class="empty-icon">📦</div><div class="empty-sub">Sin consumos — se llena automáticamente al cerrar OT con repuesto vinculado</div></div></td></tr>';
+
+  const barsEl = document.getElementById('cal-cons-frec-bars');
+  const actsRep = actsCal.filter(a=>a.repuestoId);
+  if (!actsRep.length) { barsEl.innerHTML='<div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Calderos aún</div>'; }
+  else {
+    barsEl.innerHTML = actsRep.map(a=>{
+      const esp = (typeof FREC_DIAS!=='undefined'?FREC_DIAS[a.frecuencia]:30)||30;
+      let real=esp; const fs=porRep[a.repuestoId];
+      if (fs&&fs.length>=2){ const o=fs.filter(Boolean).sort((x,y)=>x-y); real=Math.round((o[o.length-1]-o[o.length-2])/86400000); }
+      const pct=Math.min((real/esp)*100,100);
+      const col=real<=esp?'var(--green)':real<=esp*1.3?'var(--amber)':'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <span style="font-size:13px;width:160px;flex-shrink:0">${a.nombre} — ${a.activoNombre}</span>
+        <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div>
+        <span style="font-size:12px;color:var(--txt2);width:90px;text-align:right">${real} / ${esp} días</span>
+      </div>`;
+    }).join('');
+  }
+};
+
+// ─── MODALES: guardar ───────────────────────────────────────────────────────────
+window.abrirModalLecturaCald = function() {
+  poblarSelectsCald();
+  ['lc-horometro','lc-pv','lc-tv','lc-nivel','lc-tagua','lc-thumos','lc-o2','lc-co2','lc-pgas','lc-gas','lc-vapor','lc-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lc-efic-preview').textContent='—';
+  document.getElementById('modal-lectura-cald').classList.add('open');
+};
+window.guardarLecturaCald = async function() {
+  const c = allCalderas.find(x=>x.id===document.getElementById('lc-caldera').value);
+  if (!c) { showToast('⚠️','Selecciona una caldera',''); return; }
+  const num=id=>{ const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; };
+  const pv=num('lc-pv'),nivel=num('lc-nivel'),thumos=num('lc-thumos'),o2=num('lc-o2');
+  if (pv==null&&nivel==null&&thumos==null&&num('lc-gas')==null) { showToast('⚠️','Ingresa al menos un parámetro',''); return; }
+  const efic = effCombustionGas(o2, thumos);
+  const alarma = (nivel!=null&&(nivel<calderoLimites.nivelMin||nivel>calderoLimites.nivelMax)) ||
+                 (thumos!=null&&thumos>calderoLimites.tempHumosMax) ||
+                 (pv!=null&&pv>calderoLimites.presionVaporMax) ||
+                 (efic!=null&&efic<calderoLimites.eficienciaMin);
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'caldero', equipo:c.nombre, equipoId:c.id, caldera:c.nombre,
+      turno:document.getElementById('lc-turno').value,
+      horometro:num('lc-horometro'), pv, tv:num('lc-tv'), nivel, tagua:num('lc-tagua'),
+      thumos, o2, co2:num('lc-co2'), pgas:num('lc-pgas'), gas:num('lc-gas'), vapor:num('lc-vapor'),
+      eficiencia: efic!=null?+efic.toFixed(1):null, alarma,
+      obs:document.getElementById('lc-obs').value.trim()||null,
+      tecnicoUid:currentUser.uid, tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:serverTimestamp(),
+    });
+    cerrarModal('modal-lectura-cald');
+    showToast('✅','Lectura registrada', c.nombre);
+    await cargarCalderos();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+window.abrirModalAguaCald = function() {
+  poblarSelectsCald();
+  ['ag-ph','ag-cond','ag-dureza','ag-alcp','ag-alcm','ag-sulfito','ag-fosfato','ag-silice','ag-cloruros','ag-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-agua-cald').classList.add('open');
+};
+window.guardarAguaCald = async function() {
+  const c = allCalderas.find(x=>x.id===document.getElementById('ag-caldera').value);
+  if (!c) { showToast('⚠️','Selecciona una caldera',''); return; }
+  const num=id=>{ const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; };
+  if (num('ag-ph')==null&&num('ag-cond')==null) { showToast('⚠️','Ingresa al menos pH o conductividad',''); return; }
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'agua_caldero', equipoId:c.id, caldera:c.nombre,
+      ph:num('ag-ph'), cond:num('ag-cond'), dureza:num('ag-dureza'),
+      alcp:num('ag-alcp'), alcm:num('ag-alcm'), sulfito:num('ag-sulfito'),
+      fosfato:num('ag-fosfato'), silice:num('ag-silice'), cloruros:num('ag-cloruros'),
+      obs:document.getElementById('ag-obs').value.trim()||null,
+      tecnicoUid:currentUser.uid, tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:serverTimestamp(),
+    });
+    cerrarModal('modal-agua-cald');
+    showToast('✅','Análisis registrado', c.nombre);
+    await cargarCalderos();
+    if (document.getElementById('cal-view-agua').style.display!=='none') renderAguaCald();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+window.abrirModalPruebaCald = function() {
+  poblarSelectsCald();
+  document.getElementById('pr-obs').value='';
+  // Poblar selector de actividad PMP de calderas (para cruce/avance opcional)
+  const idsCal = new Set(allCalderas.map(c=>c.id));
+  const acts = (typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>idsCal.has(a.activoId));
+  document.getElementById('pr-pmp').innerHTML = '<option value="">— Ninguna —</option>' +
+    acts.map(a=>`<option value="${a.id}">${a.nombre} — ${a.activoNombre}</option>`).join('');
+  document.getElementById('modal-prueba-cald').classList.add('open');
+};
+window.guardarPruebaCald = async function() {
+  const c = allCalderas.find(x=>x.id===document.getElementById('pr-caldera').value);
+  if (!c) { showToast('⚠️','Selecciona una caldera',''); return; }
+  const tipoPrueba = document.getElementById('pr-tipo').value;
+  const resultado  = document.getElementById('pr-resultado').value;
+  const pmpId = document.getElementById('pr-pmp').value;
+  try {
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'prueba_caldero', equipoId:c.id, caldera:c.nombre,
+      tipoPrueba, resultado, pmpActividadId:pmpId||null,
+      obs:document.getElementById('pr-obs').value.trim()||null,
+      tecnicoUid:currentUser.uid, tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`,
+      creadoEn:serverTimestamp(),
+    });
+    // Si está vinculada a PMP, avanzar la próxima fecha (el plan sigue siendo el dueño del cronograma)
+    if (pmpId && typeof allPmpActividades!=='undefined') {
+      const act = allPmpActividades.find(a=>a.id===pmpId);
+      if (act) {
+        const dias = (typeof FREC_DIAS!=='undefined'?FREC_DIAS[act.frecuencia]:30)||30;
+        const hoy=new Date(); const prox=new Date(hoy); prox.setDate(prox.getDate()+dias);
+        const datos={ ultimaEjecucion:hoy.toISOString().split('T')[0], proximaFecha:prox.toISOString().split('T')[0], actualizadoEn:serverTimestamp() };
+        await updateDoc(doc(db,'pmp_actividades',pmpId), datos);
+        const idx=allPmpActividades.findIndex(a=>a.id===pmpId); if(idx>=0) allPmpActividades[idx]={...allPmpActividades[idx],...datos};
+      }
+    }
+    cerrarModal('modal-prueba-cald');
+    showToast('✅','Prueba registrada', `${PRUEBA_LABEL[tipoPrueba]} · ${c.nombre}`);
+    await cargarCalderos();
+    if (document.getElementById('cal-view-seg').style.display!=='none') renderSeguridadCald();
+  } catch(e){ showToast('❌','Error',e.message); }
+};
+
+// Hook showPage para cargar Calderos al entrar
+const _showPageCald = window.showPage;
+window.showPage = function(name, el) {
+  _showPageCald(name, el);
+  if (name==='calderos') cargarCalderos();
+};
+
 
 // Hook showPage para cargar PMP al entrar
 const _showPagePMP = window.showPage;
