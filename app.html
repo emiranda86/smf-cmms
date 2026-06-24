@@ -344,6 +344,10 @@ canvas.spark{width:100%;height:44px;}
       <span class="nav-icon">🧊</span><span class="nav-label">Planta de Hielo</span>
       <span class="nav-badge" id="badge-hielo">—</span>
     </div>
+    <div class="nav-item" id="nav-bombeo" onclick="showPage('bombeo',this)">
+      <span class="nav-icon">💧</span><span class="nav-label">Captación/Bombeo</span>
+      <span class="nav-badge" id="badge-bombeo">—</span>
+    </div>
     <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
       <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
     </div>
@@ -1837,6 +1841,149 @@ canvas.spark{width:100%;height:44px;}
     </div>
 
 
+    <!-- ══ CAPTACIÓN / BOMBEO ══ -->
+    <div class="page" id="page-bombeo">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">Captación / Bombeo</div>
+          <div class="page-sub" id="bom-resumen">— bombas · — operativas · — en standby/parada</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalLecturaBombeo()">+ Lectura operativa</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="bom-tab-estado" onclick="bomTab('estado')">Estado en tiempo real</button>
+        <button class="pmp-tab" id="bom-tab-efic" onclick="bomTab('efic')">Eficiencia de bombeo</button>
+        <button class="pmp-tab" id="bom-tab-rot" onclick="bomTab('rot')">Rotación y disponibilidad</button>
+        <button class="pmp-tab" id="bom-tab-tend" onclick="bomTab('tend')">Tendencias</button>
+        <button class="pmp-tab" id="bom-tab-horo" onclick="bomTab('horo')">Horómetros y PMP</button>
+        <button class="pmp-tab" id="bom-tab-consumo" onclick="bomTab('consumo')">Consumo e insumos</button>
+      </div>
+
+      <!-- TAB: ESTADO -->
+      <div id="bom-view-estado">
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">💧</span><div class="kpi-label">Bombas operativas</div><div class="kpi-value cyan" id="bom-k-oper">—</div><div class="kpi-sub" id="bom-k-oper-sub">de — bombas</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">🟡</span><div class="kpi-label">En standby / parada</div><div class="kpi-value amber" id="bom-k-standby">—</div><div class="kpi-sub">respaldo o detenidas</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">🌊</span><div class="kpi-label">Caudal total</div><div class="kpi-value green" id="bom-k-caudal">—</div><div class="kpi-sub">m³/h en operación</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">🛢️</span><div class="kpi-label">Nivel de cisterna</div><div class="kpi-value red" id="bom-k-nivel">—</div><div class="kpi-sub" id="bom-k-nivel-sub">poza / reservorio</div></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-hdr"><div class="card-title">Cisterna / poza de captación</div><span class="badge cyan" id="bom-cist-badge">—</span></div>
+          <div class="kpi-label">Nivel actual</div>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+            <div style="font-family:var(--font-d);font-size:28px;font-weight:700;color:var(--cyan)" id="bom-cist-nivel">— <span style="font-size:14px;color:var(--txt2)">%</span></div>
+            <div style="flex:1"><div class="mini-bar-track" style="height:14px"><div class="mini-bar-fill" id="bom-cist-bar" style="width:0%;background:var(--cyan)"></div></div>
+            <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Nivel mínimo de alarma: <span id="bom-lim-nivel-txt">20</span>%</div></div>
+          </div>
+        </div>
+        <div class="equip-grid" id="bom-grid">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando bombas…</div>
+        </div>
+      </div>
+
+      <!-- TAB: EFICIENCIA DE BOMBEO -->
+      <div id="bom-view-efic" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card amber"><span class="kpi-icon">⚡</span><div class="kpi-label">Energía específica</div><div class="kpi-value amber" id="bom-ef-kwhm3">—</div><div class="kpi-sub">kWh por m³ bombeado</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">💰</span><div class="kpi-label">Costo por m³</div><div class="kpi-value red" id="bom-ef-costom3">—</div><div class="kpi-sub">energía por m³</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">📅</span><div class="kpi-label">Costo mensual estimado</div><div class="kpi-value cyan" id="bom-ef-costomes">—</div><div class="kpi-sub">proyección energía</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">🌊</span><div class="kpi-label">Caudal promedio</div><div class="kpi-value green" id="bom-ef-caudal">—</div><div class="kpi-sub">m³/h por lectura</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Tendencia de energía específica (kWh/m³)</div><span class="badge amber" id="bom-ef-trend-badge">—</span></div>
+            <div style="position:relative;height:200px"><canvas id="bom-chart-kwhm3"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Punto de operación</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:var(--bg3);border-radius:var(--r);padding:12px"><div class="kpi-label">Caudal promedio</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--green)" id="bom-op-caudal">—</div></div>
+              <div style="background:var(--bg3);border-radius:var(--r);padding:12px"><div class="kpi-label">Presión de descarga promedio</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--cyan)" id="bom-op-presion">—</div></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:2px"><span style="font-size:11px;color:var(--txt2)">Precio kWh (S/):</span><input class="form-input" type="number" id="bom-precio-kwh" step="0.01" style="width:90px;padding:5px 8px;font-family:var(--font-m);font-size:12px"><button class="btn btn-primary btn-sm" onclick="guardarPrecioKwhBom()">Aplicar</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--amber)"><div style="font-size:13px;color:var(--txt1)" id="bom-ef-diag">El diagnóstico aparecerá cuando existan lecturas con potencia (kW) y caudal.</div></div>
+      </div>
+
+      <!-- TAB: ROTACIÓN Y DISPONIBILIDAD -->
+      <div id="bom-view-rot" style="display:none">
+        <div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--txt1)">
+          ℹ️ Esquema <strong>2+1</strong>: agrupa las bombas redundantes por su sistema padre y compara horas de servicio para recomendar la <strong>alternancia</strong> y mantener desgaste parejo. La bomba con menos horas debería ser la próxima en liderar.
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">🔄</span><div class="kpi-label">Grupos redundantes</div><div class="kpi-value green" id="bom-rot-grupos">—</div><div class="kpi-sub">conjuntos de bombas peer</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">⚖️</span><div class="kpi-label">Grupos desbalanceados</div><div class="kpi-value amber" id="bom-rot-desbal">—</div><div class="kpi-sub">requieren alternancia</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">🛡️</span><div class="kpi-label">Sin respaldo</div><div class="kpi-value red" id="bom-rot-sinresp">—</div><div class="kpi-sub">redundancia comprometida</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">🎯</span><div class="kpi-label">Acción sugerida</div><div class="kpi-value cyan" id="bom-rot-accion" style="font-size:16px">—</div><div class="kpi-sub" id="bom-rot-accion-sub">próxima alternancia</div></div>
+        </div>
+        <div id="bom-rot-grupos-cont"><div class="loading-row"><span class="spinner"></span>Analizando grupos de bombas…</div></div>
+      </div>
+
+      <!-- TAB: TENDENCIAS -->
+      <div id="bom-view-tend" style="display:none">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Bomba:</span>
+          <select class="filter-sel" id="bom-tend-sel" onchange="renderTendenciasBombeo()" style="min-width:220px"></select>
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="bom-tend-period" onchange="renderTendenciasBombeo()">
+            <option value="7">7 días</option><option value="15">15 días</option>
+            <option value="30" selected>30 días</option><option value="90">90 días</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Caudal</span><span id="bom-tend-cau-cur" style="font-family:var(--font-m);font-size:13px;color:var(--green)">— m³/h</span></div><div style="position:relative;height:140px"><canvas id="bom-chart-cau"></canvas></div></div>
+          <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Presión de descarga</span><span id="bom-tend-pre-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— bar</span></div><div style="position:relative;height:140px"><canvas id="bom-chart-pre"></canvas></div></div>
+          <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Amperaje</span><span id="bom-tend-amp-cur" style="font-family:var(--font-m);font-size:13px;color:var(--amber)">— A</span></div><div style="position:relative;height:140px"><canvas id="bom-chart-amp"></canvas></div></div>
+          <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Vibración</span><span id="bom-tend-vib-cur" style="font-family:var(--font-m);font-size:13px;color:var(--green)">— mm/s</span></div><div style="position:relative;height:140px"><canvas id="bom-chart-vib"></canvas></div></div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span class="card-title">Registro de lecturas operativas</span><span class="badge cyan" id="bom-tend-count">—</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha / Hora</th><th>Caudal</th><th>P. desc.</th><th>P. succ.</th><th>Amp</th><th>T. motor</th><th>Vibr</th><th>kW</th><th>Técnico</th></tr></thead>
+            <tbody id="bom-tend-tbody"><tr><td colspan="9" class="loading-row">Selecciona una bomba</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: HORÓMETROS Y PMP -->
+      <div id="bom-view-horo" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span class="card-title">Horómetros — cruzado con PMP</span><span class="badge amber" id="bom-horo-badge">—</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Bomba</th><th>Código</th><th>Marca</th><th>Horómetro actual</th><th>Próx. PM (PMP)</th><th>Días restantes</th><th>Estado</th></tr></thead>
+            <tbody id="bom-horo-tbody"><tr><td colspan="7" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: CONSUMO E INSUMOS -->
+      <div id="bom-view-consumo" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Cumplimiento del plan</div><div class="kpi-value green" id="bom-cons-k-cumpl">—</div><div class="kpi-sub">actividades con historial</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">⏱️</span><div class="kpi-label">Vida útil promedio</div><div class="kpi-value cyan" id="bom-cons-k-vida">—</div><div class="kpi-sub" id="bom-cons-k-vida-sub">días entre cambios</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">💰</span><div class="kpi-label">Consumo este mes</div><div class="kpi-value amber" id="bom-cons-k-gasto">—</div><div class="kpi-sub">repuestos e insumos</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Cobertura mínima de stock</div><div class="kpi-value red" id="bom-cons-k-cobertura">—</div><div class="kpi-sub" id="bom-cons-k-cobertura-sub">insumo más crítico</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Historial de cambios e insumos</div><span class="badge cyan" id="bom-cons-hist-count">—</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Insumo</th><th>Activo</th><th>Cant.</th><th>Técnico</th><th>Origen</th></tr></thead>
+            <tbody id="bom-cons-hist-tbody"><tr><td colspan="6" class="loading-row">Cargando historial…</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Frecuencia real vs. programada</div>
+          <div id="bom-cons-frec-bars"><div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Captación/Bombeo aún</div></div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- ══ LECTURAS ══ -->
     <div class="page" id="page-lecturas">
       <div class="page-header">
@@ -2737,6 +2884,54 @@ canvas.spark{width:100%;height:44px;}
 </div>
 
 
+<!-- ══ MODAL: Lectura operativa — Bomba ══ -->
+<div class="modal-overlay" id="modal-lectura-bombeo">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title">Lectura operativa — Bomba</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura-bombeo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Bomba</label>
+          <select class="form-select" id="lb-equipo"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Turno</label>
+          <select class="form-select" id="lb-turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Modo</label>
+          <select class="form-select" id="lb-modo"><option value="lead">En servicio (lead)</option><option value="standby">Standby</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Horómetro (h)</label>
+          <input class="form-input" type="number" id="lb-horometro" step="0.1" placeholder="Ej: 9650"></div>
+        <div class="form-group"><label class="form-label">Caudal (m³/h)</label>
+          <input class="form-input" type="number" id="lb-caudal" step="0.1" placeholder="Ej: 180"></div>
+        <div class="form-group"><label class="form-label">Presión descarga (bar)</label>
+          <input class="form-input" type="number" id="lb-pdesc" step="0.1" placeholder="Ej: 4.5"></div>
+        <div class="form-group"><label class="form-label">Presión succión (bar)</label>
+          <input class="form-input" type="number" id="lb-psucc" step="0.1" placeholder="Ej: -0.3"></div>
+        <div class="form-group"><label class="form-label">Nivel cisterna (%)</label>
+          <input class="form-input" type="number" id="lb-nivel" step="1" placeholder="Ej: 70"></div>
+        <div class="form-group"><label class="form-label">Amperaje (A)</label>
+          <input class="form-input" type="number" id="lb-amp" step="0.1" placeholder="Ej: 45"></div>
+        <div class="form-group"><label class="form-label">Temp. motor (°C)</label>
+          <input class="form-input" type="number" id="lb-tmotor" step="0.1" placeholder="Ej: 58"></div>
+        <div class="form-group"><label class="form-label">Vibración (mm/s)</label>
+          <input class="form-input" type="number" id="lb-vib" step="0.1" placeholder="Ej: 2.5"></div>
+        <div class="form-group"><label class="form-label">Potencia (kW)</label>
+          <input class="form-input" type="number" id="lb-pot" step="0.1" placeholder="Ej: 30"></div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="lb-obs" placeholder="Cebado, sello mecánico, ruido, fugas…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura-bombeo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLecturaBombeo()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="toast" id="toast">
   <span class="toast-icon" id="toast-icon">✅</span>
   <div><div id="toast-msg"></div><div class="toast-sub" id="toast-sub"></div></div>
@@ -2836,7 +3031,8 @@ window.showPage = function(name, el) {
     almacen:'Almacén y Repuestos', lecturas:'Registro de Lecturas',
     calderos:'Calderos · Planta de Vapor', refrigeracion:'Refrigeración Industrial', osmosis:'Ósmosis Inversa', pmp:'Plan Maestro de Mantenimiento',
     produccion:'Producción · Confiabilidad de Equipos',
-    hielo:'Planta de Hielo · Hielo en Bloque'
+    hielo:'Planta de Hielo · Hielo en Bloque',
+    bombeo:'Captación / Bombeo'
   }[name] || name;
 };
 
@@ -7368,6 +7564,317 @@ const _showPageHielo = window.showPage;
 window.showPage = function(name, el) {
   _showPageHielo(name, el);
   if (name==='hielo') cargarHielo();
+};
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO CAPTACIÓN / BOMBEO
+// Estado · Eficiencia de bombeo (kWh/m³) · Rotación y disponibilidad (2+1) ·
+// Tendencias · Horómetros · Consumo. Sin colecciones nuevas (lecturas tipo='bombeo').
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allBombas      = [];
+let allLecturasBom = [];
+let bombeoLimites  = { vibracionMax:4.5, tempMotorMax:80, nivelMin:20, presionMax:12 };
+let bombeoConfig   = { precioKwh:0.65 };
+
+window.bomTab = function(tab) {
+  ['estado','efic','rot','tend','horo','consumo'].forEach(t=>{
+    document.getElementById('bom-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('bom-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='efic')    renderEficienciaBombeo();
+  if (tab==='rot')     renderRotacionBombeo();
+  if (tab==='tend')    renderTendenciasBombeo();
+  if (tab==='horo')    renderHorometrosBombeo();
+  if (tab==='consumo') renderConsumoBombeo();
+};
+
+async function cargarBombeo() {
+  try {
+    allBombas = allActivos.filter(a => a.tipo==='EQUIPO' && (
+      /captaci|bombeo|bombas/i.test(a.area||'') || /bomba/i.test(a.nombre||'') ||
+      esDescendienteDe(a.id,'CB-000') || esDescendienteDe(a.id,'CAP-000') || esDescendienteDe(a.id,'BOM-000')));
+
+    const lecSnap = await getDocs(query(collection(db,'lecturas'),
+      where('tipo','==','bombeo'), orderBy('creadoEn','desc'), limit(600))).catch(()=>({docs:[]}));
+    allLecturasBom = lecSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const operativas = allBombas.filter(b=>b.estado==='operativo'||!b.estado).length;
+    const standby    = allBombas.filter(b=>b.estado==='detenido'||b.estado==='standby').length;
+    document.getElementById('bom-resumen').textContent =
+      `${allBombas.length} bombas · ${operativas} operativas · ${standby} en standby/parada`;
+    document.getElementById('badge-bombeo').textContent = standby>0?standby:'—';
+
+    renderEstadoBombeo();
+    poblarSelectsBombeo();
+  } catch(e){ console.error('Error cargando Bombeo:', e); }
+}
+
+function ultimaLecturaBom(b){ const l=allLecturasBom.filter(x=>x.equipoId===b.id||x.equipo===b.nombre); return l.length?l[0]:null; }
+function ultimaConCampoBom(campo){ return allLecturasBom.find(l=>l[campo]!=null && !isNaN(parseFloat(l[campo]))) || null; }
+function poblarSelectsBombeo(){
+  const opts=allBombas.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
+  ['bom-tend-sel','lb-equipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  document.getElementById('bom-precio-kwh').value=bombeoConfig.precioKwh;
+}
+
+// ─── TAB ESTADO ─────────────────────────────────────────────────────────────────
+function renderEstadoBombeo() {
+  const lecs=allBombas.map(b=>ultimaLecturaBom(b)).filter(Boolean);
+  const operativas=allBombas.filter(b=>b.estado==='operativo'||!b.estado).length;
+  document.getElementById('bom-k-oper').textContent=operativas;
+  document.getElementById('bom-k-oper-sub').textContent=`de ${allBombas.length} bombas`;
+  document.getElementById('bom-k-standby').textContent=allBombas.length-operativas;
+  const caudalTotal=lecs.filter(l=>l.modo!=='standby').reduce((s,l)=>s+(parseFloat(l.caudal)||0),0);
+  document.getElementById('bom-k-caudal').textContent=caudalTotal>0?caudalTotal.toFixed(0):'—';
+  const lNivel=ultimaConCampoBom('nivel'); const nivel=lNivel?parseFloat(lNivel.nivel):null;
+  document.getElementById('bom-k-nivel').textContent=nivel!=null?nivel+'%':'—';
+  document.getElementById('bom-k-nivel-sub').textContent=nivel!=null&&nivel<bombeoLimites.nivelMin?'⚠️ bajo mínimo':'poza / reservorio';
+
+  // Cisterna
+  document.getElementById('bom-cist-nivel').innerHTML = nivel!=null?`${nivel} <span style="font-size:14px;color:var(--txt2)">%</span>`:`— <span style="font-size:14px;color:var(--txt2)">%</span>`;
+  document.getElementById('bom-cist-bar').style.width = nivel!=null?Math.min(nivel,100)+'%':'0%';
+  document.getElementById('bom-cist-bar').style.background = nivel!=null&&nivel<bombeoLimites.nivelMin?'var(--red)':'var(--cyan)';
+  const cb=document.getElementById('bom-cist-badge');
+  cb.textContent = nivel==null?'sin datos':nivel<bombeoLimites.nivelMin?'Nivel bajo':'OK';
+  cb.className='badge '+(nivel==null?'cyan':nivel<bombeoLimites.nivelMin?'red':'green');
+  document.getElementById('bom-lim-nivel-txt').textContent=bombeoLimites.nivelMin;
+
+  const grid=document.getElementById('bom-grid');
+  if (!allBombas.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">💧</div><div class="empty-title">Sin bombas registradas</div><div class="empty-sub">No se encontraron activos tipo Equipo en el área Captación/Bombeo. Verifica el árbol de Activos.</div></div>`; return; }
+  grid.innerHTML=allBombas.map(b=>{
+    const lec=ultimaLecturaBom(b);
+    const alarma=lec && ((lec.vib!=null&&lec.vib>bombeoLimites.vibracionMax)||(lec.tmotor!=null&&lec.tmotor>bombeoLimites.tempMotorMax));
+    const standby=lec?.modo==='standby';
+    const estadoVisual=b.estado==='detenido'?'detenido':alarma?'alarma':'operativo';
+    const estLbl=b.estado==='detenido'?'Parada':standby?'Standby':alarma?'Alarma':'Operativa';
+    const estCls=b.estado==='detenido'?'abierta':standby?'prog':alarma?'vencida':'cerrada';
+    const vibCls=(lec?.vib!=null&&lec.vib>bombeoLimites.vibracionMax)?'alarm':'ok';
+    const tCls=(lec?.tmotor!=null&&lec.tmotor>bombeoLimites.tempMotorMax)?'warn':'ok';
+    return `<div class="equip-card ${estadoVisual}" onclick="seleccionarActivo('${b.id}');showPage('activos',document.querySelectorAll('.nav-item')[4])">
+      <div class="equip-card-header"><div><div class="equip-name">${b.nombre}</div><div class="equip-code">${b.cod||b.id}</div></div><span class="status ${estCls}" style="font-size:10px">${estLbl}</span></div>
+      <div class="equip-readings">
+        <div class="reading-item"><div class="reading-label">Caudal</div><div class="reading-val">${lec?.caudal!=null?lec.caudal:'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">P.desc</div><div class="reading-val">${lec?.pdesc!=null?lec.pdesc:'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">Amp</div><div class="reading-val ${tCls}">${lec?.amp!=null?lec.amp:'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">Vibr</div><div class="reading-val ${vibCls}">${lec?.vib!=null?lec.vib:'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TAB EFICIENCIA ─────────────────────────────────────────────────────────────
+window.renderEficienciaBombeo = function() {
+  const conAmbos=allLecturasBom.filter(l=>parseFloat(l.pot)>0 && parseFloat(l.caudal)>0);
+  const espVals=conAmbos.map(l=>parseFloat(l.pot)/parseFloat(l.caudal)); // kW / (m³/h) = kWh/m³
+  const esp=espVals.length?espVals.reduce((s,x)=>s+x,0)/espVals.length:null;
+  document.getElementById('bom-ef-kwhm3').textContent=esp!=null?esp.toFixed(3):'—';
+  const costoM3=esp!=null?esp*bombeoConfig.precioKwh:null;
+  document.getElementById('bom-ef-costom3').textContent=costoM3!=null?'S/ '+costoM3.toFixed(3):'—';
+  const potProm=(()=>{const v=allLecturasBom.map(l=>parseFloat(l.pot)).filter(x=>!isNaN(x));return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;})();
+  const costoMes=potProm!=null?potProm*720*bombeoConfig.precioKwh:null;
+  document.getElementById('bom-ef-costomes').textContent=costoMes!=null?'S/ '+costoMes.toLocaleString('es-PE',{maximumFractionDigits:0}):'—';
+  const cauProm=(()=>{const v=allLecturasBom.map(l=>parseFloat(l.caudal)).filter(x=>!isNaN(x));return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;})();
+  document.getElementById('bom-ef-caudal').textContent=cauProm!=null?cauProm.toFixed(0):'—';
+  document.getElementById('bom-op-caudal').textContent=cauProm!=null?cauProm.toFixed(0)+' m³/h':'—';
+  const preProm=(()=>{const v=allLecturasBom.map(l=>parseFloat(l.pdesc)).filter(x=>!isNaN(x));return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;})();
+  document.getElementById('bom-op-presion').textContent=preProm!=null?preProm.toFixed(1)+' bar':'—';
+
+  // Tendencia kWh/m³ por día
+  const hoy=new Date(); const dias=[]; for(let i=29;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);dias.push(d);}
+  const serie=dias.map(d=>{
+    const ls=allLecturasBom.filter(l=>{const f=l.creadoEn?.toDate?l.creadoEn.toDate():null;return f&&f.toDateString()===d.toDateString()&&parseFloat(l.pot)>0&&parseFloat(l.caudal)>0;});
+    if(!ls.length)return null; return ls.reduce((s,l)=>s+parseFloat(l.pot)/parseFloat(l.caudal),0)/ls.length;
+  });
+  const pts=serie.filter(v=>v!=null);
+  document.getElementById('bom-ef-trend-badge').textContent=pts.length?pts.length+' días con datos':'sin datos';
+  if(pts.length){ ensureChartJsLocal(()=>{ const labels=dias.map(d=>d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'})); buildChartRef('bom-chart-kwhm3', labels, serie.map(v=>v==null?0:+v.toFixed(3)), '#ffb300', []); }); }
+  else if(refTendCharts['bom-chart-kwhm3']){ refTendCharts['bom-chart-kwhm3'].destroy(); delete refTendCharts['bom-chart-kwhm3']; }
+
+  let diag='El diagnóstico aparecerá cuando existan lecturas con potencia (kW) y caudal.', col='var(--amber)';
+  if (esp!=null){
+    if (esp<=0.25){ diag=`✅ Bombeo eficiente (${esp.toFixed(3)} kWh/m³). El sistema opera cerca de su mejor punto de eficiencia.`; col='var(--green)'; }
+    else if (esp<=0.45){ diag=`ℹ️ Eficiencia moderada (${esp.toFixed(3)} kWh/m³). Revisar si las bombas operan fuera de su punto óptimo (estrangulamiento de válvulas, desgaste de impulsor).`; col='var(--amber)'; }
+    else { diag=`⚠️ Energía específica alta (${esp.toFixed(3)} kWh/m³). Posible desgaste de impulsor, recirculación, o punto de operación muy alejado del BEP. Conviene revisar la curva de la bomba.`; col='var(--red)'; }
+  }
+  const dEl=document.getElementById('bom-ef-diag').parentElement; dEl.style.borderLeftColor=col;
+  document.getElementById('bom-ef-diag').textContent=diag;
+};
+window.guardarPrecioKwhBom=function(){const v=parseFloat(document.getElementById('bom-precio-kwh').value);if(!isNaN(v)&&v>0){bombeoConfig.precioKwh=v;showToast('✅','Precio de energía actualizado',`S/ ${v.toFixed(2)} por kWh`);renderEficienciaBombeo();}};
+
+// ─── TAB ROTACIÓN ───────────────────────────────────────────────────────────────
+window.renderRotacionBombeo = function() {
+  // Agrupar bombas por activo padre (peers redundantes)
+  const groups={};
+  allBombas.forEach(b=>{ const k=b.padreId||'_sin'; (groups[k]=groups[k]||[]).push(b); });
+  const multi=Object.entries(groups).filter(([,arr])=>arr.length>=2);
+
+  let desbal=0, sinResp=0; const recomendaciones=[];
+  const cont=document.getElementById('bom-rot-grupos-cont');
+  if (!multi.length){
+    cont.innerHTML='<div class="empty"><div class="empty-icon">🔄</div><div class="empty-title">Sin grupos redundantes detectados</div><div class="empty-sub">Las bombas no comparten un activo padre común en el árbol. Agrúpalas bajo un mismo sistema en Activos para activar el análisis de alternancia.</div></div>';
+  } else {
+    cont.innerHTML = multi.map(([pid,arr])=>{
+      const padre=allActivos.find(a=>a.id===pid); const nombreGrupo=padre?padre.nombre:'Grupo de bombas';
+      const conHoras=arr.map(b=>({b, h:ultimaLecturaBom(b)?.horometro??null}));
+      const validas=conHoras.filter(x=>x.h!=null);
+      const operativas=arr.filter(b=>b.estado==='operativo'||!b.estado).length;
+      // Redundancia: en 2+1 hay 1 de respaldo; sin respaldo si operativas <= N-1 ... práctico: todas disponibles = OK
+      const redundancia = operativas>=arr.length ? 'ok' : operativas>=arr.length-1 ? 'limitada' : 'critica';
+      if (redundancia!=='ok') sinResp++;
+      let maxH=null,minH=null,leadName='—',nextName='—';
+      if (validas.length>=2){
+        const sorted=[...validas].sort((a,b)=>b.h-a.h);
+        maxH=sorted[0].h; minH=sorted[sorted.length-1].h; leadName=sorted[0].b.nombre; nextName=sorted[sorted.length-1].b.nombre;
+      }
+      const imbal = (maxH!=null&&maxH>0)?((maxH-minH)/maxH*100):null;
+      const desbalanceado = imbal!=null && imbal>15;
+      if (desbalanceado){ desbal++; recomendaciones.push(nextName); }
+      const redCol=redundancia==='ok'?'var(--green)':redundancia==='limitada'?'var(--amber)':'var(--red)';
+      const redLbl=redundancia==='ok'?'Redundancia OK':redundancia==='limitada'?'Sin respaldo':'Crítico';
+      const maxHval=Math.max(...validas.map(x=>x.h),1);
+      return `<div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div class="card-title">${nombreGrupo} <span style="font-size:11px;color:var(--txt2);font-weight:400">· ${arr.length} bombas</span></div>
+          <span class="badge" style="background:${redCol}22;color:${redCol}">${redLbl}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${conHoras.map(x=>{
+            const isLead=x.b.nombre===leadName, isNext=x.b.nombre===nextName;
+            const pct=x.h!=null?(x.h/maxHval*100):0;
+            const barCol=isLead?'var(--amber)':isNext?'var(--green)':'var(--cyan)';
+            return `<div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:12px;width:170px;flex-shrink:0">${x.b.nombre} ${isLead?'<span style="color:var(--amber);font-size:10px">● más usada</span>':isNext?'<span style="color:var(--green);font-size:10px">● alternar a esta</span>':''}</span>
+              <div style="flex:1;height:10px;background:var(--bg4);border-radius:5px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${barCol};border-radius:5px"></div></div>
+              <span style="font-size:12px;color:var(--txt2);width:80px;text-align:right;font-family:var(--font-m)">${x.h!=null?x.h.toLocaleString()+' h':'—'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+        ${imbal!=null?`<div style="margin-top:12px;font-size:12px;color:${desbalanceado?'var(--amber)':'var(--txt2)'}">${desbalanceado?`⚖️ Desbalance del ${imbal.toFixed(0)}% — programa la próxima rotación hacia <strong>${nextName}</strong> para emparejar horas.`:`✅ Horas equilibradas (desbalance ${imbal.toFixed(0)}%). La alternancia está funcionando.`}</div>`:'<div style="margin-top:12px;font-size:12px;color:var(--txt2)">Registra el horómetro de al menos 2 bombas del grupo para evaluar la alternancia.</div>'}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('bom-rot-grupos').textContent=multi.length;
+  document.getElementById('bom-rot-desbal').textContent=desbal;
+  document.getElementById('bom-rot-sinresp').textContent=sinResp;
+  document.getElementById('bom-rot-accion').textContent=recomendaciones.length?recomendaciones[0]:(multi.length?'Sin acción':'—');
+  document.getElementById('bom-rot-accion-sub').textContent=recomendaciones.length?'próxima a liderar':'alternancia equilibrada';
+};
+
+// ─── TAB TENDENCIAS ─────────────────────────────────────────────────────────────
+window.renderTendenciasBombeo = function() {
+  const id=document.getElementById('bom-tend-sel')?.value;
+  const dias=parseInt(document.getElementById('bom-tend-period')?.value||'30');
+  const b=allBombas.find(x=>x.id===id);
+  if (!b){document.getElementById('bom-tend-tbody').innerHTML='<tr><td colspan="9" class="loading-row">Selecciona una bomba</td></tr>';return;}
+  const desde=new Date();desde.setDate(desde.getDate()-dias);
+  const lecturas=allLecturasBom.filter(l=>(l.equipoId===b.id||l.equipo===b.nombre)&&l.creadoEn?.toDate&&l.creadoEn.toDate()>=desde).sort((a,b)=>a.creadoEn.toDate()-b.creadoEn.toDate());
+  if (!lecturas.length){
+    ['bom-chart-cau','bom-chart-pre','bom-chart-amp','bom-chart-vib'].forEach(cid=>{if(refTendCharts[cid]){refTendCharts[cid].destroy();delete refTendCharts[cid];}});
+    ['bom-tend-cau-cur','bom-tend-pre-cur','bom-tend-amp-cur','bom-tend-vib-cur'].forEach(x=>document.getElementById(x).textContent='— ');
+    document.getElementById('bom-tend-count').textContent='0 registros';
+    document.getElementById('bom-tend-tbody').innerHTML=`<tr><td colspan="9"><div class="empty" style="height:100px"><div class="empty-icon">📭</div><div class="empty-sub">Sin lecturas de ${b.nombre} en este período</div></div></td></tr>`;
+    return;
+  }
+  ensureChartJsLocal(()=>{
+    const labels=lecturas.map(l=>l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+    const cau=lecturas.map(l=>parseFloat(l.caudal)||0), pre=lecturas.map(l=>parseFloat(l.pdesc)||0), amp=lecturas.map(l=>parseFloat(l.amp)||0), vib=lecturas.map(l=>parseFloat(l.vib)||0);
+    const last=a=>a[a.length-1];
+    document.getElementById('bom-tend-cau-cur').textContent=last(cau).toFixed(0)+' m³/h';
+    document.getElementById('bom-tend-pre-cur').textContent=last(pre).toFixed(1)+' bar';
+    document.getElementById('bom-tend-amp-cur').textContent=last(amp).toFixed(1)+' A';
+    document.getElementById('bom-tend-vib-cur').textContent=last(vib).toFixed(1)+' mm/s';
+    buildChartRef('bom-chart-cau', labels, cau, '#00e676', []);
+    buildChartRef('bom-chart-pre', labels, pre, '#00d4ff', [{value:bombeoLimites.presionMax,label:'Máx',color:'rgba(255,68,68,0.5)'}]);
+    buildChartRef('bom-chart-amp', labels, amp, '#ffb300', []);
+    buildChartRef('bom-chart-vib', labels, vib, '#00e676', [{value:bombeoLimites.vibracionMax,label:'Alerta',color:'rgba(255,68,68,0.5)'}]);
+  });
+  document.getElementById('bom-tend-count').textContent=lecturas.length+' registros';
+  document.getElementById('bom-tend-tbody').innerHTML=[...lecturas].reverse().map(l=>{
+    const f=l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const vibCls=(l.vib!=null&&l.vib>bombeoLimites.vibracionMax)?'warn':'ok';
+    const tCls=(l.tmotor!=null&&l.tmotor>bombeoLimites.tempMotorMax)?'warn':'ok';
+    return `<tr><td class="mono">${f}</td><td class="mono">${l.caudal??'—'}</td><td class="mono">${l.pdesc??'—'}</td><td class="mono">${l.psucc??'—'}</td><td class="mono">${l.amp??'—'}</td><td class="mono"><span class="reading-val ${tCls}" style="font-size:12px">${l.tmotor??'—'}</span></td><td class="mono"><span class="reading-val ${vibCls}" style="font-size:12px">${l.vib??'—'}</span></td><td class="mono">${l.pot??'—'}</td><td style="font-size:11px;color:var(--txt2)">${l.tecnicoNombre||'—'}</td></tr>`;
+  }).join('');
+};
+
+// ─── TAB HORÓMETROS ─────────────────────────────────────────────────────────────
+window.renderHorometrosBombeo = function() {
+  const tbody=document.getElementById('bom-horo-tbody');
+  if (!allBombas.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">⏱️</div><div class="empty-sub">Sin bombas registradas</div></div></td></tr>';return;}
+  let prox=0;
+  tbody.innerHTML=allBombas.map(b=>{
+    const lec=ultimaLecturaBom(b); const horometro=lec?.horometro??null;
+    const acts=(typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>a.activoId===b.id);
+    const pmp=acts.sort((a,b)=>new Date(a.proximaFecha||'2099-01-01')-new Date(b.proximaFecha||'2099-01-01'))[0];
+    let diasRest=null,estado='sin-plan';
+    if(pmp?.proximaFecha){diasRest=Math.round((new Date(pmp.proximaFecha)-new Date())/86400000);estado=diasRest<0?'vencida':diasRest<=7?'proxima':'al_dia';if(estado!=='al_dia')prox++;}
+    const estCls=estado==='vencida'?'vencida':estado==='proxima'?'prog':estado==='al_dia'?'cerrada':'abierta';
+    const estLbl=estado==='vencida'?'PM vencido':estado==='proxima'?'Próx. PM':estado==='al_dia'?'OK':'Sin plan PMP';
+    return `<tr><td style="font-weight:600">${b.nombre}</td><td class="mono" style="font-size:11px;color:var(--txt2)">${b.cod||b.id}</td><td style="font-size:12px;color:var(--txt2)">${b.marca||'—'}</td><td><span style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">${horometro!=null?horometro.toLocaleString()+' h':'—'}</span></td><td class="mono" style="font-size:12px">${pmp?.proximaFecha||'—'}</td><td class="mono" style="font-size:12px;color:${diasRest!=null&&diasRest<0?'var(--red)':diasRest!=null&&diasRest<=7?'var(--amber)':'var(--txt2)'}">${diasRest!=null?diasRest+' días':'—'}</td><td><span class="status ${estCls}">${estLbl}</span></td></tr>`;
+  }).join('');
+  document.getElementById('bom-horo-badge').textContent=`${prox} próximos a mantenimiento`;
+};
+
+// ─── TAB CONSUMO ────────────────────────────────────────────────────────────────
+window.renderConsumoBombeo = function() {
+  const ids=activosDeArea('captaci'); const ids2=activosDeArea('bombeo'); ids2.forEach(x=>ids.add(x));
+  if(!ids.size) allBombas.forEach(b=>ids.add(b.id));
+  const ots=(allOT||[]).filter(o=>o.estado==='cerrada'&&o.repuestoId&&ids.has(o.activoId)).sort((a,b)=>{const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0);const fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0);return fb-fa;});
+  const acts=(typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>ids.has(a.activoId));
+  const conH=acts.filter(a=>a.ultimaEjecucion);
+  document.getElementById('bom-cons-k-cumpl').textContent=acts.length>0?Math.round(conH.length/acts.length*100)+'%':'—';
+  const porRep={};ots.forEach(o=>{if(o.repuestoId)(porRep[o.repuestoId]=porRep[o.repuestoId]||[]).push(o.creadoEn?.toDate?o.creadoEn.toDate():null);});
+  let inter=[];Object.values(porRep).forEach(fs=>{const o=fs.filter(Boolean).sort((a,b)=>a-b);for(let i=1;i<o.length;i++)inter.push((o[i]-o[i-1])/86400000);});
+  const vida=inter.length?Math.round(inter.reduce((s,v)=>s+v,0)/inter.length):null;
+  document.getElementById('bom-cons-k-vida').textContent=vida!=null?vida+' días':'—';
+  document.getElementById('bom-cons-k-vida-sub').textContent=inter.length?'promedio entre cambios':'aún sin suficiente historial';
+  const hoy=new Date();const mes=hoy.getMonth(),anio=hoy.getFullYear();
+  const otsMes=ots.filter(o=>{const f=o.creadoEn?.toDate?o.creadoEn.toDate():null;return f&&f.getMonth()===mes&&f.getFullYear()===anio;});
+  const gasto=otsMes.reduce((s,o)=>{const r=(allRepuestos||[]).find(x=>x.id===o.repuestoId);return s+((parseFloat(o.repuestoCantidad)||0)*(r?.cunit||0));},0);
+  document.getElementById('bom-cons-k-gasto').textContent='S/ '+gasto.toLocaleString('es-PE',{maximumFractionDigits:0});
+  const reps=[...new Set(acts.filter(a=>a.repuestoId).map(a=>a.repuestoId))].map(id=>(allRepuestos||[]).find(r=>r.id===id)).filter(Boolean);
+  let cob=null,crit=null;reps.forEach(r=>{const cm=ots.filter(o=>o.repuestoId===r.id&&o.creadoEn?.toDate&&(hoy-o.creadoEn.toDate())<90*86400000).length/3;if(cm>0){const d=Math.round((r.stock||0)/(cm/30));if(cob===null||d<cob){cob=d;crit=r;}}});
+  document.getElementById('bom-cons-k-cobertura').textContent=cob!=null?cob+' días':'—';
+  document.getElementById('bom-cons-k-cobertura-sub').textContent=crit?crit.desc:'sin datos suficientes de consumo';
+  const ht=document.getElementById('bom-cons-hist-tbody');
+  document.getElementById('bom-cons-hist-count').textContent=ots.length+' registros';
+  ht.innerHTML=ots.length?ots.slice(0,40).map(o=>{const f=o.creadoEn?.toDate?o.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'short'}):'—';return `<tr><td class="mono" style="font-size:11px">${f}</td><td style="font-size:12px">${o.repuestoNombre||'—'}</td><td style="font-size:12px;color:var(--txt2)">${o.activoNombre||'—'}</td><td class="mono">${o.repuestoCantidad||'—'} ${o.repuestoUnidad||''}</td><td style="font-size:12px;color:var(--txt2)">${o.tecnicoNombre||'—'}</td><td><span class="badge cyan" style="font-size:10px;cursor:pointer" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">${o.codigo}</span></td></tr>`;}).join(''):'<tr><td colspan="6"><div class="empty" style="height:100px"><div class="empty-icon">📦</div><div class="empty-sub">Sin consumos — se llena al cerrar OT con repuesto vinculado</div></div></td></tr>';
+  const barsEl=document.getElementById('bom-cons-frec-bars');
+  const actsRep=acts.filter(a=>a.repuestoId);
+  barsEl.innerHTML=actsRep.length?actsRep.map(a=>{const esp=(typeof FREC_DIAS!=='undefined'?FREC_DIAS[a.frecuencia]:30)||30;let real=esp;const fs=porRep[a.repuestoId];if(fs&&fs.length>=2){const o=fs.filter(Boolean).sort((x,y)=>x-y);real=Math.round((o[o.length-1]-o[o.length-2])/86400000);}const pct=Math.min((real/esp)*100,100);const col=real<=esp?'var(--green)':real<=esp*1.3?'var(--amber)':'var(--red)';return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><span style="font-size:13px;width:160px;flex-shrink:0">${a.nombre} — ${a.activoNombre}</span><div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div><span style="font-size:12px;color:var(--txt2);width:90px;text-align:right">${real} / ${esp} días</span></div>`;}).join(''):'<div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Captación/Bombeo aún</div>';
+};
+
+// ─── MODAL ──────────────────────────────────────────────────────────────────────
+window.abrirModalLecturaBombeo=function(){
+  poblarSelectsBombeo();
+  ['lb-horometro','lb-caudal','lb-pdesc','lb-psucc','lb-nivel','lb-amp','lb-tmotor','lb-vib','lb-pot','lb-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-lectura-bombeo').classList.add('open');
+};
+window.guardarLecturaBombeo=async function(){
+  const b=allBombas.find(x=>x.id===document.getElementById('lb-equipo').value);
+  if(!b){showToast('⚠️','Selecciona una bomba','');return;}
+  const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
+  const caudal=num('lb-caudal'),vib=num('lb-vib'),tmotor=num('lb-tmotor');
+  if(caudal==null&&num('lb-pdesc')==null&&num('lb-horometro')==null){showToast('⚠️','Ingresa al menos un parámetro','');return;}
+  const alarma=(vib!=null&&vib>bombeoLimites.vibracionMax)||(tmotor!=null&&tmotor>bombeoLimites.tempMotorMax);
+  try{
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'bombeo', equipo:b.nombre, equipoId:b.id, turno:document.getElementById('lb-turno').value, modo:document.getElementById('lb-modo').value,
+      horometro:num('lb-horometro'), caudal, pdesc:num('lb-pdesc'), psucc:num('lb-psucc'), nivel:num('lb-nivel'),
+      amp:num('lb-amp'), tmotor, vib, pot:num('lb-pot'), alarma, obs:document.getElementById('lb-obs').value.trim()||null,
+      tecnicoUid:currentUser.uid, tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`, creadoEn:serverTimestamp(),
+    });
+    cerrarModal('modal-lectura-bombeo'); showToast('✅','Lectura registrada',b.nombre); await cargarBombeo();
+  }catch(err){ showToast('❌','Error',err.message); }
+};
+
+// Hook showPage para cargar Captación/Bombeo al entrar
+const _showPageBom = window.showPage;
+window.showPage = function(name, el) {
+  _showPageBom(name, el);
+  if (name==='bombeo') cargarBombeo();
 };
 
 
