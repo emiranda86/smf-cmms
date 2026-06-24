@@ -340,6 +340,10 @@ canvas.spark{width:100%;height:44px;}
       <span class="nav-icon">🏭</span><span class="nav-label">Producción</span>
       <span class="nav-badge" id="badge-prod">—</span>
     </div>
+    <div class="nav-item" id="nav-hielo" onclick="showPage('hielo',this)">
+      <span class="nav-icon">🧊</span><span class="nav-label">Planta de Hielo</span>
+      <span class="nav-badge" id="badge-hielo">—</span>
+    </div>
     <div class="nav-item" id="nav-lecturas" onclick="showPage('lecturas',this)">
       <span class="nav-icon">🌡️</span><span class="nav-label">Lecturas</span>
     </div>
@@ -1641,6 +1645,198 @@ canvas.spark{width:100%;height:44px;}
     </div>
 
 
+    <!-- ══ PLANTA DE HIELO · HIELO EN BLOQUE ══ -->
+    <div class="page" id="page-hielo">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">Planta de Hielo · Hielo en Bloque</div>
+          <div class="page-sub" id="hie-resumen">— equipos · — operativos · — en parada</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalLecturaHielo()">+ Lectura operativa</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;flex-wrap:wrap">
+        <button class="pmp-tab active" id="hie-tab-estado" onclick="hieTab('estado')">Estado en tiempo real</button>
+        <button class="pmp-tab" id="hie-tab-prod" onclick="hieTab('prod')">Producción y rendimiento</button>
+        <button class="pmp-tab" id="hie-tab-efic" onclick="hieTab('efic')">Eficiencia energética</button>
+        <button class="pmp-tab" id="hie-tab-tend" onclick="hieTab('tend')">Tendencias</button>
+        <button class="pmp-tab" id="hie-tab-horo" onclick="hieTab('horo')">Horómetros y PMP</button>
+        <button class="pmp-tab" id="hie-tab-consumo" onclick="hieTab('consumo')">Consumo e insumos</button>
+      </div>
+
+      <!-- TAB: ESTADO -->
+      <div id="hie-view-estado">
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">🧊</span><div class="kpi-label">Producción hoy</div><div class="kpi-value cyan" id="hie-k-prod">—</div><div class="kpi-sub" id="hie-k-prod-sub">toneladas del día</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">📊</span><div class="kpi-label">% capacidad nominal</div><div class="kpi-value green" id="hie-k-cap">—</div><div class="kpi-sub" id="hie-k-cap-sub">utilización de planta</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">⚡</span><div class="kpi-label">Consumo específico</div><div class="kpi-value amber" id="hie-k-kwh">—</div><div class="kpi-sub">kWh por tonelada</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Stock de bloques</div><div class="kpi-value red" id="hie-k-stock">—</div><div class="kpi-sub" id="hie-k-stock-sub">en cámara</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Tanque de salmuera</div><span class="badge cyan" id="hie-salmuera-badge">—</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+                <div class="kpi-label">Temperatura de salmuera</div>
+                <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="hie-salmuera-temp">— <span style="font-size:13px;color:var(--txt2)">°C</span></div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Rango: <span id="hie-lim-sal-txt">−12 a −8</span> °C</div>
+              </div>
+              <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+                <div class="kpi-label">Densidad de salmuera</div>
+                <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--amber)" id="hie-salmuera-dens">— <span style="font-size:13px;color:var(--txt2)">°Bé</span></div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Rango: <span id="hie-lim-dens-txt">18 a 23</span> °Bé</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Cámara de bloques</div><span class="badge cyan" id="hie-camara-badge">—</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+                <div class="kpi-label">Temperatura de cámara</div>
+                <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--cyan)" id="hie-camara-temp">— <span style="font-size:13px;color:var(--txt2)">°C</span></div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">Máx.: <span id="hie-lim-cam-txt">−5</span> °C</div>
+              </div>
+              <div style="background:var(--bg3);border-radius:var(--r);padding:14px">
+                <div class="kpi-label">Autonomía de stock</div>
+                <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--green)" id="hie-autonomia">— <span style="font-size:13px;color:var(--txt2)">días</span></div>
+                <div style="font-size:10px;color:var(--txt2);font-family:var(--font-m);margin-top:4px">según consumo histórico</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="equip-grid" id="hie-grid">
+          <div class="loading-row" style="grid-column:1/-1"><span class="spinner"></span>Cargando equipos…</div>
+        </div>
+      </div>
+
+      <!-- TAB: PRODUCCIÓN Y RENDIMIENTO -->
+      <div id="hie-view-prod" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card cyan"><span class="kpi-icon">🧊</span><div class="kpi-label">Producción hoy</div><div class="kpi-value cyan" id="hie-pr-hoy">—</div><div class="kpi-sub" id="hie-pr-hoy-sub">bloques · toneladas</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">📊</span><div class="kpi-label">% capacidad nominal</div><div class="kpi-value green" id="hie-pr-cap">—</div><div class="kpi-sub" id="hie-pr-cap-sub">de — t/día</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">⏱️</span><div class="kpi-label">Tiempo de congelación</div><div class="kpi-value amber" id="hie-pr-tiempo">—</div><div class="kpi-sub">promedio por ciclo</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Autonomía de stock</div><div class="kpi-value red" id="hie-pr-auto">—</div><div class="kpi-sub">días de cobertura</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div class="card-hdr"><div class="card-title">Producción diaria (toneladas)</div><span class="badge cyan" id="hie-pr-trend-badge">—</span></div>
+            <div style="position:relative;height:200px"><canvas id="hie-chart-prod"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Diagnóstico de proceso</div>
+            <div id="hie-pr-diag" style="font-size:13px;color:var(--txt1);background:var(--bg3);border-radius:var(--r);padding:12px;border-left:3px solid var(--cyan)">El diagnóstico aparecerá cuando existan lecturas de producción.</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--txt2)">Capacidad nominal (t/día):</span>
+              <input class="form-input" type="number" id="hie-cap-nominal" step="1" style="width:80px;padding:5px 8px;font-family:var(--font-m);font-size:12px">
+              <span style="font-size:11px;color:var(--txt2)">Peso/bloque (kg):</span>
+              <input class="form-input" type="number" id="hie-peso-bloque" step="1" style="width:70px;padding:5px 8px;font-family:var(--font-m);font-size:12px">
+              <button class="btn btn-primary btn-sm" onclick="guardarConfigHielo()">Aplicar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EFICIENCIA ENERGÉTICA -->
+      <div id="hie-view-efic" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card amber"><span class="kpi-icon">⚡</span><div class="kpi-label">Consumo específico</div><div class="kpi-value amber" id="hie-ef-kwh">—</div><div class="kpi-sub">kWh por tonelada</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">💰</span><div class="kpi-label">Costo por tonelada</div><div class="kpi-value red" id="hie-ef-costoton">—</div><div class="kpi-sub">energía por tonelada</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">📅</span><div class="kpi-label">Costo mensual estimado</div><div class="kpi-value cyan" id="hie-ef-costomes">—</div><div class="kpi-sub" id="hie-ef-costomes-sub">proyección</div></div>
+          <div class="kpi-card green"><span class="kpi-icon">🔌</span><div class="kpi-label">Consumo promedio</div><div class="kpi-value green" id="hie-ef-cons">—</div><div class="kpi-sub">kWh por lectura</div></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-hdr"><div class="card-title">Tendencia de consumo específico (kWh/t)</div><span class="badge amber" id="hie-ef-trend-badge">—</span></div>
+          <div style="position:relative;height:200px"><canvas id="hie-chart-kwh"></canvas></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+            <span style="font-size:11px;color:var(--txt2)">Precio de energía (S/ por kWh):</span>
+            <input class="form-input" type="number" id="hie-precio-kwh" step="0.01" style="width:90px;padding:5px 8px;font-family:var(--font-m);font-size:12px">
+            <button class="btn btn-primary btn-sm" onclick="guardarPrecioKwh()">Aplicar</button>
+          </div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--amber)">
+          <div style="font-size:13px;color:var(--txt1)" id="hie-ef-diag">El diagnóstico energético aparecerá cuando existan lecturas con consumo (kWh) y producción.</div>
+        </div>
+      </div>
+
+      <!-- TAB: TENDENCIAS -->
+      <div id="hie-view-tend" style="display:none">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Equipo:</span>
+          <select class="filter-sel" id="hie-tend-sel" onchange="renderTendenciasHielo()" style="min-width:220px"></select>
+          <span style="font-size:12px;color:var(--txt2);font-family:var(--font-m)">Período:</span>
+          <select class="filter-sel" id="hie-tend-period" onchange="renderTendenciasHielo()">
+            <option value="7">7 días</option><option value="15">15 días</option>
+            <option value="30" selected>30 días</option><option value="90">90 días</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Temperatura de salmuera</span><span id="hie-tend-sal-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— °C</span></div>
+            <div style="position:relative;height:140px"><canvas id="hie-chart-sal"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Densidad de salmuera</span><span id="hie-tend-dens-cur" style="font-family:var(--font-m);font-size:13px;color:var(--amber)">— °Bé</span></div>
+            <div style="position:relative;height:140px"><canvas id="hie-chart-dens"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Presión de succión</span><span id="hie-tend-ps-cur" style="font-family:var(--font-m);font-size:13px;color:var(--green)">— bar</span></div>
+            <div style="position:relative;height:140px"><canvas id="hie-chart-ps"></canvas></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="card-title" style="font-size:12px">Presión de descarga</span><span id="hie-tend-pd-cur" style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">— bar</span></div>
+            <div style="position:relative;height:140px"><canvas id="hie-chart-pd"></canvas></div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Registro de lecturas operativas</span><span class="badge cyan" id="hie-tend-count">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha / Hora</th><th>Bloques</th><th>T. salmuera</th><th>Densidad</th><th>T. congel.</th><th>P. succ.</th><th>P. desc.</th><th>kWh</th><th>Técnico</th></tr></thead>
+            <tbody id="hie-tend-tbody"><tr><td colspan="9" class="loading-row">Selecciona un equipo</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: HORÓMETROS Y PMP -->
+      <div id="hie-view-horo" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Horómetros — cruzado con PMP</span><span class="badge amber" id="hie-horo-badge">—</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Equipo</th><th>Código</th><th>Marca</th><th>Horómetro actual</th><th>Próx. PM (PMP)</th><th>Días restantes</th><th>Estado</th></tr></thead>
+            <tbody id="hie-horo-tbody"><tr><td colspan="7" class="loading-row"><span class="spinner"></span>Cargando…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: CONSUMO E INSUMOS -->
+      <div id="hie-view-consumo" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Cumplimiento del plan</div><div class="kpi-value green" id="hie-cons-k-cumpl">—</div><div class="kpi-sub">actividades con historial</div></div>
+          <div class="kpi-card cyan"><span class="kpi-icon">⏱️</span><div class="kpi-label">Vida útil promedio</div><div class="kpi-value cyan" id="hie-cons-k-vida">—</div><div class="kpi-sub" id="hie-cons-k-vida-sub">días entre cambios</div></div>
+          <div class="kpi-card amber"><span class="kpi-icon">💰</span><div class="kpi-label">Consumo este mes</div><div class="kpi-value amber" id="hie-cons-k-gasto">—</div><div class="kpi-sub">repuestos e insumos</div></div>
+          <div class="kpi-card red"><span class="kpi-icon">📦</span><div class="kpi-label">Cobertura mínima de stock</div><div class="kpi-value red" id="hie-cons-k-cobertura">—</div><div class="kpi-sub" id="hie-cons-k-cobertura-sub">insumo más crítico</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Historial de cambios e insumos</div><span class="badge cyan" id="hie-cons-hist-count">—</span></div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Fecha</th><th>Insumo</th><th>Activo</th><th>Cant.</th><th>Técnico</th><th>Origen</th></tr></thead>
+            <tbody id="hie-cons-hist-tbody"><tr><td colspan="6" class="loading-row">Cargando historial…</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Frecuencia real vs. programada</div>
+          <div id="hie-cons-frec-bars"><div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Planta de Hielo aún</div></div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- ══ LECTURAS ══ -->
     <div class="page" id="page-lecturas">
       <div class="page-header">
@@ -2490,6 +2686,57 @@ canvas.spark{width:100%;height:44px;}
 </div>
 
 
+<!-- ══ MODAL: Lectura operativa — Planta de Hielo (bloque) ══ -->
+<div class="modal-overlay" id="modal-lectura-hielo">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Lectura operativa — Planta de Hielo</div>
+      <button class="modal-close" onclick="cerrarModal('modal-lectura-hielo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Equipo</label>
+          <select class="form-select" id="lh-equipo"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Turno</label>
+          <select class="form-select" id="lh-turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Horómetro (h)</label>
+          <input class="form-input" type="number" id="lh-horometro" step="0.1" placeholder="Ej: 14200"></div>
+        <div class="form-group"><label class="form-label">Bloques producidos</label>
+          <input class="form-input" type="number" id="lh-bloques" step="1" placeholder="Ej: 120"></div>
+        <div class="form-group"><label class="form-label">Stock de bloques en cámara</label>
+          <input class="form-input" type="number" id="lh-stock" step="1" placeholder="Ej: 340"></div>
+        <div class="form-group"><label class="form-label">Temp. de salmuera (°C)</label>
+          <input class="form-input" type="number" id="lh-tsal" step="0.1" placeholder="Ej: -10"></div>
+        <div class="form-group"><label class="form-label">Densidad salmuera (°Bé)</label>
+          <input class="form-input" type="number" id="lh-dens" step="0.1" placeholder="Ej: 20"></div>
+        <div class="form-group"><label class="form-label">Tiempo de congelación (h)</label>
+          <input class="form-input" type="number" id="lh-tcong" step="0.5" placeholder="Ej: 16"></div>
+        <div class="form-group"><label class="form-label">Temp. evaporación (°C)</label>
+          <input class="form-input" type="number" id="lh-tevap" step="0.1" placeholder="Ej: -15"></div>
+        <div class="form-group"><label class="form-label">Presión succión (bar)</label>
+          <input class="form-input" type="number" id="lh-ps" step="0.1" placeholder="Ej: 2.2"></div>
+        <div class="form-group"><label class="form-label">Presión descarga (bar)</label>
+          <input class="form-input" type="number" id="lh-pd" step="0.1" placeholder="Ej: 12"></div>
+        <div class="form-group"><label class="form-label">Temp. cámara bloques (°C)</label>
+          <input class="form-input" type="number" id="lh-tcam" step="0.1" placeholder="Ej: -6"></div>
+        <div class="form-group"><label class="form-label">Temp. agua de moldes (°C)</label>
+          <input class="form-input" type="number" id="lh-tagua" step="0.1" placeholder="Opcional"></div>
+        <div class="form-group"><label class="form-label">Consumo de energía (kWh)</label>
+          <input class="form-input" type="number" id="lh-kwh" step="0.1" placeholder="Ej: 850"></div>
+        <div class="form-group full"><label class="form-label">Observación</label>
+          <input class="form-input" type="text" id="lh-obs" placeholder="Estado de moldes, agitadores, desescarche…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-lectura-hielo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLecturaHielo()">Guardar lectura</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="toast" id="toast">
   <span class="toast-icon" id="toast-icon">✅</span>
   <div><div id="toast-msg"></div><div class="toast-sub" id="toast-sub"></div></div>
@@ -2588,7 +2835,8 @@ window.showPage = function(name, el) {
     solicitudes:'Solicitudes de Trabajo', activos:'Gestión de Activos',
     almacen:'Almacén y Repuestos', lecturas:'Registro de Lecturas',
     calderos:'Calderos · Planta de Vapor', refrigeracion:'Refrigeración Industrial', osmosis:'Ósmosis Inversa', pmp:'Plan Maestro de Mantenimiento',
-    produccion:'Producción · Confiabilidad de Equipos'
+    produccion:'Producción · Confiabilidad de Equipos',
+    hielo:'Planta de Hielo · Hielo en Bloque'
   }[name] || name;
 };
 
@@ -6766,6 +7014,360 @@ const _showPageProd = window.showPage;
 window.showPage = function(name, el) {
   _showPageProd(name, el);
   if (name==='produccion') cargarProduccion();
+};
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÓDULO PLANTA DE HIELO · HIELO EN BLOQUE
+// Estado · Producción y rendimiento · Eficiencia energética (kWh/t) · Tendencias ·
+// Horómetros · Consumo. Proceso clave: salmuera (temp + densidad) y ciclo de congelación.
+// Detección por área que contiene "Hielo". Sin colecciones nuevas (lecturas tipo='hielo').
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let allEquiposHielo = [];
+let allLecturasHielo= [];
+
+let hieloLimites = { tSalMin:-12, tSalMax:-8, densMin:18, densMax:23, tCamMax:-5, tCongMax:24 };
+let hieloConfig  = { precioKwh:0.65, capacidadNominalTon:50, pesoBloque:25 }; // S/kWh · t/día · kg
+
+// ─── Navegación ─────────────────────────────────────────────────────────────────
+window.hieTab = function(tab) {
+  ['estado','prod','efic','tend','horo','consumo'].forEach(t=>{
+    document.getElementById('hie-view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('hie-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='prod')    renderProduccionHielo();
+  if (tab==='efic')    renderEficienciaHielo();
+  if (tab==='tend')    renderTendenciasHielo();
+  if (tab==='horo')    renderHorometrosHielo();
+  if (tab==='consumo') renderConsumoHielo();
+};
+
+// ─── Carga ──────────────────────────────────────────────────────────────────────
+async function cargarHielo() {
+  try {
+    allEquiposHielo = allActivos.filter(a => a.tipo==='EQUIPO' && (
+      /hielo/i.test(a.area||'') || esDescendienteDe(a.id,'HI-000') ||
+      esDescendienteDe(a.id,'PH-000') || esDescendienteDe(a.id,'HIELO-000')));
+
+    const lecSnap = await getDocs(query(collection(db,'lecturas'),
+      where('tipo','==','hielo'), orderBy('creadoEn','desc'), limit(600))).catch(()=>({docs:[]}));
+    allLecturasHielo = lecSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const operativos = allEquiposHielo.filter(e=>e.estado==='operativo'||!e.estado).length;
+    const detenidos  = allEquiposHielo.filter(e=>e.estado==='detenido').length;
+    document.getElementById('hie-resumen').textContent =
+      `${allEquiposHielo.length} equipos · ${operativos} operativos · ${detenidos} en parada`;
+    document.getElementById('badge-hielo').textContent = detenidos>0?detenidos:'—';
+
+    renderEstadoHielo();
+    poblarSelectsHielo();
+  } catch(e){ console.error('Error cargando Planta de Hielo:', e); }
+}
+
+function ultimaLecturaHielo(eq){ const l=allLecturasHielo.filter(x=>x.equipoId===eq.id||x.equipo===eq.nombre); return l.length?l[0]:null; }
+function ultimaConCampo(campo){ return allLecturasHielo.find(l=>l[campo]!=null && !isNaN(parseFloat(l[campo]))) || null; }
+function poblarSelectsHielo(){
+  const opts=allEquiposHielo.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
+  ['hie-tend-sel','lh-equipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  document.getElementById('hie-precio-kwh').value=hieloConfig.precioKwh;
+  document.getElementById('hie-cap-nominal').value=hieloConfig.capacidadNominalTon;
+  document.getElementById('hie-peso-bloque').value=hieloConfig.pesoBloque;
+}
+
+// ─── Cálculos de producción / energía ───────────────────────────────────────────
+function lecturasEnDia(fecha){
+  return allLecturasHielo.filter(l=>{ const f=l.creadoEn?.toDate?l.creadoEn.toDate():null;
+    return f && f.toDateString()===fecha.toDateString(); });
+}
+function produccionTon(lecturas){
+  const bloques = lecturas.reduce((s,l)=>s+(parseFloat(l.bloques)||0),0);
+  return bloques*hieloConfig.pesoBloque/1000;
+}
+function consumoEspecifico(lecturas){
+  const ton = produccionTon(lecturas);
+  const kwh = lecturas.reduce((s,l)=>s+(parseFloat(l.kwh)||0),0);
+  return ton>0 ? kwh/ton : null;
+}
+// Autonomía: estima despacho diario desde deltas de stock + producción
+function computeAutonomia(){
+  const conStock = allLecturasHielo.filter(l=>l.stock!=null).sort((a,b)=>{
+    const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0);
+    const fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0); return fa-fb; });
+  if (conStock.length<2) return { stock:conStock[0]?conStock[0].stock:null, autonomia:null, despachoDia:null };
+  let despachoTotal=0, dias=0;
+  for (let i=1;i<conStock.length;i++){
+    const prev=conStock[i-1], cur=conStock[i];
+    const dStock=(parseFloat(cur.stock)||0)-(parseFloat(prev.stock)||0);
+    const prod=parseFloat(cur.bloques)||0;
+    const despacho=Math.max(prod - dStock, 0); // despacho = producción − Δstock
+    const fa=prev.creadoEn.toDate(), fb=cur.creadoEn.toDate();
+    const dt=Math.max((fb-fa)/86400000, 0.01);
+    despachoTotal+=despacho; dias+=dt;
+  }
+  const despachoDia = dias>0 ? despachoTotal/dias : null;
+  const stockActual = parseFloat(conStock[conStock.length-1].stock)||0;
+  const autonomia = despachoDia>0 ? stockActual/despachoDia : null;
+  return { stock:stockActual, autonomia, despachoDia };
+}
+
+// ─── TAB ESTADO ─────────────────────────────────────────────────────────────────
+function renderEstadoHielo() {
+  const hoy=new Date();
+  const prodHoy=produccionTon(lecturasEnDia(hoy));
+  const ult30=allLecturasHielo.filter(l=>{const f=l.creadoEn?.toDate?l.creadoEn.toDate():null;return f&&(hoy-f)<30*86400000;});
+  const kwhTon=consumoEspecifico(ult30);
+  const auto=computeAutonomia();
+
+  document.getElementById('hie-k-prod').innerHTML = `${prodHoy.toFixed(1)} <span style="font-size:14px;color:var(--txt2)">t</span>`;
+  document.getElementById('hie-k-prod-sub').textContent = `${lecturasEnDia(hoy).reduce((s,l)=>s+(parseFloat(l.bloques)||0),0)} bloques`;
+  const pct=hieloConfig.capacidadNominalTon>0?(prodHoy/hieloConfig.capacidadNominalTon*100):0;
+  document.getElementById('hie-k-cap').textContent = prodHoy>0?pct.toFixed(0)+'%':'—';
+  document.getElementById('hie-k-cap-sub').textContent = `de ${hieloConfig.capacidadNominalTon} t/día`;
+  document.getElementById('hie-k-kwh').textContent = kwhTon!=null?kwhTon.toFixed(0):'—';
+  document.getElementById('hie-k-stock').textContent = auto.stock!=null?auto.stock+' bl':'—';
+  document.getElementById('hie-k-stock-sub').textContent = auto.stock!=null?`≈ ${(auto.stock*hieloConfig.pesoBloque/1000).toFixed(1)} t`:'en cámara';
+
+  // Salmuera
+  const lSal=ultimaConCampo('tsal'), lDens=ultimaConCampo('dens');
+  const tsal=lSal?parseFloat(lSal.tsal):null, dens=lDens?parseFloat(lDens.dens):null;
+  const setV=(id,val,unit)=>{document.getElementById(id).innerHTML = val!=null?`${val} <span style="font-size:13px;color:var(--txt2)">${unit}</span>`:`— <span style="font-size:13px;color:var(--txt2)">${unit}</span>`;};
+  setV('hie-salmuera-temp', tsal, '°C'); setV('hie-salmuera-dens', dens, '°Bé');
+  const salOk = (tsal==null||(tsal>=hieloLimites.tSalMin&&tsal<=hieloLimites.tSalMax)) && (dens==null||(dens>=hieloLimites.densMin&&dens<=hieloLimites.densMax));
+  const salBadge=document.getElementById('hie-salmuera-badge');
+  salBadge.textContent = (tsal==null&&dens==null)?'sin datos':salOk?'En rango':'Fuera de rango';
+  salBadge.className = 'badge '+((tsal==null&&dens==null)?'cyan':salOk?'green':'red');
+  document.getElementById('hie-lim-sal-txt').textContent=`${hieloLimites.tSalMin} a ${hieloLimites.tSalMax}`;
+  document.getElementById('hie-lim-dens-txt').textContent=`${hieloLimites.densMin} a ${hieloLimites.densMax}`;
+
+  // Cámara
+  const lCam=ultimaConCampo('tcam'); const tcam=lCam?parseFloat(lCam.tcam):null;
+  setV('hie-camara-temp', tcam, '°C');
+  document.getElementById('hie-autonomia').innerHTML = auto.autonomia!=null?`${auto.autonomia.toFixed(1)} <span style="font-size:13px;color:var(--txt2)">días</span>`:`— <span style="font-size:13px;color:var(--txt2)">días</span>`;
+  const camBadge=document.getElementById('hie-camara-badge');
+  const camOk=tcam==null||tcam<=hieloLimites.tCamMax;
+  camBadge.textContent=tcam==null?'sin datos':camOk?'OK':'Temp. alta'; camBadge.className='badge '+(tcam==null?'cyan':camOk?'green':'amber');
+  document.getElementById('hie-lim-cam-txt').textContent=hieloLimites.tCamMax;
+
+  // Grid
+  const grid=document.getElementById('hie-grid');
+  if (!allEquiposHielo.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🧊</div><div class="empty-title">Sin equipos de planta de hielo</div><div class="empty-sub">No se encontraron activos tipo Equipo en el área Planta de Hielo. Verifica el árbol de Activos.</div></div>`; return; }
+  grid.innerHTML=allEquiposHielo.map(e=>{
+    const lec=ultimaLecturaHielo(e);
+    const alarma = lec && ((lec.tsal!=null&&(lec.tsal<hieloLimites.tSalMin||lec.tsal>hieloLimites.tSalMax)) || (lec.tcam!=null&&lec.tcam>hieloLimites.tCamMax));
+    const estadoVisual=e.estado==='detenido'?'detenido':alarma?'alarma':'operativo';
+    const estLbl=estadoVisual==='operativo'?'OK':estadoVisual==='alarma'?'Alarma':'En parada';
+    const estCls=estadoVisual==='operativo'?'cerrada':estadoVisual==='alarma'?'vencida':'abierta';
+    const critCol=e.crit==='A'?'var(--red)':e.crit==='C'?'var(--green)':'var(--amber)';
+    return `<div class="equip-card ${estadoVisual}" onclick="seleccionarActivo('${e.id}');showPage('activos',document.querySelectorAll('.nav-item')[4])">
+      <div class="equip-card-header"><div><div class="equip-name">${e.nombre}</div><div class="equip-code">${e.cod||e.id}</div></div><span class="status ${estCls}" style="font-size:10px">${estLbl}</span></div>
+      <div class="equip-readings">
+        <div class="reading-item"><div class="reading-label">Crit.</div><div class="reading-val" style="color:${critCol}">${e.crit||'B'}</div></div>
+        <div class="reading-item"><div class="reading-label">Horóm</div><div class="reading-val">${lec?.horometro!=null?lec.horometro+'h':'—'}</div></div>
+        <div class="reading-item"><div class="reading-label">kWh</div><div class="reading-val">${lec?.kwh!=null?lec.kwh:'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TAB PRODUCCIÓN ─────────────────────────────────────────────────────────────
+window.renderProduccionHielo = function() {
+  const hoy=new Date();
+  const lecHoy=lecturasEnDia(hoy);
+  const bloquesHoy=lecHoy.reduce((s,l)=>s+(parseFloat(l.bloques)||0),0);
+  const prodHoy=produccionTon(lecHoy);
+  document.getElementById('hie-pr-hoy').innerHTML=`${prodHoy.toFixed(1)} <span style="font-size:14px;color:var(--txt2)">t</span>`;
+  document.getElementById('hie-pr-hoy-sub').textContent=`${bloquesHoy} bloques`;
+  const pct=hieloConfig.capacidadNominalTon>0?(prodHoy/hieloConfig.capacidadNominalTon*100):0;
+  document.getElementById('hie-pr-cap').textContent=prodHoy>0?pct.toFixed(0)+'%':'—';
+  document.getElementById('hie-pr-cap-sub').textContent=`de ${hieloConfig.capacidadNominalTon} t/día`;
+  const tcongs=allLecturasHielo.map(l=>parseFloat(l.tcong)).filter(x=>!isNaN(x));
+  const tcong=tcongs.length?tcongs.reduce((s,x)=>s+x,0)/tcongs.length:null;
+  document.getElementById('hie-pr-tiempo').textContent=tcong!=null?tcong.toFixed(1)+' h':'—';
+  const auto=computeAutonomia();
+  document.getElementById('hie-pr-auto').textContent=auto.autonomia!=null?auto.autonomia.toFixed(1)+' d':'—';
+
+  // Chart producción diaria últimos 30 días
+  const dias=[]; for(let i=29;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);dias.push(d);}
+  const serie=dias.map(d=>produccionTon(lecturasEnDia(d)));
+  const conDatos=serie.some(v=>v>0);
+  document.getElementById('hie-pr-trend-badge').textContent=conDatos?'últimos 30 días':'sin datos';
+  if (conDatos){
+    ensureChartJsLocal(()=>{
+      const labels=dias.map(d=>d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+      buildChartRef('hie-chart-prod', labels, serie.map(v=>+v.toFixed(2)), '#00d4ff', hieloConfig.capacidadNominalTon>0?[{value:hieloConfig.capacidadNominalTon,label:'Capacidad',color:'rgba(0,230,118,0.5)'}]:[]);
+    });
+  } else if (refTendCharts['hie-chart-prod']) { refTendCharts['hie-chart-prod'].destroy(); delete refTendCharts['hie-chart-prod']; }
+
+  // Diagnóstico
+  const lSal=ultimaConCampo('tsal'); const tsal=lSal?parseFloat(lSal.tsal):null;
+  let diag='El diagnóstico aparecerá cuando existan lecturas de producción.', col='var(--cyan)';
+  if (prodHoy>0||tsal!=null){
+    if (tsal!=null && tsal>hieloLimites.tSalMax){ diag=`⚠️ Salmuera a ${tsal}°C, por encima del rango (${hieloLimites.tSalMax}°C). Salmuera más cálida alarga el ciclo de congelación y reduce la producción diaria. Revisar el sistema de refrigeración y la concentración de salmuera.`; col='var(--amber)'; }
+    else if (pct<60 && prodHoy>0){ diag=`ℹ️ Planta al ${pct.toFixed(0)}% de su capacidad nominal. Hay margen de producción disponible; si la demanda lo requiere, se puede aumentar la rotación de moldes.`; col='var(--cyan)'; }
+    else if (tcong!=null && tcong>hieloLimites.tCongMax){ diag=`⚠️ Tiempo de congelación promedio (${tcong.toFixed(1)} h) sobre lo esperado. Suele indicar salmuera poco fría o densidad fuera de rango. Verificar temperatura y °Bé de la salmuera.`; col='var(--amber)'; }
+    else { diag=`✅ Proceso estable. Producción al ${pct.toFixed(0)}% de capacidad con ciclo de ${tcong!=null?tcong.toFixed(1)+'h':'—'} y salmuera en rango.`; col='var(--green)'; }
+  }
+  const dEl=document.getElementById('hie-pr-diag'); dEl.style.borderLeftColor=col; dEl.textContent=diag;
+};
+
+// ─── TAB EFICIENCIA ─────────────────────────────────────────────────────────────
+window.renderEficienciaHielo = function() {
+  const hoy=new Date();
+  const ult30=allLecturasHielo.filter(l=>{const f=l.creadoEn?.toDate?l.creadoEn.toDate():null;return f&&(hoy-f)<30*86400000;});
+  const kwhTon=consumoEspecifico(ult30);
+  document.getElementById('hie-ef-kwh').textContent=kwhTon!=null?kwhTon.toFixed(0):'—';
+  const costoTon=kwhTon!=null?kwhTon*hieloConfig.precioKwh:null;
+  document.getElementById('hie-ef-costoton').textContent=costoTon!=null?'S/ '+costoTon.toFixed(1):'—';
+  // Costo mensual: producción del mes × costo/ton
+  const mes=hoy.getMonth(),anio=hoy.getFullYear();
+  const lecMes=allLecturasHielo.filter(l=>{const f=l.creadoEn?.toDate?l.creadoEn.toDate():null;return f&&f.getMonth()===mes&&f.getFullYear()===anio;});
+  const tonMes=produccionTon(lecMes);
+  const costoMes=costoTon!=null?tonMes*costoTon:null;
+  document.getElementById('hie-ef-costomes').textContent=costoMes!=null?'S/ '+costoMes.toLocaleString('es-PE',{maximumFractionDigits:0}):'—';
+  document.getElementById('hie-ef-costomes-sub').textContent=tonMes>0?`${tonMes.toFixed(1)} t producidas este mes`:'proyección';
+  const kwhs=allLecturasHielo.map(l=>parseFloat(l.kwh)).filter(x=>!isNaN(x));
+  document.getElementById('hie-ef-cons').textContent=kwhs.length?(kwhs.reduce((s,x)=>s+x,0)/kwhs.length).toFixed(0)+' kWh':'—';
+
+  // Tendencia kWh/t por día (últimos 30 días con datos)
+  const dias=[]; for(let i=29;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);dias.push(d);}
+  const serie=dias.map(d=>consumoEspecifico(lecturasEnDia(d)));
+  const pts=serie.filter(v=>v!=null);
+  document.getElementById('hie-ef-trend-badge').textContent=pts.length?pts.length+' días con datos':'sin datos';
+  if (pts.length){
+    ensureChartJsLocal(()=>{
+      const labels=dias.map(d=>d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+      const data=serie.map(v=>v!=null?+v.toFixed(1):null);
+      buildChartRef('hie-chart-kwh', labels, data.map(v=>v==null?0:v), '#ffb300', []);
+    });
+  } else if (refTendCharts['hie-chart-kwh']) { refTendCharts['hie-chart-kwh'].destroy(); delete refTendCharts['hie-chart-kwh']; }
+
+  let diag='El diagnóstico energético aparecerá cuando existan lecturas con consumo (kWh) y producción.', col='var(--amber)';
+  if (kwhTon!=null){
+    if (kwhTon<=70){ diag=`✅ Consumo específico eficiente (${kwhTon.toFixed(0)} kWh/t). Está dentro del rango típico de una planta de hielo en bloque bien operada.`; col='var(--green)'; }
+    else if (kwhTon<=100){ diag=`ℹ️ Consumo específico moderado (${kwhTon.toFixed(0)} kWh/t). Hay oportunidad de mejora: revisar aislamiento de cámara, desescarche y temperatura de condensación.`; col='var(--amber)'; }
+    else { diag=`⚠️ Consumo específico alto (${kwhTon.toFixed(0)} kWh/t). Posibles causas: condensador sucio, fuga de frío en cámara, salmuera mal regulada o baja carga de la planta. Conviene auditoría energética.`; col='var(--red)'; }
+  }
+  const dEl=document.getElementById('hie-ef-diag').parentElement; dEl.style.borderLeftColor=col;
+  document.getElementById('hie-ef-diag').textContent=diag;
+};
+
+window.guardarPrecioKwh=function(){const v=parseFloat(document.getElementById('hie-precio-kwh').value);if(!isNaN(v)&&v>0){hieloConfig.precioKwh=v;showToast('✅','Precio de energía actualizado',`S/ ${v.toFixed(2)} por kWh`);renderEficienciaHielo();}};
+window.guardarConfigHielo=function(){const c=parseFloat(document.getElementById('hie-cap-nominal').value);const p=parseFloat(document.getElementById('hie-peso-bloque').value);if(!isNaN(c)&&c>0)hieloConfig.capacidadNominalTon=c;if(!isNaN(p)&&p>0)hieloConfig.pesoBloque=p;showToast('✅','Configuración actualizada',`${hieloConfig.capacidadNominalTon} t/día · ${hieloConfig.pesoBloque} kg/bloque`);renderProduccionHielo();renderEstadoHielo();};
+
+// ─── TAB TENDENCIAS ─────────────────────────────────────────────────────────────
+window.renderTendenciasHielo = function() {
+  const id=document.getElementById('hie-tend-sel')?.value;
+  const dias=parseInt(document.getElementById('hie-tend-period')?.value||'30');
+  const e=allEquiposHielo.find(x=>x.id===id);
+  if (!e){document.getElementById('hie-tend-tbody').innerHTML='<tr><td colspan="9" class="loading-row">Selecciona un equipo</td></tr>';return;}
+  const desde=new Date();desde.setDate(desde.getDate()-dias);
+  const lecturas=allLecturasHielo.filter(l=>(l.equipoId===e.id||l.equipo===e.nombre)&&l.creadoEn?.toDate&&l.creadoEn.toDate()>=desde).sort((a,b)=>a.creadoEn.toDate()-b.creadoEn.toDate());
+  if (!lecturas.length){
+    ['hie-chart-sal','hie-chart-dens','hie-chart-ps','hie-chart-pd'].forEach(cid=>{if(refTendCharts[cid]){refTendCharts[cid].destroy();delete refTendCharts[cid];}});
+    ['hie-tend-sal-cur','hie-tend-dens-cur','hie-tend-ps-cur','hie-tend-pd-cur'].forEach(x=>document.getElementById(x).textContent='— ');
+    document.getElementById('hie-tend-count').textContent='0 registros';
+    document.getElementById('hie-tend-tbody').innerHTML=`<tr><td colspan="9"><div class="empty" style="height:100px"><div class="empty-icon">📭</div><div class="empty-sub">Sin lecturas de ${e.nombre} en este período</div></div></td></tr>`;
+    return;
+  }
+  ensureChartJsLocal(()=>{
+    const labels=lecturas.map(l=>l.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit'}));
+    const sal=lecturas.map(l=>parseFloat(l.tsal)||0), den=lecturas.map(l=>parseFloat(l.dens)||0), ps=lecturas.map(l=>parseFloat(l.ps)||0), pd=lecturas.map(l=>parseFloat(l.pd)||0);
+    const last=a=>a[a.length-1];
+    document.getElementById('hie-tend-sal-cur').textContent=last(sal).toFixed(1)+' °C';
+    document.getElementById('hie-tend-dens-cur').textContent=last(den).toFixed(1)+' °Bé';
+    document.getElementById('hie-tend-ps-cur').textContent=last(ps).toFixed(1)+' bar';
+    document.getElementById('hie-tend-pd-cur').textContent=last(pd).toFixed(1)+' bar';
+    buildChartRef('hie-chart-sal', labels, sal, '#00d4ff', [{value:hieloLimites.tSalMin,label:'Mín',color:'rgba(0,212,255,0.4)'},{value:hieloLimites.tSalMax,label:'Máx',color:'rgba(255,68,68,0.5)'}]);
+    buildChartRef('hie-chart-dens',labels, den, '#ffb300', [{value:hieloLimites.densMin,label:'Mín',color:'rgba(255,179,0,0.4)'},{value:hieloLimites.densMax,label:'Máx',color:'rgba(255,68,68,0.5)'}]);
+    buildChartRef('hie-chart-ps',  labels, ps,  '#00e676', []);
+    buildChartRef('hie-chart-pd',  labels, pd,  '#00d4ff', []);
+  });
+  document.getElementById('hie-tend-count').textContent=lecturas.length+' registros';
+  document.getElementById('hie-tend-tbody').innerHTML=[...lecturas].reverse().map(l=>{
+    const f=l.creadoEn.toDate().toLocaleString('es-PE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const salCls=(l.tsal!=null&&(l.tsal<hieloLimites.tSalMin||l.tsal>hieloLimites.tSalMax))?'warn':'ok';
+    const denCls=(l.dens!=null&&(l.dens<hieloLimites.densMin||l.dens>hieloLimites.densMax))?'warn':'ok';
+    return `<tr><td class="mono">${f}</td><td class="mono">${l.bloques??'—'}</td><td class="mono"><span class="reading-val ${salCls}" style="font-size:12px">${l.tsal??'—'}</span></td><td class="mono"><span class="reading-val ${denCls}" style="font-size:12px">${l.dens??'—'}</span></td><td class="mono">${l.tcong??'—'}</td><td class="mono">${l.ps??'—'}</td><td class="mono">${l.pd??'—'}</td><td class="mono">${l.kwh??'—'}</td><td style="font-size:11px;color:var(--txt2)">${l.tecnicoNombre||'—'}</td></tr>`;
+  }).join('');
+};
+
+// ─── TAB HORÓMETROS ─────────────────────────────────────────────────────────────
+window.renderHorometrosHielo = function() {
+  const tbody=document.getElementById('hie-horo-tbody');
+  if (!allEquiposHielo.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">⏱️</div><div class="empty-sub">Sin equipos registrados</div></div></td></tr>';return;}
+  let prox=0;
+  tbody.innerHTML=allEquiposHielo.map(e=>{
+    const lec=ultimaLecturaHielo(e); const horometro=lec?.horometro??null;
+    const acts=(typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>a.activoId===e.id);
+    const pmp=acts.sort((a,b)=>new Date(a.proximaFecha||'2099-01-01')-new Date(b.proximaFecha||'2099-01-01'))[0];
+    let diasRest=null,estado='sin-plan';
+    if(pmp?.proximaFecha){diasRest=Math.round((new Date(pmp.proximaFecha)-new Date())/86400000);estado=diasRest<0?'vencida':diasRest<=7?'proxima':'al_dia';if(estado!=='al_dia')prox++;}
+    const estCls=estado==='vencida'?'vencida':estado==='proxima'?'prog':estado==='al_dia'?'cerrada':'abierta';
+    const estLbl=estado==='vencida'?'PM vencido':estado==='proxima'?'Próx. PM':estado==='al_dia'?'OK':'Sin plan PMP';
+    return `<tr><td style="font-weight:600">${e.nombre}</td><td class="mono" style="font-size:11px;color:var(--txt2)">${e.cod||e.id}</td><td style="font-size:12px;color:var(--txt2)">${e.marca||'—'}</td><td><span style="font-family:var(--font-m);font-size:13px;color:var(--cyan)">${horometro!=null?horometro.toLocaleString()+' h':'—'}</span></td><td class="mono" style="font-size:12px">${pmp?.proximaFecha||'—'}</td><td class="mono" style="font-size:12px;color:${diasRest!=null&&diasRest<0?'var(--red)':diasRest!=null&&diasRest<=7?'var(--amber)':'var(--txt2)'}">${diasRest!=null?diasRest+' días':'—'}</td><td><span class="status ${estCls}">${estLbl}</span></td></tr>`;
+  }).join('');
+  document.getElementById('hie-horo-badge').textContent=`${prox} próximos a mantenimiento`;
+};
+
+// ─── TAB CONSUMO ────────────────────────────────────────────────────────────────
+window.renderConsumoHielo = function() {
+  const ids=activosDeArea('hielo'); if(!ids.size) allEquiposHielo.forEach(e=>ids.add(e.id));
+  const ots=(allOT||[]).filter(o=>o.estado==='cerrada'&&o.repuestoId&&ids.has(o.activoId)).sort((a,b)=>{const fa=a.creadoEn?.toDate?a.creadoEn.toDate():new Date(0);const fb=b.creadoEn?.toDate?b.creadoEn.toDate():new Date(0);return fb-fa;});
+  const acts=(typeof allPmpActividades!=='undefined'?allPmpActividades:[]).filter(a=>ids.has(a.activoId));
+  const conH=acts.filter(a=>a.ultimaEjecucion);
+  document.getElementById('hie-cons-k-cumpl').textContent=acts.length>0?Math.round(conH.length/acts.length*100)+'%':'—';
+  const porRep={};ots.forEach(o=>{if(o.repuestoId)(porRep[o.repuestoId]=porRep[o.repuestoId]||[]).push(o.creadoEn?.toDate?o.creadoEn.toDate():null);});
+  let inter=[];Object.values(porRep).forEach(fs=>{const o=fs.filter(Boolean).sort((a,b)=>a-b);for(let i=1;i<o.length;i++)inter.push((o[i]-o[i-1])/86400000);});
+  const vida=inter.length?Math.round(inter.reduce((s,v)=>s+v,0)/inter.length):null;
+  document.getElementById('hie-cons-k-vida').textContent=vida!=null?vida+' días':'—';
+  document.getElementById('hie-cons-k-vida-sub').textContent=inter.length?'promedio entre cambios':'aún sin suficiente historial';
+  const hoy=new Date();const mes=hoy.getMonth(),anio=hoy.getFullYear();
+  const otsMes=ots.filter(o=>{const f=o.creadoEn?.toDate?o.creadoEn.toDate():null;return f&&f.getMonth()===mes&&f.getFullYear()===anio;});
+  const gasto=otsMes.reduce((s,o)=>{const r=(allRepuestos||[]).find(x=>x.id===o.repuestoId);return s+((parseFloat(o.repuestoCantidad)||0)*(r?.cunit||0));},0);
+  document.getElementById('hie-cons-k-gasto').textContent='S/ '+gasto.toLocaleString('es-PE',{maximumFractionDigits:0});
+  const reps=[...new Set(acts.filter(a=>a.repuestoId).map(a=>a.repuestoId))].map(id=>(allRepuestos||[]).find(r=>r.id===id)).filter(Boolean);
+  let cob=null,crit=null;reps.forEach(r=>{const cm=ots.filter(o=>o.repuestoId===r.id&&o.creadoEn?.toDate&&(hoy-o.creadoEn.toDate())<90*86400000).length/3;if(cm>0){const d=Math.round((r.stock||0)/(cm/30));if(cob===null||d<cob){cob=d;crit=r;}}});
+  document.getElementById('hie-cons-k-cobertura').textContent=cob!=null?cob+' días':'—';
+  document.getElementById('hie-cons-k-cobertura-sub').textContent=crit?crit.desc:'sin datos suficientes de consumo';
+  const ht=document.getElementById('hie-cons-hist-tbody');
+  document.getElementById('hie-cons-hist-count').textContent=ots.length+' registros';
+  ht.innerHTML=ots.length?ots.slice(0,40).map(o=>{const f=o.creadoEn?.toDate?o.creadoEn.toDate().toLocaleDateString('es-PE',{day:'2-digit',month:'short'}):'—';return `<tr><td class="mono" style="font-size:11px">${f}</td><td style="font-size:12px">${o.repuestoNombre||'—'}</td><td style="font-size:12px;color:var(--txt2)">${o.activoNombre||'—'}</td><td class="mono">${o.repuestoCantidad||'—'} ${o.repuestoUnidad||''}</td><td style="font-size:12px;color:var(--txt2)">${o.tecnicoNombre||'—'}</td><td><span class="badge cyan" style="font-size:10px;cursor:pointer" onclick="showPage('ot',document.querySelectorAll('.nav-item')[1])">${o.codigo}</span></td></tr>`;}).join(''):'<tr><td colspan="6"><div class="empty" style="height:100px"><div class="empty-icon">📦</div><div class="empty-sub">Sin consumos — se llena al cerrar OT con repuesto vinculado</div></div></td></tr>';
+  const barsEl=document.getElementById('hie-cons-frec-bars');
+  const actsRep=acts.filter(a=>a.repuestoId);
+  barsEl.innerHTML=actsRep.length?actsRep.map(a=>{const esp=(typeof FREC_DIAS!=='undefined'?FREC_DIAS[a.frecuencia]:30)||30;let real=esp;const fs=porRep[a.repuestoId];if(fs&&fs.length>=2){const o=fs.filter(Boolean).sort((x,y)=>x-y);real=Math.round((o[o.length-1]-o[o.length-2])/86400000);}const pct=Math.min((real/esp)*100,100);const col=real<=esp?'var(--green)':real<=esp*1.3?'var(--amber)':'var(--red)';return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><span style="font-size:13px;width:160px;flex-shrink:0">${a.nombre} — ${a.activoNombre}</span><div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div><span style="font-size:12px;color:var(--txt2);width:90px;text-align:right">${real} / ${esp} días</span></div>`;}).join(''):'<div style="color:var(--txt2);font-size:12px">Sin actividades PMP con repuesto vinculado asignadas a Planta de Hielo aún</div>';
+};
+
+// ─── MODAL ──────────────────────────────────────────────────────────────────────
+window.abrirModalLecturaHielo=function(){
+  poblarSelectsHielo();
+  ['lh-horometro','lh-bloques','lh-stock','lh-tsal','lh-dens','lh-tcong','lh-tevap','lh-ps','lh-pd','lh-tcam','lh-tagua','lh-kwh','lh-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-lectura-hielo').classList.add('open');
+};
+window.guardarLecturaHielo=async function(){
+  const e=allEquiposHielo.find(x=>x.id===document.getElementById('lh-equipo').value);
+  if(!e){showToast('⚠️','Selecciona un equipo','');return;}
+  const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
+  const tsal=num('lh-tsal'),dens=num('lh-dens'),tcam=num('lh-tcam'),bloques=num('lh-bloques');
+  if(bloques==null&&tsal==null&&num('lh-kwh')==null&&num('lh-horometro')==null){showToast('⚠️','Ingresa al menos un parámetro','');return;}
+  const alarma=(tsal!=null&&(tsal<hieloLimites.tSalMin||tsal>hieloLimites.tSalMax))||(dens!=null&&(dens<hieloLimites.densMin||dens>hieloLimites.densMax))||(tcam!=null&&tcam>hieloLimites.tCamMax);
+  try{
+    await addDoc(collection(db,'lecturas'),{
+      tipo:'hielo', equipo:e.nombre, equipoId:e.id, turno:document.getElementById('lh-turno').value,
+      horometro:num('lh-horometro'), bloques, stock:num('lh-stock'), tsal, dens, tcong:num('lh-tcong'),
+      tevap:num('lh-tevap'), ps:num('lh-ps'), pd:num('lh-pd'), tcam, tagua:num('lh-tagua'), kwh:num('lh-kwh'),
+      alarma, obs:document.getElementById('lh-obs').value.trim()||null,
+      tecnicoUid:currentUser.uid, tecnicoNombre:`${currentPerfil.nombres} ${currentPerfil.apellidos}`, creadoEn:serverTimestamp(),
+    });
+    cerrarModal('modal-lectura-hielo'); showToast('✅','Lectura registrada',e.nombre); await cargarHielo();
+  }catch(err){ showToast('❌','Error',err.message); }
+};
+
+// Hook showPage para cargar Planta de Hielo al entrar
+const _showPageHielo = window.showPage;
+window.showPage = function(name, el) {
+  _showPageHielo(name, el);
+  if (name==='hielo') cargarHielo();
 };
 
 
